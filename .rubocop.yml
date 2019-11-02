@@ -1,5 +1,20 @@
+require: rubocop-rspec
+
 Metrics/LineLength:
   Max: 120
 
 Metrics/MethodLength:
   Max: 20
+
+RSpec/ExpectInHook:
+  Enabled: false
+
+RSpec/EmptyLineAfterHook:
+  Enabled: false
+
+RSpec/ScatteredSetup:
+  Enabled: false
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
