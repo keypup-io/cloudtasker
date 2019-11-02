@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'google/cloud/tasks'
+
 module Cloudtasker
   # Build, serialize and schedule tasks on GCP Cloud Task
   class Task
@@ -8,22 +10,13 @@ module Cloudtasker
     # Alrogith used to sign the verification token
     JWT_ALG = 'HS256'
 
-    URL = 'http://foo.bar/worker'
-
-    def self.included(base)
-      base.extend(ClassMethods)
-    end
-
-    # Class methods
-    module ClassMethods
-      #
-      # Return the Google Cloud Task client.
-      #
-      # @return [Google::Cloud::Tasks] The Google Cloud Task client.
-      #
-      def self.client
-        @client ||= Google::Cloud::Tasks.new(version: :v2beta3)
-      end
+    #
+    # Return the Google Cloud Task client.
+    #
+    # @return [Google::Cloud::Tasks] The Google Cloud Task client.
+    #
+    def self.client
+      @client ||= ::Google::Cloud::Tasks.new(version: :v2beta3)
     end
 
     #
@@ -87,7 +80,7 @@ module Cloudtasker
       {
         http_request: {
           http_method: 'POST',
-          url: URL,
+          url: config.processor_url,
           headers: {
             'Content-Type' => 'application/json',
             'Authorization' => "Bearer #{verification_token}"
@@ -129,7 +122,7 @@ module Cloudtasker
 
       # Generate protobuf timestamp
       timestamp = Google::Protobuf::Timestamp.new
-      timestamp.seconds = Time.current.to_i + interval.to_i
+      timestamp.seconds = Time.now.to_i + interval.to_i
       timestamp
     end
 
@@ -142,6 +135,8 @@ module Cloudtasker
     # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
     #
     def schedule(interval: nil)
+      puts interval
+
       # Generate task payload
       task = task_payload.merge(
         schedule_time: schedule_time(interval)

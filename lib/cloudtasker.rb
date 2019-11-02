@@ -3,16 +3,20 @@
 require 'cloudtasker/version'
 require 'cloudtasker/config'
 require 'cloudtasker/task'
+require 'cloudtasker/worker'
 
 # Define and manage Cloud Task based workers
 module Cloudtasker
-  attr_reader :config
+  attr_writer :config
 
   #
   # Cloudtasker configurator.
   #
   def self.configure
-    self.config = Config.new
     yield(config)
+  end
+
+  def self.config
+    @config ||= Config.new
   end
 end

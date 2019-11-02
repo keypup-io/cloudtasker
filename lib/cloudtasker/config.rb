@@ -27,6 +27,16 @@ module Cloudtasker
     DOC
 
     #
+    # Return the full URL of the processor. Worker payloads will be sent
+    # to this URL.
+    #
+    # @return [String] The processor URL.
+    #
+    def processor_url
+      File.join(processor_host, processor_path)
+    end
+
+    #
     # The hostname of the application processing the workers. The hostname must
     # be reachable from Cloud Task.
     #
