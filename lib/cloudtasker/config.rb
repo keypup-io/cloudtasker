@@ -63,7 +63,7 @@ module Cloudtasker
     # @return [String] The ID of the processing queue.
     #
     def gcp_queue_id
-      @gcp_queue_id || raise(StandardError, PROJECT_ID_MISSING_ERROR)
+      @gcp_queue_id || raise(StandardError, QUEUE_ID_MISSING_ERROR)
     end
 
     #
@@ -92,7 +92,7 @@ module Cloudtasker
     #
     def secret
       @secret || (
-        defined?(Rails) && Rails.application.credentials.secret_key_base
+        defined?(Rails) && Rails.application.credentials&.secret_key_base
       ) || raise(StandardError, SECRET_MISSING_ERROR)
     end
   end
