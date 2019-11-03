@@ -2,6 +2,8 @@
 
 require 'cloudtasker/version'
 require 'cloudtasker/config'
+require 'cloudtasker/authentication_error'
+require 'cloudtasker/authenticator'
 require 'cloudtasker/task'
 require 'cloudtasker/worker'
 

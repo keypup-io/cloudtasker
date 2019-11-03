@@ -52,16 +52,6 @@ RSpec.describe Cloudtasker::Task do
     it { is_expected.to eq(queue_path) }
   end
 
-  describe '#verification_token' do
-    subject { task.verification_token }
-
-    let(:expected_token) { JWT.encode({ iat: Time.now.to_i }, config.secret, described_class::JWT_ALG) }
-
-    around { |e| Timecop.freeze { e.run } }
-
-    it { is_expected.to eq(expected_token) }
-  end
-
   describe '#task_payload' do
     subject { task.task_payload }
 
@@ -72,7 +62,7 @@ RSpec.describe Cloudtasker::Task do
           url: config.processor_url,
           headers: {
             'Content-Type' => 'application/json',
-            'Authorization' => "Bearer #{task.verification_token}"
+            'Authorization' => "Bearer #{Cloudtasker::Authenticator.verification_token}"
           },
           body: task.worker_payload.to_json
         }

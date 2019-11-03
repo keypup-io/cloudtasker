@@ -42,7 +42,7 @@ module Cloudtasker
     #
     # Return the cloudtasker configuration. See Cloudtasker#configure.
     #
-    # @return [<Type>] <description>
+    # @return [Cloudtasker::Config] The library configuration.
     #
     def config
       Cloudtasker.config
@@ -62,16 +62,6 @@ module Cloudtasker
     end
 
     #
-    # A Json Web Token (JWT) which will be used by the processor
-    # to authenticate the job.
-    #
-    # @return [String] The jwt token
-    #
-    def verification_token
-      JWT.encode({ iat: Time.now.to_i }, config.secret, JWT_ALG)
-    end
-
-    #
     # Return the full task configuration sent to Cloud Task
     #
     # @return [Hash] The task body
@@ -83,7 +73,7 @@ module Cloudtasker
           url: config.processor_url,
           headers: {
             'Content-Type' => 'application/json',
-            'Authorization' => "Bearer #{verification_token}"
+            'Authorization' => "Bearer #{Authenticator.verification_token}"
           },
           body: worker_payload.to_json
         }
