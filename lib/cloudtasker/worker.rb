@@ -54,5 +54,20 @@ module Cloudtasker
     def execute
       perform(*job_args)
     end
+
+    #
+    # Helper method used to re-enqueue the job. Re-enqueued
+    # jobs keep the same job_id.
+    #
+    # This helper may be useful when jobs must pause activity due to external
+    # factors such as when a third-party API is throttling the rate of API calls.
+    #
+    # @param [Integer] interval Delay to wait before processing the job again (in seconds).
+    #
+    # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
+    #
+    def reenqueue(interval)
+      Task.new(worker: self.class, job_args: job_args, job_id: job_id).schedule(interval: interval)
+    end
   end
 end

@@ -50,4 +50,25 @@ RSpec.describe Cloudtasker::Worker do
     before { allow(worker).to receive(:perform).with(*args).and_return(resp) }
     it { is_expected.to eq(resp) }
   end
+
+  describe '#reenqueue' do
+    subject { worker.reenqueue(delay) }
+
+    let(:delay) { 10 }
+    let(:worker) { worker_class.new(job_args: args, job_id: SecureRandom.uuid) }
+    let(:args) { [1, 2] }
+    let(:resp) { 'some-result' }
+
+    let(:task) { instance_double('Cloudtasker::Task') }
+    let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
+
+    before do
+      allow(Cloudtasker::Task).to receive(:new)
+        .with(worker: worker.class, job_args: worker.job_args, job_id: worker.job_id)
+        .and_return(task)
+      allow(task).to receive(:schedule).with(interval: delay).and_return(resp)
+    end
+
+    it { is_expected.to eq(resp) }
+  end
 end
