@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-class MyWorker
+class TestWorker
   include Cloudtasker::Worker
 
-  def perform
-    1
+  def perform(arg1, arg2)
+    arg1 + arg2
   end
 end

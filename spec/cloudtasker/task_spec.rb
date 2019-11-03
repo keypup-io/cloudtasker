@@ -3,9 +3,9 @@
 RSpec.describe Cloudtasker::Task do
   let(:config) { Cloudtasker.config }
   let(:client) { instance_double('Google::Cloud::Tasks::V2beta3::CloudTasksClient') }
-  let(:worker) { MyWorker }
+  let(:worker) { TestWorker }
   let(:args) { ['foo', 1] }
-  let(:task) { described_class.new(worker: MyWorker, args: args) }
+  let(:task) { described_class.new(worker: TestWorker, args: args) }
 
   describe 'creation' do
     subject { task }
