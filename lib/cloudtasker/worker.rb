@@ -12,6 +12,27 @@ module Cloudtasker
     # Module class methods
     module ClassMethods
       #
+      # Set the worker runtime options.
+      #
+      # @param [Hash] opts The worker options
+      #
+      # @return [<Type>] <description>
+      #
+      def cloudtasker_options(opts = {})
+        opt_list = opts&.map { |k, v| [k.to_s, v] } || [] # stringify
+        @cloudtasker_options_hash = Hash[opt_list]
+      end
+
+      #
+      # Return the worker runtime options.
+      #
+      # @return [Hash] The worker runtime options.
+      #
+      def cloudtasker_options_hash
+        @cloudtasker_options_hash
+      end
+
+      #
       # Enqueue worker in the backgroundf.
       #
       # @param [Array<any>] *args List of worker arguments

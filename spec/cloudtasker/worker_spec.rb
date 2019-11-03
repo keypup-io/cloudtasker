@@ -31,6 +31,17 @@ RSpec.describe Cloudtasker::Worker do
     it { is_expected.to eq(resp) }
   end
 
+  describe '.cloudtasker_options_hash' do
+    subject { worker_class.cloudtasker_options_hash }
+
+    let(:opts) { { foo: 'bar' } }
+    let!(:original_opts) { worker_class.cloudtasker_options_hash }
+
+    before { worker_class.cloudtasker_options(opts) }
+    after { worker_class.cloudtasker_options(original_opts) }
+    it { is_expected.to eq(Hash[opts.map { |k, v| [k.to_s, v] }]) }
+  end
+
   describe '.new' do
     subject { worker_class.new(job_args: args, job_id: id) }
 
@@ -57,7 +68,6 @@ RSpec.describe Cloudtasker::Worker do
     let(:delay) { 10 }
     let(:worker) { worker_class.new(job_args: args, job_id: SecureRandom.uuid) }
     let(:args) { [1, 2] }
-    let(:resp) { 'some-result' }
 
     let(:task) { instance_double('Cloudtasker::Task') }
     let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
