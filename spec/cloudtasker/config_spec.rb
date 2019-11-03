@@ -34,6 +34,7 @@ RSpec.describe Cloudtasker::Config do
       let(:rails_app) { instance_double('application') }
       let(:credentials) { instance_double('credentials') }
 
+      before { stub_const('Rails', Class.new) }
       before { allow(Rails).to receive(:application).and_return(rails_app) }
       before { allow(rails_app).to receive(:credentials).and_return(credentials) }
       before { allow(credentials).to receive(:secret_key_base).and_return(rails_secret) }
@@ -43,7 +44,6 @@ RSpec.describe Cloudtasker::Config do
     context 'with no value' do
       let(:secret) { nil }
 
-      before { Object.send(:remove_const, :Rails) }
       it { expect { method }.to raise_error(StandardError, described_class::SECRET_MISSING_ERROR) }
     end
   end
