@@ -11,6 +11,29 @@ module Cloudtasker
     JWT_ALG = 'HS256'
 
     #
+    # Return an instantiated worker from a Cloud Task
+    # payload.
+    #
+    # @param [Hash] payload The Cloud Task payload.
+    #
+    # @return [Any] An intantiated worker
+    #
+    def self.worker_from_payload(payload)
+      # Extract worker parameters
+      klass_name = payload&.dig('worker') || payload&.dig(:worker)
+      worker_args = payload&.dig('args') || payload&.dig(:args)
+
+      # Check that worker class is a valid worker
+      worker_klass = Object.const_get(klass_name)
+      return nil unless worker_klass.include?(Worker)
+
+      # Return instantiated worker
+      worker_klass.new(worker_args)
+    rescue NameError
+      nil
+    end
+
+    #
     # Return the Google Cloud Task client.
     #
     # @return [Google::Cloud::Tasks] The Google Cloud Task client.

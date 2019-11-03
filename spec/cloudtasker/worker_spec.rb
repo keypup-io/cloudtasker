@@ -30,4 +30,23 @@ RSpec.describe Cloudtasker::Worker do
     before { allow(worker_class).to receive(:perform_in).with(nil, arg1, arg2).and_return(resp) }
     it { is_expected.to eq(resp) }
   end
+
+  describe '.new' do
+    subject { worker_class.new(args) }
+
+    let(:args) { [1, 2] }
+
+    it { is_expected.to have_attributes(args: args) }
+  end
+
+  describe '#execute' do
+    subject { worker.execute }
+
+    let(:worker) { worker_class.new(args) }
+    let(:args) { [1, 2] }
+    let(:resp) { 'some-result' }
+
+    before { allow(worker).to receive(:perform).with(*args).and_return(resp) }
+    it { is_expected.to eq(resp) }
+  end
 end

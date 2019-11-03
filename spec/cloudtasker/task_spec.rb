@@ -7,7 +7,7 @@ RSpec.describe Cloudtasker::Task do
   let(:args) { ['foo', 1] }
   let(:task) { described_class.new(worker: TestWorker, args: args) }
 
-  describe 'creation' do
+  describe '.new' do
     subject { task }
 
     it { is_expected.to have_attributes(worker: worker, args: args) }
@@ -19,6 +19,36 @@ RSpec.describe Cloudtasker::Task do
     before { allow(Google::Cloud::Tasks).to receive(:new).with(version: :v2beta3).and_return(client) }
 
     it { is_expected.to eq(client) }
+  end
+
+  describe '.worker_from_payload' do
+    subject { described_class.worker_from_payload(payload) }
+
+    let(:worker_class) { TestWorker }
+    let(:worker_class_name) { worker_class.to_s }
+    let(:payload) do
+      {
+        'worker' => worker_class_name,
+        'args' => args
+      }
+    end
+
+    context 'with valid worker' do
+      it { is_expected.to be_a(worker_class) }
+      it { is_expected.to have_attributes(args: args) }
+    end
+
+    context 'with worker class not implementing Cloudtasker::Worker' do
+      let(:worker_class) { TestNonWorker }
+
+      it { is_expected.to be_nil }
+    end
+
+    context 'with invalid worker class' do
+      let(:worker_class_name) { 'ClassThatDoesNotExist' }
+
+      it { is_expected.to be_nil }
+    end
   end
 
   describe '#client' do
