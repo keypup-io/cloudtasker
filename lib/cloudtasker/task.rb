@@ -5,7 +5,7 @@ require 'google/cloud/tasks'
 module Cloudtasker
   # Build, serialize and schedule tasks on GCP Cloud Task
   class Task
-    attr_reader :worker, :args
+    attr_reader :worker, :job_args
 
     # Alrogith used to sign the verification token
     JWT_ALG = 'HS256'
@@ -21,14 +21,15 @@ module Cloudtasker
     def self.worker_from_payload(payload)
       # Extract worker parameters
       klass_name = payload&.dig('worker') || payload&.dig(:worker)
-      worker_args = payload&.dig('args') || payload&.dig(:args)
+      job_args = payload&.dig('args') || payload&.dig(:args)
+      job_id = payload&.dig('id') || payload&.dig(:id)
 
       # Check that worker class is a valid worker
       worker_klass = Object.const_get(klass_name)
       return nil unless worker_klass.include?(Worker)
 
       # Return instantiated worker
-      worker_klass.new(worker_args)
+      worker_klass.new(job_args: job_args, job_id: job_id)
     rescue NameError
       nil
     end
@@ -58,11 +59,12 @@ module Cloudtasker
     # Prepare a new cloud task.
     #
     # @param [Class] worker The worker class.
-    # @param [Array<any>] args The worker class arguments.
+    # @param [Array<any>] job_args The worker class arguments.
     #
-    def initialize(worker:, args:)
+    def initialize(worker:, job_args:, job_id: nil)
       @worker = worker
-      @args = args
+      @job_args = job_args
+      @job_id = job_id
     end
 
     #
@@ -72,6 +74,15 @@ module Cloudtasker
     #
     def client
       self.class.client
+    end
+
+    #
+    # A unique ID identifying this task.
+    #
+    # @return [String] A unique job/task id.
+    #
+    def job_id
+      @job_id ||= SecureRandom.uuid
     end
 
     #
@@ -129,8 +140,9 @@ module Cloudtasker
     #
     def worker_payload
       @worker_payload ||= {
+        id: job_id,
         worker: worker.to_s,
-        args: args
+        args: job_args
       }
     end
 

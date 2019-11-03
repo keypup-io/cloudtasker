@@ -6,7 +6,7 @@ module Cloudtasker
     # Add class method to including class
     def self.included(base)
       base.extend(ClassMethods)
-      base.attr_accessor :args
+      base.attr_accessor :job_args, :job_id
     end
 
     # Module class methods
@@ -31,17 +31,19 @@ module Cloudtasker
       # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
       #
       def perform_in(interval, *args)
-        Task.new(worker: self, args: args).schedule(interval: interval)
+        Task.new(worker: self, job_args: args).schedule(interval: interval)
       end
     end
 
     #
     # Build a new worker instance.
     #
-    # @param [Array<any>] args The list of perform args.
+    # @param [Array<any>] job_args The list of perform args.
+    # @param [Array<any>] job_id A unique ID identifying this job.
     #
-    def initialize(args)
-      @args = args
+    def initialize(job_args:, job_id:)
+      @job_args = job_args
+      @job_id = job_id
     end
 
     #
@@ -50,7 +52,7 @@ module Cloudtasker
     # @return [Any] The result of the perform.
     #
     def execute
-      perform(*args)
+      perform(*job_args)
     end
   end
 end

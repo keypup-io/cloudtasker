@@ -13,7 +13,7 @@ RSpec.describe Cloudtasker::Worker do
     let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
 
     before do
-      allow(Cloudtasker::Task).to receive(:new).with(worker: worker_class, args: [arg1, arg2]).and_return(task)
+      allow(Cloudtasker::Task).to receive(:new).with(worker: worker_class, job_args: [arg1, arg2]).and_return(task)
       allow(task).to receive(:schedule).with(interval: delay).and_return(resp)
     end
 
@@ -32,17 +32,18 @@ RSpec.describe Cloudtasker::Worker do
   end
 
   describe '.new' do
-    subject { worker_class.new(args) }
+    subject { worker_class.new(job_args: args, job_id: id) }
 
+    let(:id) { SecureRandom.uuid }
     let(:args) { [1, 2] }
 
-    it { is_expected.to have_attributes(args: args) }
+    it { is_expected.to have_attributes(job_args: args, job_id: id) }
   end
 
   describe '#execute' do
     subject { worker.execute }
 
-    let(:worker) { worker_class.new(args) }
+    let(:worker) { worker_class.new(job_args: args, job_id: SecureRandom.uuid) }
     let(:args) { [1, 2] }
     let(:resp) { 'some-result' }
 
