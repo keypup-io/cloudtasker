@@ -51,6 +51,28 @@ RSpec.describe Cloudtasker::Task do
     end
   end
 
+  describe '.execute_from_payload!' do
+    subject(:execute) { described_class.execute_from_payload!(payload) }
+
+    let(:payload) { { 'foo' => 'bar' } }
+
+    before { allow(described_class).to receive(:worker_from_payload).with(payload).and_return(worker) }
+
+    context 'with valid worker' do
+      let(:worker) { instance_double('TestWorker') }
+      let(:ret) { 'some-result' }
+
+      before { allow(worker).to receive(:execute).and_return(ret) }
+      it { is_expected.to eq(ret) }
+    end
+
+    context 'with invalid worker' do
+      let(:worker) { nil }
+
+      it { expect { execute }.to raise_error(Cloudtasker::InvalidWorkerError) }
+    end
+  end
+
   describe '#client' do
     subject { task.client }
 

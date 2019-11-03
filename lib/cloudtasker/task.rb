@@ -16,7 +16,7 @@ module Cloudtasker
     #
     # @param [Hash] payload The Cloud Task payload.
     #
-    # @return [Any] An intantiated worker
+    # @return [Any] An intantiated worker.
     #
     def self.worker_from_payload(payload)
       # Extract worker parameters
@@ -31,6 +31,18 @@ module Cloudtasker
       worker_klass.new(worker_args)
     rescue NameError
       nil
+    end
+
+    #
+    # Execute a task worker from a task payload
+    #
+    # @param [Hash] payload The Cloud Task payload.
+    #
+    # @return [Any] The return value of the worker perform method.
+    #
+    def self.execute_from_payload!(payload)
+      worker = worker_from_payload(payload) || raise(InvalidWorkerError)
+      worker.execute
     end
 
     #

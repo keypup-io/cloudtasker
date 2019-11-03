@@ -17,4 +17,5 @@ RSpec/ScatteredSetup:
 
 Metrics/BlockLength:
   Exclude:
+    - cloudtasker.gemspec
     - 'spec/**/*'

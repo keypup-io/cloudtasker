@@ -2,7 +2,10 @@
 
 require 'cloudtasker/version'
 require 'cloudtasker/config'
+
 require 'cloudtasker/authentication_error'
+require 'cloudtasker/invalid_worker_error'
+
 require 'cloudtasker/authenticator'
 require 'cloudtasker/task'
 require 'cloudtasker/worker'
@@ -22,3 +25,5 @@ module Cloudtasker
     @config ||= Config.new
   end
 end
+
+require 'cloudtasker/engine' if defined?(::Rails::Engine)
