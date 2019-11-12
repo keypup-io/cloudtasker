@@ -58,13 +58,10 @@ module Cloudtasker
     #
     # Prepare a new cloud task.
     #
-    # @param [Class] worker The worker class.
-    # @param [Array<any>] job_args The worker class arguments.
+    # @param [Cloudtasker::Worker] worker The worker instance.
     #
-    def initialize(worker:, job_args:, job_id: nil)
+    def initialize(worker)
       @worker = worker
-      @job_args = job_args
-      @job_id = job_id
     end
 
     #
@@ -74,15 +71,6 @@ module Cloudtasker
     #
     def client
       self.class.client
-    end
-
-    #
-    # A unique ID identifying this task.
-    #
-    # @return [String] A unique job/task id.
-    #
-    def job_id
-      @job_id ||= SecureRandom.uuid
     end
 
     #
@@ -140,9 +128,9 @@ module Cloudtasker
     #
     def worker_payload
       @worker_payload ||= {
-        id: job_id,
-        worker: worker.to_s,
-        args: job_args
+        id: worker.job_id,
+        worker: worker.class.to_s,
+        args: worker.job_args
       }
     end
 

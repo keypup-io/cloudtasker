@@ -3,15 +3,15 @@
 RSpec.describe Cloudtasker::Task do
   let(:config) { Cloudtasker.config }
   let(:client) { instance_double('Google::Cloud::Tasks::V2beta3::CloudTasksClient') }
-  let(:worker) { TestWorker }
+  let(:worker) { TestWorker.new(job_args: args) }
   let(:args) { ['foo', 1] }
   let(:job_id) { nil }
-  let(:task) { described_class.new(worker: TestWorker, job_args: args, job_id: job_id) }
+  let(:task) { described_class.new(worker) }
 
   describe '.new' do
     subject { task }
 
-    it { is_expected.to have_attributes(worker: worker, job_args: args) }
+    it { is_expected.to have_attributes(worker: worker) }
   end
 
   describe '.client' do
@@ -84,23 +84,6 @@ RSpec.describe Cloudtasker::Task do
     it { is_expected.to eq(client) }
   end
 
-  describe '#job_id' do
-    subject { task.job_id }
-
-    context 'with specified job_id' do
-      let(:job_id) { '111' }
-
-      it { is_expected.to eq(job_id) }
-    end
-
-    context 'with no specified job_id' do
-      let(:uuid) { '222-333' }
-
-      before { allow(SecureRandom).to receive(:uuid).and_return(uuid) }
-      it { is_expected.to eq(uuid) }
-    end
-  end
-
   describe '#config' do
     subject { task.config }
 
@@ -148,7 +131,7 @@ RSpec.describe Cloudtasker::Task do
   describe '#worker_payload' do
     subject { task.worker_payload }
 
-    let(:expected_payload) { { id: task.job_id, worker: worker.to_s, args: args } }
+    let(:expected_payload) { { id: worker.job_id, worker: worker.class.to_s, args: args } }
 
     it { is_expected.to eq(expected_payload) }
   end

@@ -52,7 +52,19 @@ module Cloudtasker
       # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
       #
       def perform_in(interval, *args)
-        Task.new(worker: self, job_args: args).schedule(interval: interval)
+        schedule(worker: new(job_args: args), interval: interval)
+      end
+
+      #
+      # Enqueue a worker object, with or without delay.
+      #
+      # @param [Cloudtasker::Worker] worker The worker to schedule.
+      # @param [Integer] interval The delay in seconds.
+      #
+      # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
+      #
+      def schedule(worker:, interval: nil)
+        Task.new(worker).schedule(interval: interval)
       end
     end
 
@@ -60,11 +72,11 @@ module Cloudtasker
     # Build a new worker instance.
     #
     # @param [Array<any>] job_args The list of perform args.
-    # @param [Array<any>] job_id A unique ID identifying this job.
+    # @param [String] job_id A unique ID identifying this job.
     #
-    def initialize(job_args: [], job_id:)
+    def initialize(job_args: [], job_id: nil)
       @job_args = job_args
-      @job_id = job_id
+      @job_id = job_id || SecureRandom.uuid
     end
 
     #
@@ -88,7 +100,7 @@ module Cloudtasker
     # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
     #
     def reenqueue(interval)
-      Task.new(worker: self.class, job_args: job_args, job_id: job_id).schedule(interval: interval)
+      self.class.schedule(worker: self, interval: interval)
     end
   end
 end
