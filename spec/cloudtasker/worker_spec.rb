@@ -11,7 +11,7 @@ RSpec.describe Cloudtasker::Worker do
     let(:arg2) { 2 }
     let(:task) { instance_double('Cloudtasker::Task') }
     let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
-    let(:worker) { instance_double(worker_class.to_s) }
+    let(:worker) { worker_class.new(job_args: [1, 2]) }
 
     before do
       allow(Cloudtasker::Task).to receive(:new).with(worker).and_return(task)
@@ -19,6 +19,12 @@ RSpec.describe Cloudtasker::Worker do
     end
 
     it { is_expected.to eq(resp) }
+
+    context 'with client middleware chain' do
+      before { Cloudtasker.config.client_middleware.add(TestMiddleware) }
+      after { expect(worker.middleware_called).to be_truthy }
+      it { is_expected.to eq(resp) }
+    end
   end
 
   describe '.perform_in' do
@@ -88,7 +94,14 @@ RSpec.describe Cloudtasker::Worker do
     let(:resp) { 'some-result' }
 
     before { allow(worker).to receive(:perform).with(*args).and_return(resp) }
+
     it { is_expected.to eq(resp) }
+
+    context 'with server middleware chain' do
+      before { Cloudtasker.config.server_middleware.add(TestMiddleware) }
+      after { expect(worker.middleware_called).to be_truthy }
+      it { is_expected.to eq(resp) }
+    end
   end
 
   describe '#reenqueue' do

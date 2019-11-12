@@ -7,9 +7,9 @@ class TestMiddleware
     @arg = arg
   end
 
-  def call(_worker)
-    puts 'called'
+  def call(worker)
     @called = true
+    worker.middleware_called = true if worker.respond_to?(:middleware_called)
     yield
   end
 end

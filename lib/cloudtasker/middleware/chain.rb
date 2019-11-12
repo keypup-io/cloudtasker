@@ -213,7 +213,6 @@ module Cloudtasker
         chain = retrieve.dup
         traverse_chain = lambda do
           if chain.empty?
-            puts 'empty'
             yield
           else
             chain.shift.call(*args, &traverse_chain)

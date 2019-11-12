@@ -160,8 +160,6 @@ module Cloudtasker
     # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
     #
     def schedule(interval: nil)
-      puts interval
-
       # Generate task payload
       task = task_payload.merge(
         schedule_time: schedule_time(interval)

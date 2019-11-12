@@ -24,6 +24,12 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  # Ensure cache is clean before each test
+  config.before do
+    Cloudtasker.config.client_middleware.clear
+    Cloudtasker.config.server_middleware.clear
+  end
 end
 
 # Configure for tests

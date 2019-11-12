@@ -64,7 +64,9 @@ module Cloudtasker
       # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
       #
       def schedule(worker:, interval: nil)
-        Task.new(worker).schedule(interval: interval)
+        Cloudtasker.config.client_middleware.invoke(worker) do
+          Task.new(worker).schedule(interval: interval)
+        end
       end
     end
 
@@ -85,7 +87,9 @@ module Cloudtasker
     # @return [Any] The result of the perform.
     #
     def execute
-      perform(*job_args)
+      Cloudtasker.config.server_middleware.invoke(self) do
+        perform(*job_args)
+      end
     end
 
     #
