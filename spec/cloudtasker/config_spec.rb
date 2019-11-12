@@ -125,4 +125,30 @@ RSpec.describe Cloudtasker::Config do
 
     it { is_expected.to eq("#{config.processor_host}#{config.processor_path}") }
   end
+
+  describe '#client_middleware' do
+    subject(:middlewares) { config.client_middleware }
+
+    before do
+      config.client_middleware do |chain|
+        chain.add(TestMiddleware)
+      end
+    end
+
+    it { is_expected.to be_a(Cloudtasker::Middleware::Chain) }
+    it { expect(middlewares).to be_exists(TestMiddleware) }
+  end
+
+  describe '#server_middleware' do
+    subject(:middlewares) { config.server_middleware }
+
+    before do
+      config.server_middleware do |chain|
+        chain.add(TestMiddleware)
+      end
+    end
+
+    it { is_expected.to be_a(Cloudtasker::Middleware::Chain) }
+    it { expect(middlewares).to be_exists(TestMiddleware) }
+  end
 end

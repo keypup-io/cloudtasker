@@ -95,5 +95,27 @@ module Cloudtasker
         defined?(Rails) && Rails.application.credentials&.secret_key_base
       ) || raise(StandardError, SECRET_MISSING_ERROR)
     end
+
+    #
+    # Return the chain of client middlewares.
+    #
+    # @return [Cloudtasker::Middleware::Chain] The chain of middlewares.
+    #
+    def client_middleware
+      @client_middleware ||= Middleware::Chain.new
+      yield @client_middleware if block_given?
+      @client_middleware
+    end
+
+    #
+    # Return the chain of server middlewares.
+    #
+    # @return [Cloudtasker::Middleware::Chain] The chain of middlewares.
+    #
+    def server_middleware
+      @server_middleware ||= Middleware::Chain.new
+      yield @server_middleware if block_given?
+      @server_middleware
+    end
   end
 end
