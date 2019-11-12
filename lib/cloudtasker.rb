@@ -6,6 +6,7 @@ require 'cloudtasker/config'
 require 'cloudtasker/authentication_error'
 require 'cloudtasker/invalid_worker_error'
 
+require 'cloudtasker/middleware/chain'
 require 'cloudtasker/authenticator'
 require 'cloudtasker/task'
 require 'cloudtasker/worker'

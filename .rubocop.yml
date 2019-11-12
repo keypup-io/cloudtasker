@@ -1,5 +1,8 @@
 require: rubocop-rspec
 
+Metrics/AbcSize:
+  Max: 20
+
 Metrics/LineLength:
   Max: 120
 

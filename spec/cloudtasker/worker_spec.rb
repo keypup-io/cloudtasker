@@ -43,12 +43,22 @@ RSpec.describe Cloudtasker::Worker do
   end
 
   describe '.new' do
-    subject { worker_class.new(job_args: args, job_id: id) }
+    subject { worker_class.new(worker_args) }
 
     let(:id) { SecureRandom.uuid }
     let(:args) { [1, 2] }
 
-    it { is_expected.to have_attributes(job_args: args, job_id: id) }
+    context 'without args' do
+      let(:worker_args) { { job_id: id } }
+
+      it { is_expected.to have_attributes(job_args: [], job_id: id) }
+    end
+
+    context 'with args' do
+      let(:worker_args) { { job_args: args, job_id: id } }
+
+      it { is_expected.to have_attributes(job_args: args, job_id: id) }
+    end
   end
 
   describe '#execute' do

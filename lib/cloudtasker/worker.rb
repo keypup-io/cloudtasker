@@ -62,7 +62,7 @@ module Cloudtasker
     # @param [Array<any>] job_args The list of perform args.
     # @param [Array<any>] job_id A unique ID identifying this job.
     #
-    def initialize(job_args:, job_id:)
+    def initialize(job_args: [], job_id:)
       @job_args = job_args
       @job_id = job_id
     end
