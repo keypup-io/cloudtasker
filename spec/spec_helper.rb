@@ -29,6 +29,9 @@ RSpec.configure do |config|
   config.before do
     Cloudtasker.config.client_middleware.clear
     Cloudtasker.config.server_middleware.clear
+
+    # Flush redis keys
+    Cloudtasker::RedisClient.clear
   end
 end
 
@@ -43,4 +46,7 @@ Cloudtasker.configure do |config|
   config.secret = 'my$s3cr3t'
   config.processor_host = 'http://localhost'
   config.processor_path = '/mynamespace/run'
+
+  # Redis
+  config.redis = { url: "redis://#{ENV['REDIS_HOST'].presence || 'localhost'}:6379/15" }
 end

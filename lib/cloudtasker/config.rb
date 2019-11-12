@@ -3,6 +3,7 @@
 module Cloudtasker
   # Holds cloudtasker configuration. See Cloudtasker#configure
   class Config
+    attr_accessor :redis
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
                 :gcp_queue_id, :processor_host, :processor_path
 
