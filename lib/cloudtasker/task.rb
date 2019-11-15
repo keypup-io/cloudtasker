@@ -18,18 +18,19 @@ module Cloudtasker
     #
     # @return [Any] An intantiated worker.
     #
-    def self.worker_from_payload(payload)
+    def self.worker_from_payload(arg_payload)
+      # Symbolize payload keys
+      payload = JSON.parse(arg_payload.to_json, symbolize_names: true)
+
       # Extract worker parameters
-      klass_name = payload&.dig('worker') || payload&.dig(:worker)
-      job_args = payload&.dig('args') || payload&.dig(:args)
-      job_id = payload&.dig('id') || payload&.dig(:id)
+      klass_name = payload&.dig(:worker)
 
       # Check that worker class is a valid worker
       worker_klass = Object.const_get(klass_name)
       return nil unless worker_klass.include?(Worker)
 
       # Return instantiated worker
-      worker_klass.new(job_args: job_args, job_id: job_id)
+      worker_klass.new(payload.slice(:job_args, :job_id, :job_meta))
     rescue NameError
       nil
     end
@@ -128,9 +129,10 @@ module Cloudtasker
     #
     def worker_payload
       @worker_payload ||= {
-        id: worker.job_id,
         worker: worker.class.to_s,
-        args: worker.job_args
+        job_id: worker.job_id,
+        job_args: worker.job_args,
+        job_meta: worker.job_meta
       }
     end
 

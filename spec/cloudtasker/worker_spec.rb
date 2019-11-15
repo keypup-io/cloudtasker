@@ -48,6 +48,7 @@ RSpec.describe Cloudtasker::Worker do
 
     let(:id) { SecureRandom.uuid }
     let(:args) { [1, 2] }
+    let(:meta) { { foo: 'bar' } }
 
     context 'without args' do
       let(:worker_args) { {} }
@@ -56,9 +57,9 @@ RSpec.describe Cloudtasker::Worker do
     end
 
     context 'with args' do
-      let(:worker_args) { { job_args: args, job_id: id } }
+      let(:worker_args) { { job_args: args, job_id: id, job_meta: meta } }
 
-      it { is_expected.to have_attributes(job_args: args, job_id: id) }
+      it { is_expected.to have_attributes(job_args: args, job_id: id, job_meta: meta) }
     end
   end
 
@@ -108,12 +109,30 @@ RSpec.describe Cloudtasker::Worker do
     subject { worker.reenqueue(delay) }
 
     let(:delay) { 10 }
-    let(:worker) { worker_class.new(job_args: args, job_id: SecureRandom.uuid) }
+    let(:worker) { worker_class.new(job_args: args) }
     let(:args) { [1, 2] }
 
     let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
 
     before { allow(worker).to receive(:schedule).with(interval: delay).and_return(resp) }
     it { is_expected.to eq(resp) }
+  end
+
+  describe '#set_meta' do
+    let(:worker) { worker_class.new }
+    let(:key) { 'some_id' }
+    let(:val) { 'foo' }
+
+    before { worker.set_meta(key, val) }
+    it { expect(worker.job_meta[key.to_sym]).to eq(val) }
+  end
+
+  describe '#get_meta' do
+    let(:worker) { worker_class.new }
+    let(:key) { 'some_id' }
+    let(:val) { 'foo' }
+
+    before { worker.set_meta(key, val) }
+    it { expect(worker.get_meta(key)).to eq(val) }
   end
 end

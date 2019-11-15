@@ -3,8 +3,9 @@
 RSpec.describe Cloudtasker::Task do
   let(:config) { Cloudtasker.config }
   let(:client) { instance_double('Google::Cloud::Tasks::V2beta3::CloudTasksClient') }
-  let(:worker) { TestWorker.new(job_args: args) }
-  let(:args) { ['foo', 1] }
+  let(:worker) { TestWorker.new(job_args: job_args, job_meta: job_meta) }
+  let(:job_args) { ['foo', 1] }
+  let(:job_meta) { { foo: 'bar' } }
   let(:job_id) { nil }
   let(:task) { described_class.new(worker) }
 
@@ -30,15 +31,16 @@ RSpec.describe Cloudtasker::Task do
     let(:worker_class_name) { worker_class.to_s }
     let(:payload) do
       {
-        'id' => id,
         'worker' => worker_class_name,
-        'args' => args
+        'job_id' => id,
+        'job_args' => job_args,
+        'job_meta' => job_meta
       }
     end
 
     context 'with valid worker' do
       it { is_expected.to be_a(worker_class) }
-      it { is_expected.to have_attributes(job_args: args, job_id: id) }
+      it { is_expected.to have_attributes(job_args: job_args, job_id: id, job_meta: job_meta) }
     end
 
     context 'with worker class not implementing Cloudtasker::Worker' do
@@ -131,7 +133,14 @@ RSpec.describe Cloudtasker::Task do
   describe '#worker_payload' do
     subject { task.worker_payload }
 
-    let(:expected_payload) { { id: worker.job_id, worker: worker.class.to_s, args: args } }
+    let(:expected_payload) do
+      {
+        worker: worker.class.to_s,
+        job_id: worker.job_id,
+        job_args: job_args,
+        job_meta: job_meta
+      }
+    end
 
     it { is_expected.to eq(expected_payload) }
   end

@@ -6,7 +6,7 @@ module Cloudtasker
     # Add class method to including class
     def self.included(base)
       base.extend(ClassMethods)
-      base.attr_accessor :job_args, :job_id
+      base.attr_accessor :job_args, :job_id, :job_meta
     end
 
     # Module class methods
@@ -62,9 +62,10 @@ module Cloudtasker
     # @param [Array<any>] job_args The list of perform args.
     # @param [String] job_id A unique ID identifying this job.
     #
-    def initialize(job_args: [], job_id: nil)
+    def initialize(job_args: [], job_id: nil, job_meta: {})
       @job_args = job_args
       @job_id = job_id || SecureRandom.uuid
+      @job_meta = job_meta || {}
     end
 
     #
@@ -104,6 +105,31 @@ module Cloudtasker
     #
     def reenqueue(interval)
       schedule(interval: interval)
+    end
+
+    #
+    # Set meta information on the job. This may be used by middlewares
+    # to store additional information on the job itself (e.g. a tracking ID).
+    #
+    # @param [String, Symbol] key The key of the meta info.
+    # @param [Any] val The value of the meta info.
+    #
+    # @return [<Type>] <description>
+    #
+    def set_meta(key, val)
+      job_meta[key.to_sym] = val
+    end
+
+    #
+    # Retrieve meta information from the worker. This may be used by middlewares
+    # to retrieve information on the job itself (e.g. a tracking ID).
+    #
+    # @param [String, Symbol] key The key of the meta info.
+    #
+    # @return [<Type>] <description>
+    #
+    def get_meta(key)
+      job_meta[key.to_sym]
     end
   end
 end
