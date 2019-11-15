@@ -19,11 +19,18 @@ require_relative 'lock/while_executing'
 require_relative 'job'
 
 require_relative 'middleware/client'
+require_relative 'middleware/server'
 
 module Cloudtasker
   module UniqueJob
     # Registration module
     module Middleware
+      def self.configure
+        Cloudtasker.configure do |config|
+          config.client_middleware { |c| c.add(Middleware::Client) }
+          config.server_middleware { |c| c.add(Middleware::Server) }
+        end
+      end
     end
   end
 end
