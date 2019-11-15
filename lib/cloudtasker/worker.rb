@@ -47,12 +47,24 @@ module Cloudtasker
       # Enqueue worker and delay processing.
       #
       # @param [Integer, nil] interval The delay in seconds.
-      # @param [Array<any>] *args List of worker arguments
+      # @param [Array<any>] *args List of worker arguments.
       #
       # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
       #
       def perform_in(interval, *args)
         new(job_args: args).schedule(interval: interval)
+      end
+
+      #
+      # Enqueue worker and delay processing.
+      #
+      # @param [Time, Integer] time_at The time at which the job should run.
+      # @param [Array<any>] *args List of worker arguments
+      #
+      # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
+      #
+      def perform_at(time_at, *args)
+        new(job_args: args).schedule(time_at: time_at)
       end
     end
 
@@ -84,11 +96,13 @@ module Cloudtasker
     #
     # @param [Integer] interval The delay in seconds.
     #
+    # @param [Time, Integer] interval The time at which the job should run
+    #
     # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
     #
-    def schedule(interval: nil)
+    def schedule(interval: nil, time_at: nil)
       Cloudtasker.config.client_middleware.invoke(self) do
-        Task.new(self).schedule(interval: interval)
+        Task.new(self).schedule(interval: interval, time_at: time_at)
       end
     end
 

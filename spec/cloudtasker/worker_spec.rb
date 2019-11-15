@@ -3,6 +3,24 @@
 RSpec.describe Cloudtasker::Worker do
   let(:worker_class) { TestWorker }
 
+  describe '.perform_at' do
+    subject { worker_class.perform_at(time_at, arg1, arg2) }
+
+    let(:time_at) { Time.now }
+    let(:arg1) { 1 }
+    let(:arg2) { 2 }
+    let(:task) { instance_double('Cloudtasker::Task') }
+    let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
+    let(:worker) { instance_double(worker_class.to_s) }
+
+    before do
+      allow(worker_class).to receive(:new).with(job_args: [arg1, arg2]).and_return(worker)
+      allow(worker).to receive(:schedule).with(time_at: time_at).and_return(resp)
+    end
+
+    it { is_expected.to eq(resp) }
+  end
+
   describe '.perform_in' do
     subject { worker_class.perform_in(delay, arg1, arg2) }
 
@@ -64,8 +82,9 @@ RSpec.describe Cloudtasker::Worker do
   end
 
   describe '#schedule' do
-    subject { worker.schedule(interval: delay) }
+    subject { worker.schedule(interval: delay, time_at: time_at) }
 
+    let(:time_at) { Time.now }
     let(:delay) { 10 }
     let(:arg1) { 1 }
     let(:arg2) { 2 }
@@ -75,7 +94,7 @@ RSpec.describe Cloudtasker::Worker do
 
     before do
       allow(Cloudtasker::Task).to receive(:new).with(worker).and_return(task)
-      allow(task).to receive(:schedule).with(interval: delay).and_return(resp)
+      allow(task).to receive(:schedule).with(interval: delay, time_at: time_at).and_return(resp)
     end
 
     it { is_expected.to eq(resp) }

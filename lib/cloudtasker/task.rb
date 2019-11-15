@@ -144,12 +144,12 @@ module Cloudtasker
     #
     # @return [Google::Protobuf::Timestamp, nil] The protobuff timestamp
     #
-    def schedule_time(interval)
-      return nil unless interval&.to_i&.positive?
+    def schedule_time(interval: nil, time_at: nil)
+      return nil unless interval || time_at
 
       # Generate protobuf timestamp
       timestamp = Google::Protobuf::Timestamp.new
-      timestamp.seconds = Time.now.to_i + interval.to_i
+      timestamp.seconds = (time_at || Time.now).to_i + interval.to_i
       timestamp
     end
 
@@ -161,10 +161,10 @@ module Cloudtasker
     #
     # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
     #
-    def schedule(interval: nil)
+    def schedule(interval: nil, time_at: nil)
       # Generate task payload
       task = task_payload.merge(
-        schedule_time: schedule_time(interval)
+        schedule_time: schedule_time(interval: interval, time_at: time_at)
       ).compact
 
       # Create and return remote task

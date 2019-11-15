@@ -146,21 +146,16 @@ RSpec.describe Cloudtasker::Task do
   end
 
   describe '#schedule_time' do
-    subject { task.schedule_time(interval) }
+    subject { task.schedule_time(interval: interval, time_at: time_at) }
 
-    context 'with no interval' do
-      let(:interval) { nil }
+    let(:interval) { nil }
+    let(:time_at) { nil }
 
+    context 'with no args' do
       it { is_expected.to be_nil }
     end
 
-    context 'with negative interval' do
-      let(:interval) { -1 }
-
-      it { is_expected.to be_nil }
-    end
-
-    context 'with positive interval' do
+    context 'with interval' do
       let(:interval) { 10 }
       let(:expected_time) do
         ts = Google::Protobuf::Timestamp.new
@@ -169,6 +164,29 @@ RSpec.describe Cloudtasker::Task do
       end
 
       around { |e| Timecop.freeze { e.run } }
+      it { is_expected.to eq(expected_time) }
+    end
+
+    context 'with time_at' do
+      let(:time_at) { Time.now }
+      let(:expected_time) do
+        ts = Google::Protobuf::Timestamp.new
+        ts.seconds = time_at.to_i
+        ts
+      end
+
+      it { is_expected.to eq(expected_time) }
+    end
+
+    context 'with time_at and interval' do
+      let(:time_at) { Time.now }
+      let(:interval) { 50 }
+      let(:expected_time) do
+        ts = Google::Protobuf::Timestamp.new
+        ts.seconds = time_at.to_i + interval
+        ts
+      end
+
       it { is_expected.to eq(expected_time) }
     end
   end
@@ -191,8 +209,8 @@ RSpec.describe Cloudtasker::Task do
     end
 
     context 'with scheduled time' do
-      let(:attrs) { { interval: 10 } }
-      let(:expected_payload) { task.task_payload.merge(schedule_time: task.schedule_time(attrs[:interval])) }
+      let(:attrs) { { interval: 10, time_at: Time.now } }
+      let(:expected_payload) { task.task_payload.merge(schedule_time: task.schedule_time(attrs)) }
 
       it { is_expected.to eq(resp) }
     end
