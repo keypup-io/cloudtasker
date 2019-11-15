@@ -7,6 +7,9 @@ module Cloudtasker
     class Job
       attr_reader :worker
 
+      # The default lock strategy to use. Defaults to "no lock".
+      DEFAULT_LOCK = UniqueJob::Lock::NoOp
+
       #
       # Build a new instance of the class.
       #
@@ -38,7 +41,7 @@ module Cloudtasker
             lock_klass = Lock.const_get(lock_name.to_s.split('_').collect(&:capitalize).join)
             lock_klass.new(self)
           rescue NameError
-            Lock::NoOp.new(self)
+            DEFAULT_LOCK.new(self)
           end
       end
 

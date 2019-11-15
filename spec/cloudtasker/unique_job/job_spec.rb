@@ -3,7 +3,7 @@
 require 'cloudtasker/unique_job/middleware'
 
 RSpec.describe Cloudtasker::UniqueJob::Job do
-  let(:worker) { TestWorker.new(job_args: [1, 2], job_id: SecureRandom.uuid) }
+  let(:worker) { TestWorker.new(job_args: [1, 2]) }
   let(:job) { described_class.new(worker) }
 
   describe '.new' do
@@ -94,7 +94,7 @@ RSpec.describe Cloudtasker::UniqueJob::Job do
     subject(:lock!) { job.lock! }
 
     context 'with lock acquired by another job' do
-      let(:other_worker) { TestWorker.new(job_args: [1, 2], job_id: SecureRandom.uuid) }
+      let(:other_worker) { TestWorker.new(job_args: [1, 2]) }
       let(:other_job) { described_class.new(other_worker) }
 
       before { other_job.lock! }
@@ -116,7 +116,7 @@ RSpec.describe Cloudtasker::UniqueJob::Job do
     subject { job.redis.get(job.unique_gid) }
 
     context 'with lock acquired by another job' do
-      let(:other_worker) { TestWorker.new(job_args: [1, 2], job_id: SecureRandom.uuid) }
+      let(:other_worker) { TestWorker.new(job_args: [1, 2]) }
       let(:other_job) { described_class.new(other_worker) }
 
       before { other_job.lock! }

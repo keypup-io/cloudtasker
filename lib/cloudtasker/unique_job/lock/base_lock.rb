@@ -17,6 +17,41 @@ module Cloudtasker
         end
 
         #
+        # Return the worker configuration options.
+        #
+        # @return [Hash] The worker configuration options.
+        #
+        def options
+          job.options
+        end
+
+        #
+        # Return the strategy to use by default. Can be overriden in each lock.
+        #
+        # @return [Cloudtasker::UniqueJob::ConflictStrategy::BaseStrategy] The strategy to use by default.
+        #
+        def default_conflict_strategy
+          ConflictStrategy::Reject
+        end
+
+        #
+        # Return the conflict strategy to use on conflict
+        #
+        # @return [Cloudtasker::UniqueJob::ConflictStrategy::BaseStrategy] The instantiated strategy.
+        #
+        def conflict_instance
+          @conflict_instance ||=
+            begin
+              # Infer lock class and get instance
+              strategy_name = options[:on_conflict] || options['on_conflict']
+              strategy_klass = ConflictStrategy.const_get(strategy_name.to_s.split('_').collect(&:capitalize).join)
+              strategy_klass.new(job)
+            rescue NameError
+              default_conflict_strategy.new(job)
+            end
+        end
+
+        #
         # Lock logic invoked when a job is scheduled (client middleware).
         #
         def schedule

@@ -3,9 +3,9 @@
 module Cloudtasker
   module UniqueJob
     module Lock
-      # Conflict if any other job with the same args is scheduled or moved to execution
-      # while the first job is pending or executing.
-      class UntilExecuted < BaseLock
+      # Conflict if any other job with the same args is scheduled
+      # while the first job is pending.
+      class UntilExecuting < BaseLock
         #
         # Acquire a lock for the job and trigger a conflict
         # if the lock could not be acquired.
@@ -18,15 +18,11 @@ module Cloudtasker
         end
 
         #
-        # Acquire a lock for the job and trigger a conflict
-        # if the lock could not be acquired.
+        # Release the lock and perform the job.
         #
         def execute
-          job.lock!
-          yield
           job.unlock!
-        rescue LockError
-          conflict_instance.on_execute { yield }
+          yield
         end
       end
     end
