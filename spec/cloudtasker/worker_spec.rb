@@ -3,30 +3,6 @@
 RSpec.describe Cloudtasker::Worker do
   let(:worker_class) { TestWorker }
 
-  describe '.schedule' do
-    subject { worker_class.schedule(worker: worker, interval: delay) }
-
-    let(:delay) { 10 }
-    let(:arg1) { 1 }
-    let(:arg2) { 2 }
-    let(:task) { instance_double('Cloudtasker::Task') }
-    let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
-    let(:worker) { worker_class.new(job_args: [1, 2]) }
-
-    before do
-      allow(Cloudtasker::Task).to receive(:new).with(worker).and_return(task)
-      allow(task).to receive(:schedule).with(interval: delay).and_return(resp)
-    end
-
-    it { is_expected.to eq(resp) }
-
-    context 'with client middleware chain' do
-      before { Cloudtasker.config.client_middleware.add(TestMiddleware) }
-      after { expect(worker.middleware_called).to be_truthy }
-      it { is_expected.to eq(resp) }
-    end
-  end
-
   describe '.perform_in' do
     subject { worker_class.perform_in(delay, arg1, arg2) }
 
@@ -39,7 +15,7 @@ RSpec.describe Cloudtasker::Worker do
 
     before do
       allow(worker_class).to receive(:new).with(job_args: [arg1, arg2]).and_return(worker)
-      allow(worker_class).to receive(:schedule).with(worker: worker, interval: delay).and_return(resp)
+      allow(worker).to receive(:schedule).with(interval: delay).and_return(resp)
     end
 
     it { is_expected.to eq(resp) }
@@ -86,6 +62,30 @@ RSpec.describe Cloudtasker::Worker do
     end
   end
 
+  describe '#schedule' do
+    subject { worker.schedule(interval: delay) }
+
+    let(:delay) { 10 }
+    let(:arg1) { 1 }
+    let(:arg2) { 2 }
+    let(:task) { instance_double('Cloudtasker::Task') }
+    let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
+    let(:worker) { worker_class.new(job_args: [1, 2]) }
+
+    before do
+      allow(Cloudtasker::Task).to receive(:new).with(worker).and_return(task)
+      allow(task).to receive(:schedule).with(interval: delay).and_return(resp)
+    end
+
+    it { is_expected.to eq(resp) }
+
+    context 'with client middleware chain' do
+      before { Cloudtasker.config.client_middleware.add(TestMiddleware) }
+      after { expect(worker.middleware_called).to be_truthy }
+      it { is_expected.to eq(resp) }
+    end
+  end
+
   describe '#execute' do
     subject { worker.execute }
 
@@ -111,10 +111,9 @@ RSpec.describe Cloudtasker::Worker do
     let(:worker) { worker_class.new(job_args: args, job_id: SecureRandom.uuid) }
     let(:args) { [1, 2] }
 
-    let(:task) { instance_double('Cloudtasker::Task') }
     let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
 
-    before { allow(worker_class).to receive(:schedule).with(worker: worker, interval: delay).and_return(resp) }
+    before { allow(worker).to receive(:schedule).with(interval: delay).and_return(resp) }
     it { is_expected.to eq(resp) }
   end
 end

@@ -52,21 +52,7 @@ module Cloudtasker
       # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
       #
       def perform_in(interval, *args)
-        schedule(worker: new(job_args: args), interval: interval)
-      end
-
-      #
-      # Enqueue a worker object, with or without delay.
-      #
-      # @param [Cloudtasker::Worker] worker The worker to schedule.
-      # @param [Integer] interval The delay in seconds.
-      #
-      # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
-      #
-      def schedule(worker:, interval: nil)
-        Cloudtasker.config.client_middleware.invoke(worker) do
-          Task.new(worker).schedule(interval: interval)
-        end
+        new(job_args: args).schedule(interval: interval)
       end
     end
 
@@ -93,6 +79,19 @@ module Cloudtasker
     end
 
     #
+    # Enqueue a worker, with or without delay.
+    #
+    # @param [Integer] interval The delay in seconds.
+    #
+    # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
+    #
+    def schedule(interval: nil)
+      Cloudtasker.config.client_middleware.invoke(self) do
+        Task.new(self).schedule(interval: interval)
+      end
+    end
+
+    #
     # Helper method used to re-enqueue the job. Re-enqueued
     # jobs keep the same job_id.
     #
@@ -104,7 +103,7 @@ module Cloudtasker
     # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
     #
     def reenqueue(interval)
-      self.class.schedule(worker: self, interval: interval)
+      schedule(interval: interval)
     end
   end
 end
