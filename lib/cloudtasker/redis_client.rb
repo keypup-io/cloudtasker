@@ -29,7 +29,7 @@ module Cloudtasker
     def fetch(key)
       return nil unless (val = client.get(key.to_s))
 
-      JSON.parse(val)
+      JSON.parse(val, symbolize_names: true)
     rescue JSON::ParserError
       nil
     end
@@ -58,7 +58,7 @@ module Cloudtasker
     # @param [String] cache_key The cache key to access.
     #
     def with_lock(cache_key)
-      return nil unless cache_key.present?
+      return nil unless cache_key
 
       # Wait to acquire lock
       lock_key = [cache_key, LOCK_KEY_SUFFIX].join('/')

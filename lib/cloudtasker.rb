@@ -9,6 +9,7 @@ require 'cloudtasker/invalid_worker_error'
 require 'cloudtasker/middleware/chain'
 require 'cloudtasker/authenticator'
 require 'cloudtasker/task'
+require 'cloudtasker/meta_store'
 require 'cloudtasker/worker'
 
 # Define and manage Cloud Task based workers

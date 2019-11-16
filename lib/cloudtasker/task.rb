@@ -10,6 +10,32 @@ module Cloudtasker
     # Alrogith used to sign the verification token
     JWT_ALG = 'HS256'
 
+    # TODO: Move to a dedicated CloudTask class
+    #
+    # Find a Cloud task
+    #
+    # @param [String] id The ID of the task.
+    #
+    # @return [Google::Cloud::Tasks::V2beta3::Task] The cloud task.
+    #
+    def self.find(id)
+      client.get_task(id)
+    rescue Google::Gax::RetryError
+      nil
+    end
+
+    # TODO: Move to a dedicated CloudTask class
+    #
+    # Delete a Cloud task
+    #
+    # @param [String] id The ID of the task.
+    #
+    def self.delete(id)
+      client.delete_task(id)
+    rescue Google::Gax::RetryError
+      nil
+    end
+
     #
     # Return an instantiated worker from a Cloud Task
     # payload.

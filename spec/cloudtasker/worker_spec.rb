@@ -77,7 +77,7 @@ RSpec.describe Cloudtasker::Worker do
     context 'with args' do
       let(:worker_args) { { job_args: args, job_id: id, job_meta: meta } }
 
-      it { is_expected.to have_attributes(job_args: args, job_id: id, job_meta: meta) }
+      it { is_expected.to have_attributes(job_args: args, job_id: id, job_meta: eq(meta)) }
     end
   end
 
@@ -137,21 +137,14 @@ RSpec.describe Cloudtasker::Worker do
     it { is_expected.to eq(resp) }
   end
 
-  describe '#set_meta' do
-    let(:worker) { worker_class.new }
-    let(:key) { 'some_id' }
-    let(:val) { 'foo' }
+  describe '#new_instance' do
+    subject(:new_instance) { worker.new_instance }
 
-    before { worker.set_meta(key, val) }
-    it { expect(worker.job_meta[key.to_sym]).to eq(val) }
-  end
+    let(:job_args) { [1, 2] }
+    let(:job_meta) { { foo: 'bar' } }
+    let(:worker) { worker_class.new(job_args: job_args, job_meta: job_meta) }
 
-  describe '#get_meta' do
-    let(:worker) { worker_class.new }
-    let(:key) { 'some_id' }
-    let(:val) { 'foo' }
-
-    before { worker.set_meta(key, val) }
-    it { expect(worker.get_meta(key)).to eq(val) }
+    it { is_expected.to have_attributes(job_args: job_args, job_meta: eq(job_meta)) }
+    it { expect(new_instance.job_id).not_to eq(worker.job_id) }
   end
 end

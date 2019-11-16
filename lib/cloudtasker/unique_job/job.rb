@@ -91,7 +91,7 @@ module Cloudtasker
       # @return [String] The global ID of the job
       #
       def unique_gid
-        [Config::ID_NAMESPACE, unique_id].join('/')
+        [Config::KEY_NAMESPACE, unique_id].join('/')
       end
 
       #

@@ -17,7 +17,7 @@ RSpec.describe Cloudtasker::RedisClient do
     let(:content) { { 'foo' => 'bar' } }
 
     before { described_class.set(key, content.to_json) }
-    it { is_expected.to eq(content) }
+    it { is_expected.to eq(JSON.parse(content.to_json, symbolize_names: true)) }
   end
 
   describe '#write' do
@@ -27,7 +27,7 @@ RSpec.describe Cloudtasker::RedisClient do
     let(:content) { { 'foo' => 'bar' } }
 
     before { described_class.write(key, content) }
-    it { is_expected.to eq(content) }
+    it { is_expected.to eq(JSON.parse(content.to_json, symbolize_names: true)) }
   end
 
   describe '#clear' do

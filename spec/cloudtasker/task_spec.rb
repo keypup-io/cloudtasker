@@ -9,6 +9,56 @@ RSpec.describe Cloudtasker::Task do
   let(:job_id) { nil }
   let(:task) { described_class.new(worker) }
 
+  describe '.find' do
+    subject { described_class.find(id) }
+
+    let(:id) { '222' }
+    let(:client) { instance_double('Google::Cloud::V2beta3::Tasks') }
+
+    before { allow(described_class).to receive(:client).and_return(client) }
+
+    context 'with task found' do
+      let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
+
+      before { allow(described_class.client).to receive(:get_task).with(id).and_return(resp) }
+      it { is_expected.to eq(resp) }
+    end
+
+    context 'with task not found' do
+      before do
+        allow(described_class.client).to receive(:get_task)
+          .with(id)
+          .and_raise(Google::Gax::RetryError.new('msg'))
+      end
+      it { is_expected.to be_nil }
+    end
+  end
+
+  describe '.delete' do
+    subject { described_class.delete(id) }
+
+    let(:id) { '222' }
+    let(:client) { instance_double('Google::Cloud::V2beta3::Tasks') }
+
+    before { allow(described_class).to receive(:client).and_return(client) }
+
+    context 'with task found' do
+      let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
+
+      before { allow(described_class.client).to receive(:delete_task).with(id).and_return(resp) }
+      it { is_expected.to eq(resp) }
+    end
+
+    context 'with task not found' do
+      before do
+        allow(described_class.client).to receive(:delete_task)
+          .with(id)
+          .and_raise(Google::Gax::RetryError.new('msg'))
+      end
+      it { is_expected.to be_nil }
+    end
+  end
+
   describe '.new' do
     subject { task }
 
@@ -40,7 +90,7 @@ RSpec.describe Cloudtasker::Task do
 
     context 'with valid worker' do
       it { is_expected.to be_a(worker_class) }
-      it { is_expected.to have_attributes(job_args: job_args, job_id: id, job_meta: job_meta) }
+      it { is_expected.to have_attributes(job_args: job_args, job_id: id, job_meta: eq(job_meta)) }
     end
 
     context 'with worker class not implementing Cloudtasker::Worker' do
