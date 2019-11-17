@@ -8,6 +8,9 @@ module Cloudtasker
     class Schedule
       attr_accessor :id, :cron, :worker, :task_id, :job_id
 
+      # Key Namespace used for object saved under this class
+      SUB_NAMESPACE = 'schedule'
+
       #
       # Return the redis client.
       #
@@ -15,6 +18,50 @@ module Cloudtasker
       #
       def self.redis
         RedisClient
+      end
+
+      #
+      # Return a namespaced key.
+      #
+      # @param [String, Symbol] val The key to namespace
+      #
+      # @return [String] The namespaced key.
+      #
+      def self.key(val)
+        return nil if val.nil?
+
+        [Config::KEY_NAMESPACE, SUB_NAMESPACE, val.to_s].join('/')
+      end
+
+      #
+      # Return all schedules
+      #
+      # @return [Array<Cloudtasker::Batch::Schedule>] The list of stored schedules.
+      #
+      def self.all
+        redis.search(key('*')).map do |gid|
+          find(gid.sub(key(''), ''))
+        end
+      end
+
+      #
+      # Synchronize list of cron schedules from a Hash. Schedules
+      # not listed in this hash will be removed.
+      #
+      # @example
+      #   Cloudtasker::Cron::Schedule.load_from_hash!(
+      #     my_job: { cron: '0 0 * * *', worker: 'MyWorker' }
+      #     my_other_job: { cron: '0 10 * * *', worker: 'MyOtherWorker' }
+      #   )
+      #
+      def self.load_from_hash!(hash)
+        schedules = hash.map do |id, config|
+          schedule_config = JSON.parse(config.to_json, symbolize_names: true).merge(id: id)
+          create(schedule_config)
+        end
+
+        # Remove existing schedules which are not part of the list
+        all.reject { |e| schedules.include?(e) }.each { |e| delete(e.id) }
       end
 
       #
@@ -37,8 +84,7 @@ module Cloudtasker
       # @return [Cloudtasker::Cron::Schedule] The schedule instance.
       #
       def self.find(id)
-        gid = [Config::KEY_NAMESPACE, id].join('/')
-        return nil unless (schedule_config = redis.fetch(gid))
+        return nil unless (schedule_config = redis.fetch(key(id)))
 
         new(schedule_config)
       end
@@ -89,7 +135,7 @@ module Cloudtasker
       # @return [String] The namespaced schedule id.
       #
       def gid
-        [Config::KEY_NAMESPACE, id].join('/')
+        self.class.key(id)
       end
 
       #

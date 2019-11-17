@@ -14,6 +14,66 @@ RSpec.describe Cloudtasker::Cron::Schedule do
     it { is_expected.to eq(Cloudtasker::RedisClient) }
   end
 
+  describe '.key' do
+    subject { described_class.key(val) }
+
+    context 'with value' do
+      let(:val) { :some_key }
+      let(:expected) do
+        [
+          Cloudtasker::Cron::Config::KEY_NAMESPACE,
+          described_class::SUB_NAMESPACE,
+          val.to_s
+        ].join('/')
+      end
+
+      it { is_expected.to eq(expected) }
+    end
+
+    context 'with nil' do
+      let(:val) { nil }
+
+      it { is_expected.to be_nil }
+    end
+  end
+
+  describe '.all' do
+    subject { described_class.all.sort_by(&:id) }
+
+    let!(:schedules) do
+      3.times.map do |n|
+        described_class
+          .new(id: "schedule/#{n}", cron: cron, worker: worker_klass.to_s)
+          .tap { |e| e.save(update_task: false) }
+      end.sort_by(&:id)
+    end
+
+    it { is_expected.to eq(schedules) }
+  end
+
+  describe '.load_from_hash!' do
+    subject { described_class.load_from_hash!(hash) }
+
+    let(:schedule) { described_class.new(id: id, cron: cron, worker: worker_klass.to_s) }
+    let(:existing) { described_class.new(id: 'ToDelete', cron: cron, worker: worker_klass.to_s) }
+    let(:hash) do
+      {
+        id => { 'cron' => cron, 'worker' => worker_klass.to_s }
+      }
+    end
+
+    before do
+      allow(described_class).to receive(:all).and_return([schedule, existing])
+      allow(described_class).to(
+        receive(:create).with(id: id, cron: cron, worker: worker_klass.to_s).and_return(schedule)
+      )
+      allow(described_class).to receive(:delete).with(existing.id)
+    end
+    after { expect(described_class).to have_received(:create) }
+    after { expect(described_class).to have_received(:delete) }
+    it { is_expected.to be_truthy }
+  end
+
   describe '.create' do
     subject { described_class.create(id: id, cron: cron, worker: worker_klass.to_s) }
 
@@ -91,7 +151,15 @@ RSpec.describe Cloudtasker::Cron::Schedule do
   describe '#gid' do
     subject { schedule.gid }
 
-    it { is_expected.to eq([Cloudtasker::Cron::Config::KEY_NAMESPACE, id].join('/')) }
+    let(:expected) do
+      [
+        Cloudtasker::Cron::Config::KEY_NAMESPACE,
+        described_class::SUB_NAMESPACE,
+        id
+      ].join('/')
+    end
+
+    it { is_expected.to eq(expected) }
   end
 
   describe '#valid?' do
