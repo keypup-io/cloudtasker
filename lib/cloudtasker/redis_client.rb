@@ -84,6 +84,28 @@ module Cloudtasker
     end
 
     #
+    # Return all keys matching the provided patterns.
+    #
+    # @param [String] pattern A redis compatible pattern.
+    #
+    # @return [Array<String>] The list of matching keys
+    #
+    def search(pattern)
+      # Initialize loop variables
+      cursor = nil
+      list = []
+
+      # Scan and capture matching keys
+      while cursor != 0
+        scan = client.scan(cursor || 0, match: pattern)
+        list += scan[1]
+        cursor = scan[0].to_i
+      end
+
+      list
+    end
+
+    #
     # Delegate all methods to the redis client.
     #
     # @param [String, Symbol] name The method to delegate.

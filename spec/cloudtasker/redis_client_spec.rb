@@ -50,6 +50,26 @@ RSpec.describe Cloudtasker::RedisClient do
     it { expect { |b| described_class.with_lock(key, &b) }.to yield_control }
   end
 
+  describe '#search' do
+    subject { described_class.search(pattern).sort }
+
+    let(:keys) { 50.times.map { |n| "foo/#{n}" }.sort }
+
+    before { keys.each { |e| described_class.set(e, true) } }
+
+    context 'with keys matching pattern' do
+      let(:pattern) { 'foo/*' }
+
+      it { is_expected.to eq(keys) }
+    end
+
+    context 'with no keys matching' do
+      let(:pattern) { 'bar/*' }
+
+      it { is_expected.to be_empty }
+    end
+  end
+
   describe '#get' do
     subject { described_class.get(key) }
 
