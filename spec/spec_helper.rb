@@ -2,6 +2,7 @@
 
 require 'bundler/setup'
 require 'timecop'
+require 'webmock/rspec'
 
 # Configure Rails dummary app
 ENV['RAILS_ENV'] ||= 'test'
