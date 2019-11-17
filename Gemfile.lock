@@ -2,6 +2,7 @@ PATH
   remote: .
   specs:
     cloudtasker (0.1.0)
+      activesupport
       fugit
       google-cloud-tasks
       jwt

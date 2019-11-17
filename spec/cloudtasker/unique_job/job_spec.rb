@@ -81,15 +81,7 @@ RSpec.describe Cloudtasker::UniqueJob::Job do
   describe '#unique_gid' do
     subject { job.unique_gid }
 
-    let(:expected) do
-      [
-        Cloudtasker::UniqueJob::Config::KEY_NAMESPACE,
-        described_class::SUB_NAMESPACE,
-        job.unique_id
-      ].join('/')
-    end
-
-    it { is_expected.to eq(expected) }
+    it { is_expected.to eq([described_class.to_s.underscore, job.unique_id].join('/')) }
   end
 
   describe '#redis' do

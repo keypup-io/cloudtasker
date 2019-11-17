@@ -2,7 +2,6 @@
 
 require 'cloudtasker/redis_client'
 
-require_relative 'config'
 require_relative 'schedule'
 require_relative 'job'
 require_relative 'middleware/server'

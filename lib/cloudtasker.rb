@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'active_support/core_ext/string/inflections'
+
 require 'cloudtasker/version'
 require 'cloudtasker/config'
 

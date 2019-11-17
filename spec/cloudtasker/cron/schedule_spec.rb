@@ -19,15 +19,8 @@ RSpec.describe Cloudtasker::Cron::Schedule do
 
     context 'with value' do
       let(:val) { :some_key }
-      let(:expected) do
-        [
-          Cloudtasker::Cron::Config::KEY_NAMESPACE,
-          described_class::SUB_NAMESPACE,
-          val.to_s
-        ].join('/')
-      end
 
-      it { is_expected.to eq(expected) }
+      it { is_expected.to eq([described_class.to_s.underscore, val.to_s].join('/')) }
     end
 
     context 'with nil' do
@@ -151,15 +144,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
   describe '#gid' do
     subject { schedule.gid }
 
-    let(:expected) do
-      [
-        Cloudtasker::Cron::Config::KEY_NAMESPACE,
-        described_class::SUB_NAMESPACE,
-        id
-      ].join('/')
-    end
-
-    it { is_expected.to eq(expected) }
+    it { is_expected.to eq(described_class.key(schedule.id)) }
   end
 
   describe '#valid?' do

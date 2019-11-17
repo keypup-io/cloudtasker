@@ -30,7 +30,7 @@ module Cloudtasker
       def self.key(val)
         return nil if val.nil?
 
-        [Config::KEY_NAMESPACE, SUB_NAMESPACE, val.to_s].join('/')
+        [to_s.underscore, val.to_s].join('/')
       end
 
       #

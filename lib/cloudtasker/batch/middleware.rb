@@ -3,7 +3,6 @@
 require 'cloudtasker/redis_client'
 
 require_relative 'extension/worker'
-require_relative 'config'
 require_relative 'batch_progress'
 require_relative 'job'
 

@@ -3,7 +3,6 @@
 require 'cloudtasker/redis_client'
 
 require_relative 'lock_error'
-require_relative 'config'
 
 require_relative 'conflict_strategy/base_strategy'
 require_relative 'conflict_strategy/raise'
