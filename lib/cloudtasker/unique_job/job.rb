@@ -10,6 +10,9 @@ module Cloudtasker
       # The default lock strategy to use. Defaults to "no lock".
       DEFAULT_LOCK = UniqueJob::Lock::NoOp
 
+      # Key Namespace used for object saved under this class
+      SUB_NAMESPACE = 'job'
+
       #
       # Build a new instance of the class.
       #
@@ -91,7 +94,7 @@ module Cloudtasker
       # @return [String] The global ID of the job
       #
       def unique_gid
-        [Config::KEY_NAMESPACE, unique_id].join('/')
+        [Config::KEY_NAMESPACE, SUB_NAMESPACE, unique_id].join('/')
       end
 
       #

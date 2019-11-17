@@ -10,6 +10,9 @@ module Cloudtasker
     class Job
       attr_reader :worker
 
+      # Key Namespace used for object saved under this class
+      SUB_NAMESPACE = 'job'
+
       #
       # Build a new instance of the class
       #
@@ -29,7 +32,7 @@ module Cloudtasker
       def key(val)
         return nil if val.nil?
 
-        [Config::KEY_NAMESPACE, val.to_s].join('/')
+        [Config::KEY_NAMESPACE, SUB_NAMESPACE, val.to_s].join('/')
       end
 
       #

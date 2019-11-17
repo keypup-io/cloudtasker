@@ -6,6 +6,9 @@ module Cloudtasker
     class Job
       attr_reader :worker
 
+      # Key Namespace used for object saved under this class
+      SUB_NAMESPACE = 'job'
+
       #
       # Return the cloudtasker redis client
       #
@@ -44,7 +47,7 @@ module Cloudtasker
       def self.key(val)
         return nil if val.nil?
 
-        [Config::KEY_NAMESPACE, val.to_s].join('/')
+        [Config::KEY_NAMESPACE, SUB_NAMESPACE, val.to_s].join('/')
       end
 
       #
