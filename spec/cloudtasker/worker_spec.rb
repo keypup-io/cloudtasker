@@ -55,6 +55,12 @@ RSpec.describe Cloudtasker::Worker do
 
       it { is_expected.to be_nil }
     end
+
+    context 'with nil' do
+      let(:worker_hash) { nil }
+
+      it { is_expected.to be_nil }
+    end
   end
 
   describe '.perform_at' do
@@ -214,7 +220,7 @@ RSpec.describe Cloudtasker::Worker do
         worker: worker.class.to_s,
         job_id: worker.job_id,
         job_args: worker.job_args,
-        job_meta: worker.job_meta
+        job_meta: worker.job_meta.to_h
       }
     end
 
@@ -227,5 +233,23 @@ RSpec.describe Cloudtasker::Worker do
     let(:worker) { worker_class.new(job_args: [1, 2], job_meta: { foo: 'bar' }) }
 
     it { is_expected.to eq(worker.to_h.to_json) }
+  end
+
+  describe '#==' do
+    subject { worker }
+
+    let(:worker) { worker_class.new(job_args: [1, 2], job_meta: { foo: 'bar' }) }
+
+    context 'with same job_id' do
+      it { is_expected.to eq(worker_class.new(job_id: worker.job_id)) }
+    end
+
+    context 'with different job_id' do
+      it { is_expected.not_to eq(worker_class.new(job_id: worker.job_id + 'a')) }
+    end
+
+    context 'with different object' do
+      it { is_expected.not_to eq('foo') }
+    end
   end
 end

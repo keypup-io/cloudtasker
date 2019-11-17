@@ -37,6 +37,7 @@ module Cloudtasker
 
       # Extract worker parameters
       klass_name = payload&.dig(:worker)
+      return nil unless klass_name
 
       # Check that worker class is a valid worker
       worker_klass = Object.const_get(klass_name)
@@ -181,7 +182,7 @@ module Cloudtasker
         worker: self.class.to_s,
         job_id: job_id,
         job_args: job_args,
-        job_meta: job_meta
+        job_meta: job_meta.to_h
       }
     end
 
@@ -194,6 +195,17 @@ module Cloudtasker
     #
     def to_json(*args)
       to_h.to_json(*args)
+    end
+
+    #
+    # Equality operator.
+    #
+    # @param [Any] other The object to compare.
+    #
+    # @return [Boolean] True if the object is equal.
+    #
+    def ==(other)
+      other.is_a?(self.class) && other.job_id == job_id
     end
   end
 end
