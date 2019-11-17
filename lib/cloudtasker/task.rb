@@ -37,31 +37,6 @@ module Cloudtasker
     end
 
     #
-    # Return an instantiated worker from a Cloud Task
-    # payload.
-    #
-    # @param [Hash] payload The Cloud Task payload.
-    #
-    # @return [Any] An intantiated worker.
-    #
-    def self.worker_from_payload(arg_payload)
-      # Symbolize payload keys
-      payload = JSON.parse(arg_payload.to_json, symbolize_names: true)
-
-      # Extract worker parameters
-      klass_name = payload&.dig(:worker)
-
-      # Check that worker class is a valid worker
-      worker_klass = Object.const_get(klass_name)
-      return nil unless worker_klass.include?(Worker)
-
-      # Return instantiated worker
-      worker_klass.new(payload.slice(:job_args, :job_id, :job_meta))
-    rescue NameError
-      nil
-    end
-
-    #
     # Execute a task worker from a task payload
     #
     # @param [Hash] payload The Cloud Task payload.
@@ -69,7 +44,7 @@ module Cloudtasker
     # @return [Any] The return value of the worker perform method.
     #
     def self.execute_from_payload!(payload)
-      worker = worker_from_payload(payload) || raise(InvalidWorkerError)
+      worker = Cloudtasker::Worker.from_hash(payload) || raise(InvalidWorkerError)
       worker.execute
     end
 

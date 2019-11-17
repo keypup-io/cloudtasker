@@ -73,45 +73,12 @@ RSpec.describe Cloudtasker::Task do
     it { is_expected.to eq(client) }
   end
 
-  describe '.worker_from_payload' do
-    subject { described_class.worker_from_payload(payload) }
-
-    let(:id) { SecureRandom.uuid }
-    let(:worker_class) { TestWorker }
-    let(:worker_class_name) { worker_class.to_s }
-    let(:payload) do
-      {
-        'worker' => worker_class_name,
-        'job_id' => id,
-        'job_args' => job_args,
-        'job_meta' => job_meta
-      }
-    end
-
-    context 'with valid worker' do
-      it { is_expected.to be_a(worker_class) }
-      it { is_expected.to have_attributes(job_args: job_args, job_id: id, job_meta: eq(job_meta)) }
-    end
-
-    context 'with worker class not implementing Cloudtasker::Worker' do
-      let(:worker_class) { TestNonWorker }
-
-      it { is_expected.to be_nil }
-    end
-
-    context 'with invalid worker class' do
-      let(:worker_class_name) { 'ClassThatDoesNotExist' }
-
-      it { is_expected.to be_nil }
-    end
-  end
-
   describe '.execute_from_payload!' do
     subject(:execute) { described_class.execute_from_payload!(payload) }
 
     let(:payload) { { 'foo' => 'bar' } }
 
-    before { allow(described_class).to receive(:worker_from_payload).with(payload).and_return(worker) }
+    before { allow(Cloudtasker::Worker).to receive(:from_hash).with(payload).and_return(worker) }
 
     context 'with valid worker' do
       let(:worker) { instance_double('TestWorker') }

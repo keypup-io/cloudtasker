@@ -49,5 +49,5 @@ Cloudtasker.configure do |config|
   config.processor_path = '/mynamespace/run'
 
   # Redis
-  config.redis = { url: "redis://#{ENV['REDIS_HOST'].presence || 'localhost'}:6379/15" }
+  config.redis = { url: "redis://#{ENV['REDIS_HOST'] || 'localhost'}:6379/15" }
 end
