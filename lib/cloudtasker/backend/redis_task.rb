@@ -204,7 +204,7 @@ module Cloudtasker
         @http_client ||=
           begin
             uri = URI(http_request[:url])
-            Net::HTTP.new(uri.host, uri.port)
+            Net::HTTP.new(uri.host, uri.port).tap { |e| e.read_timeout = 60 * 10 }
           end
       end
 
