@@ -7,7 +7,7 @@ RSpec.describe Cloudtasker::Config do
   let(:gcp_queue_id) { 'some-queue-id' }
   let(:processor_host) { 'http://localhost' }
   let(:processor_path) { nil }
-  let(:logger) { 'SomeLogger' }
+  let(:logger) { Logger.new(nil) }
   let(:mode) { :production }
 
   let(:config) do
