@@ -16,11 +16,15 @@ module Cloudtasker
     # Run a worker from a Cloud Task payload
     #
     def run
-      WorkerHandler.execute_from_payload!(request.params.slice(:worker, :args))
+      WorkerHandler.execute_from_payload!(
+        request.params.slice(:worker, :job_id, :job_args, :job_meta)
+      )
       head :no_content
     rescue InvalidWorkerError
       head :not_found
-    rescue StandardError
+    rescue StandardError => e
+      Cloudtasker.logger.error(e)
+      Cloudtasker.logger.error(e.backtrace.join("\n"))
       head :unprocessable_entity
     end
 

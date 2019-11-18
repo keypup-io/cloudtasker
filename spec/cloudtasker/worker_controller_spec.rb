@@ -4,11 +4,14 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
   routes { Cloudtasker::Engine.routes }
 
   describe 'POST #run' do
-    subject { post :run, body: { worker: worker_class_name, args: args, other: 'arg' }.to_json, as: :json }
+    subject { post :run, body: payload.to_json, as: :json }
 
+    let(:payload) { { worker: worker_class_name, job_id: id, job_args: args, job_meta: meta, other: :foo } }
+    let(:id) { '111' }
     let(:worker_class_name) { 'TestWorker' }
     let(:args) { [1, 2] }
-    let(:expected_payload) { { 'worker' => worker_class_name, 'args' => args } }
+    let(:meta) { { 'foo' => 'bar' } }
+    let(:expected_payload) { payload.slice(:worker, :job_id, :job_args, :job_meta) }
     let(:auth_token) { Cloudtasker::Authenticator.verification_token }
 
     context 'with valid worker' do
