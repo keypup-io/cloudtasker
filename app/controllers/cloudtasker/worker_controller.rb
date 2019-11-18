@@ -16,7 +16,7 @@ module Cloudtasker
     # Run a worker from a Cloud Task payload
     #
     def run
-      Task.execute_from_payload!(request.params.slice(:worker, :args))
+      WorkerHandler.execute_from_payload!(request.params.slice(:worker, :args))
       head :no_content
     rescue InvalidWorkerError
       head :not_found

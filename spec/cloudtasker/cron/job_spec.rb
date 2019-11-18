@@ -205,7 +205,7 @@ RSpec.describe Cloudtasker::Cron::Job do
 
     let(:next_worker) { TestWorker.new }
     let(:task_id) { 'some-task-id' }
-    let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task', name: task_id) }
+    let(:resp) { instance_double('Cloudtasker::CloudTask', id: task_id) }
 
     before do
       allow(worker).to receive(:new_instance).and_return(next_worker)

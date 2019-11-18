@@ -179,8 +179,8 @@ module Cloudtasker
         next_worker = worker.new_instance.tap { |e| e.job_meta.set(key(:time_at), next_time.iso8601) }
 
         # Schedule next worker
-        resp = next_worker.schedule(time_at: next_time)
-        cron_schedule.update(task_id: resp.name, job_id: next_worker.job_id)
+        task = next_worker.schedule(time_at: next_time)
+        cron_schedule.update(task_id: task.id, job_id: next_worker.job_id)
       end
 
       #

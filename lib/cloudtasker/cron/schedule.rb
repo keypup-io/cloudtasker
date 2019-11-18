@@ -99,7 +99,7 @@ module Cloudtasker
         return false unless schedule
 
         # Delete task and stored schedule
-        Task.delete(schedule.task_id) if schedule.task_id
+        CloudTask.delete(schedule.task_id) if schedule.task_id
         redis.del(schedule.gid)
       end
 
@@ -262,7 +262,7 @@ module Cloudtasker
         return true unless update_task && config_was_changed
 
         # Delete previous instance
-        Task.delete(task_id) if task_id
+        CloudTask.delete(task_id) if task_id
 
         # Schedule worker
         worker_instance = Object.const_get(worker).new

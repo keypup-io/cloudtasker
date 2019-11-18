@@ -69,8 +69,8 @@ RSpec.describe Cloudtasker::Worker do
     let(:time_at) { Time.now }
     let(:arg1) { 1 }
     let(:arg2) { 2 }
-    let(:task) { instance_double('Cloudtasker::Task') }
-    let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
+    let(:task) { instance_double('Cloudtasker::WorkerHandler') }
+    let(:resp) { instance_double('Cloudtasker::CloudTask') }
     let(:worker) { instance_double(worker_class.to_s) }
 
     before do
@@ -87,8 +87,8 @@ RSpec.describe Cloudtasker::Worker do
     let(:delay) { 10 }
     let(:arg1) { 1 }
     let(:arg2) { 2 }
-    let(:task) { instance_double('Cloudtasker::Task') }
-    let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
+    let(:task) { instance_double('Cloudtasker::WorkerHandler') }
+    let(:resp) { instance_double('Cloudtasker::CloudTask') }
     let(:worker) { instance_double(worker_class.to_s) }
 
     before do
@@ -104,7 +104,7 @@ RSpec.describe Cloudtasker::Worker do
 
     let(:arg1) { 1 }
     let(:arg2) { 2 }
-    let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
+    let(:resp) { instance_double('Cloudtasker::CloudTask') }
 
     before { allow(worker_class).to receive(:perform_in).with(nil, arg1, arg2).and_return(resp) }
     it { is_expected.to eq(resp) }
@@ -148,12 +148,12 @@ RSpec.describe Cloudtasker::Worker do
     let(:delay) { 10 }
     let(:arg1) { 1 }
     let(:arg2) { 2 }
-    let(:task) { instance_double('Cloudtasker::Task') }
-    let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
+    let(:task) { instance_double('Cloudtasker::WorkerHandler') }
+    let(:resp) { instance_double('Cloudtasker::CloudTask') }
     let(:worker) { worker_class.new(job_args: [1, 2]) }
 
     before do
-      allow(Cloudtasker::Task).to receive(:new).with(worker).and_return(task)
+      allow(Cloudtasker::WorkerHandler).to receive(:new).with(worker).and_return(task)
       allow(task).to receive(:schedule).with(interval: delay, time_at: time_at).and_return(resp)
     end
 
@@ -191,7 +191,7 @@ RSpec.describe Cloudtasker::Worker do
     let(:worker) { worker_class.new(job_args: args) }
     let(:args) { [1, 2] }
 
-    let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
+    let(:resp) { instance_double('Cloudtasker::CloudTask') }
 
     before { allow(worker).to receive(:schedule).with(interval: delay).and_return(resp) }
     after { expect(worker.job_reenqueued).to be_truthy }

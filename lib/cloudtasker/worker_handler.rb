@@ -3,38 +3,12 @@
 require 'google/cloud/tasks'
 
 module Cloudtasker
-  # Build, serialize and schedule tasks on GCP Cloud Task
-  class Task
+  # Build, serialize and schedule tasks on the processing backend.
+  class WorkerHandler
     attr_reader :worker, :job_args
 
     # Alrogith used to sign the verification token
     JWT_ALG = 'HS256'
-
-    # TODO: Move to a dedicated CloudTask class
-    #
-    # Find a Cloud task
-    #
-    # @param [String] id The ID of the task.
-    #
-    # @return [Google::Cloud::Tasks::V2beta3::Task] The cloud task.
-    #
-    def self.find(id)
-      client.get_task(id)
-    rescue Google::Gax::RetryError
-      nil
-    end
-
-    # TODO: Move to a dedicated CloudTask class
-    #
-    # Delete a Cloud task
-    #
-    # @param [String] id The ID of the task.
-    #
-    def self.delete(id)
-      client.delete_task(id)
-    rescue Google::Gax::RetryError
-      nil
-    end
 
     #
     # Execute a task worker from a task payload
@@ -49,52 +23,12 @@ module Cloudtasker
     end
 
     #
-    # Return the Google Cloud Task client.
-    #
-    # @return [Google::Cloud::Tasks] The Google Cloud Task client.
-    #
-    def self.client
-      @client ||= ::Google::Cloud::Tasks.new(version: :v2beta3)
-    end
-
-    #
     # Prepare a new cloud task.
     #
     # @param [Cloudtasker::Worker] worker The worker instance.
     #
     def initialize(worker)
       @worker = worker
-    end
-
-    #
-    # Return the Google Cloud Task client.
-    #
-    # @return [Google::Cloud::Tasks] The Google Cloud Task client.
-    #
-    def client
-      self.class.client
-    end
-
-    #
-    # Return the cloudtasker configuration. See Cloudtasker#configure.
-    #
-    # @return [Cloudtasker::Config] The library configuration.
-    #
-    def config
-      Cloudtasker.config
-    end
-
-    #
-    # Return the fully qualified path for the Cloud Task queue.
-    #
-    # @return [String] The queue path.
-    #
-    def queue_path
-      client.queue_path(
-        config.gcp_project_id,
-        config.gcp_location_id,
-        config.gcp_queue_id
-      )
     end
 
     #
@@ -106,7 +40,7 @@ module Cloudtasker
       {
         http_request: {
           http_method: 'POST',
-          url: config.processor_url,
+          url: Cloudtasker.config.processor_url,
           headers: {
             'Content-Type' => 'application/json',
             'Authorization' => "Bearer #{Authenticator.verification_token}"
@@ -142,16 +76,15 @@ module Cloudtasker
     # before running a task.
     #
     # @param [Integer, nil] interval The time to wait.
+    # @param [Integer, nil] time_at The time at which the job should run.
     #
-    # @return [Google::Protobuf::Timestamp, nil] The protobuff timestamp
+    # @return [Integer, nil] The Unix timestamp.
     #
     def schedule_time(interval: nil, time_at: nil)
       return nil unless interval || time_at
 
-      # Generate protobuf timestamp
-      timestamp = Google::Protobuf::Timestamp.new
-      timestamp.seconds = (time_at || Time.now).to_i + interval.to_i
-      timestamp
+      # Generate the complete Unix timestamp
+      (time_at || Time.now).to_i + interval.to_i
     end
 
     #
@@ -160,7 +93,7 @@ module Cloudtasker
     # @param [Integer, nil] interval How to wait before running the task.
     #   Leave to `nil` to run now.
     #
-    # @return [Google::Cloud::Tasks::V2beta3::Task] The Google Task response
+    # @return [Cloudtasker::CloudTask] The Google Task response
     #
     def schedule(interval: nil, time_at: nil)
       # Generate task payload
@@ -169,7 +102,7 @@ module Cloudtasker
       ).compact
 
       # Create and return remote task
-      client.create_task(queue_path, task)
+      CloudTask.create(task)
     end
   end
 end

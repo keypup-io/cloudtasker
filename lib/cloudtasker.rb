@@ -10,7 +10,8 @@ require 'cloudtasker/invalid_worker_error'
 
 require 'cloudtasker/middleware/chain'
 require 'cloudtasker/authenticator'
-require 'cloudtasker/task'
+require 'cloudtasker/cloud_task'
+require 'cloudtasker/worker_handler'
 require 'cloudtasker/meta_store'
 require 'cloudtasker/worker'
 
@@ -25,8 +26,22 @@ module Cloudtasker
     yield(config)
   end
 
+  #
+  # Return the Cloudtasker configuration.
+  #
+  # @return [Cloudtasker::Config] The Cloudtasker configuration.
+  #
   def self.config
     @config ||= Config.new
+  end
+
+  #
+  # Return the Cloudtasker logger.
+  #
+  # @return [Logger] The Cloudtasker logger.
+  #
+  def self.logger
+    config.logger
   end
 end
 

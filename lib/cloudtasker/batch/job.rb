@@ -274,7 +274,7 @@ module Cloudtasker
       #
       # Save the batch and enqueue all child workers attached to it.
       #
-      # @return [Array<Google::Cloud::Tasks::V2beta3::Task>] The Google Task responses
+      # @return [Array<Cloudtasker::CloudTask>] The Google Task responses
       #
       def setup
         return true if jobs.empty?

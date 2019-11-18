@@ -51,4 +51,7 @@ Cloudtasker.configure do |config|
 
   # Redis
   config.redis = { url: "redis://#{ENV['REDIS_HOST'] || 'localhost'}:6379/15" }
+
+  # Logger
+  config.logger = Logger.new(nil)
 end

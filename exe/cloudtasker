@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'bundler/setup'
+require 'cloudtasker/cli'
+
+begin
+  Cloudtasker::CLI.run
+rescue StandardError => e
+  raise e if $DEBUG
+
+  warn e.message
+  warn e.backtrace.join("\n")
+  exit 1
+end

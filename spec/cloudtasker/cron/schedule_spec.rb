@@ -105,7 +105,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
 
     let(:task_id) { nil }
 
-    before { allow(Cloudtasker::Task).to receive(:delete).with(task_id) }
+    before { allow(Cloudtasker::CloudTask).to receive(:delete).with(task_id) }
     before { schedule.task_id = task_id }
     before { schedule.save(update_task: false) }
 
@@ -113,7 +113,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
       let(:task_id) { '222' }
 
       before { described_class.delete(id) }
-      after { expect(Cloudtasker::Task).to have_received(:delete) }
+      after { expect(Cloudtasker::CloudTask).to have_received(:delete) }
       it { is_expected.to be_nil }
     end
 
@@ -296,7 +296,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
     before { allow(Cloudtasker::Cron::Job).to receive(:new).with(be_a(worker_klass)).and_return(job) }
     before { allow(job).to receive(:set).with(schedule_id: id).and_return(job) }
     before { allow(job).to receive(:schedule!).and_return(true) }
-    before { allow(Cloudtasker::Task).to receive(:delete).with(be_a(String)) }
+    before { allow(Cloudtasker::CloudTask).to receive(:delete).with(be_a(String)) }
 
     context 'with invalid schedule' do
       before { allow(schedule).to receive(:valid?).and_return(false) }
@@ -319,7 +319,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
       before { allow(schedule).to receive(:config_changed?).and_return(true) }
       after { expect(described_class.find(id)).to eq(schedule) }
       after { expect(job).to have_received(:schedule!) }
-      after { expect(Cloudtasker::Task).to have_received(:delete).with(task_id) }
+      after { expect(Cloudtasker::CloudTask).to have_received(:delete).with(task_id) }
       it { is_expected.to be_truthy }
     end
 

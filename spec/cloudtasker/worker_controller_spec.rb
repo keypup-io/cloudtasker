@@ -14,18 +14,18 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
     context 'with valid worker' do
       before do
         request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"
-        allow(Cloudtasker::Task).to receive(:execute_from_payload!)
+        allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
           .with(expected_payload)
           .and_return(true)
       end
-      after { expect(Cloudtasker::Task).to have_received(:execute_from_payload!) }
+      after { expect(Cloudtasker::WorkerHandler).to have_received(:execute_from_payload!) }
       it { is_expected.to be_successful }
     end
 
     context 'with valid worker and execution errors' do
       before do
         request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"
-        allow(Cloudtasker::Task).to receive(:execute_from_payload!)
+        allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
           .with(expected_payload)
           .and_raise(ArgumentError)
       end
@@ -35,7 +35,7 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
     context 'with invalid worker' do
       before do
         request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"
-        allow(Cloudtasker::Task).to receive(:execute_from_payload!)
+        allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
           .with(expected_payload)
           .and_raise(Cloudtasker::InvalidWorkerError)
       end

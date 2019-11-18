@@ -1,7 +1,15 @@
 # frozen_string_literal: true
 
 RSpec.describe Cloudtasker do
-  it 'has a version number' do
-    expect(Cloudtasker::VERSION).not_to be nil
+  describe '::VERSION' do
+    subject { Cloudtasker::VERSION }
+
+    it { is_expected.not_to be nil }
+  end
+
+  describe '.logger' do
+    subject { described_class.logger }
+
+    it { is_expected.to eq(described_class.config.logger) }
   end
 end

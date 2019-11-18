@@ -7,9 +7,13 @@ RSpec.describe Cloudtasker::Config do
   let(:gcp_queue_id) { 'some-queue-id' }
   let(:processor_host) { 'http://localhost' }
   let(:processor_path) { nil }
+  let(:logger) { 'SomeLogger' }
+  let(:mode) { :production }
 
   let(:config) do
     Cloudtasker.configure do |c|
+      c.mode = mode
+      c.logger = logger
       c.secret = secret
       c.gcp_location_id = gcp_location_id
       c.gcp_project_id = gcp_project_id
@@ -19,6 +23,69 @@ RSpec.describe Cloudtasker::Config do
     end
 
     Cloudtasker.config
+  end
+
+  describe '#mode' do
+    subject { config.mode }
+
+    context 'with mode specified' do
+      it { is_expected.to eq(mode) }
+    end
+
+    context 'with no mode and development environment' do
+      let(:mode) { nil }
+
+      before { allow(config).to receive(:environment).and_return('development') }
+      it { is_expected.to eq(:development) }
+    end
+
+    context 'with no mode and other environment' do
+      let(:mode) { nil }
+
+      before { allow(config).to receive(:environment).and_return('production') }
+      it { is_expected.to eq(:production) }
+    end
+  end
+
+  describe '#environment' do
+    subject { config.environment }
+
+    before { allow(ENV).to receive(:[]).with('CLOUDTASKER_ENV').and_return(nil) }
+    before { allow(ENV).to receive(:[]).with('RAILS_ENV').and_return(nil) }
+    before { allow(ENV).to receive(:[]).with('RACK_ENV').and_return(nil) }
+
+    context 'with no env-related vars' do
+      it { is_expected.to eq('development') }
+    end
+
+    context 'with CLOUDTASKER_ENV' do
+      before { allow(ENV).to receive(:[]).with('CLOUDTASKER_ENV').and_return('production') }
+      it { is_expected.to eq('production') }
+    end
+
+    context 'with RACK_ENV' do
+      before { allow(ENV).to receive(:[]).with('RACK_ENV').and_return('production') }
+      it { is_expected.to eq('production') }
+    end
+
+    context 'with RAILS_ENV' do
+      before { allow(ENV).to receive(:[]).with('RAILS_ENV').and_return('production') }
+      it { is_expected.to eq('production') }
+    end
+  end
+
+  describe '#logger' do
+    subject { config.logger }
+
+    context 'with no logger provider' do
+      let(:logger) { nil }
+
+      it { is_expected.to be_a(::Logger) }
+    end
+
+    context 'with logger provider' do
+      it { is_expected.to eq(logger) }
+    end
   end
 
   describe '#secret' do
