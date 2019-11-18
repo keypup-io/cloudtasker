@@ -12,3 +12,12 @@ Cloudtasker.configure do |config|
   config.gcp_queue_id = 'some-queue'
   config.processor_host = 'http://localhost:3000'
 end
+
+unless Rails.env.test?
+  Cloudtasker::Cron::Schedule.load_from_hash!(
+    'my_worker' => {
+      'worker' => 'CronWorker',
+      'cron' => '* * * * *'
+    }
+  )
+end
