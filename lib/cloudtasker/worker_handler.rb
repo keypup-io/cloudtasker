@@ -67,7 +67,7 @@ module Cloudtasker
         worker: worker.class.to_s,
         job_id: worker.job_id,
         job_args: worker.job_args,
-        job_meta: worker.job_meta
+        job_meta: worker.job_meta.to_h
       }
     end
 
