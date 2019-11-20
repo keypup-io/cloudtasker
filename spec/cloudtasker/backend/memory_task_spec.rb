@@ -1,0 +1,218 @@
+# frozen_string_literal: true
+
+require 'cloudtasker/backend/memory_task'
+
+RSpec.describe Cloudtasker::Backend::MemoryTask do
+  let(:job_payload) do
+    {
+      http_request: {
+        http_method: 'POST',
+        url: 'http://localhost:300/run',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer 123'
+        },
+        body: {
+          worker: worker_name,
+          job_id: 'aaa'
+        }.to_json
+      },
+      schedule_time: 2
+    }
+  end
+  let(:job_payload2) do
+    {
+      http_request: {
+        http_method: 'POST',
+        url: 'http://localhost:300/run',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer 123'
+        },
+        body: {
+          worker: worker_name2,
+          job_id: 'bbb'
+        }.to_json
+      },
+      schedule_time: 2
+    }
+  end
+  let(:worker_name) { 'TestWorker' }
+  let(:worker_name2) { 'TestWorker2' }
+  let(:task_id) { '1234' }
+  let(:task) { described_class.new(job_payload.merge(id: task_id)) }
+  let(:task_id2) { '2434' }
+  let(:task2) { described_class.new(job_payload2.merge(id: task_id2)) }
+
+  before { described_class.clear }
+
+  describe '.queue' do
+    subject { described_class.queue }
+
+    it { is_expected.to be_a(Array) }
+  end
+
+  describe '.jobs' do
+    subject { described_class.jobs(filter) }
+
+    let(:filter) { nil }
+
+    before { described_class.create(job_payload.merge(id: task_id)) }
+    before { described_class.create(job_payload2.merge(id: task_id2)) }
+
+    context 'without filter' do
+      it { is_expected.to eq([task.worker, task2.worker]) }
+    end
+
+    context 'with filter' do
+      let(:filter) { worker_name }
+
+      it { is_expected.to eq([task.worker]) }
+    end
+  end
+
+  describe '.drain' do
+    subject { described_class.drain(filter) }
+
+    let(:filter) { 'somefilter' }
+    let(:resp) { 'some-respone' }
+
+    before { allow(described_class).to receive(:all).with(filter).and_return([task]) }
+    before { allow(task).to receive(:execute).and_return(resp) }
+    it { is_expected.to eq([resp]) }
+  end
+
+  describe '.all' do
+    subject { described_class.all(filter) }
+
+    let(:filter) { nil }
+
+    before { described_class.create(job_payload.merge(id: task_id)) }
+    before { described_class.create(job_payload2.merge(id: task_id2)) }
+
+    context 'without filter' do
+      it { is_expected.to eq([task, task2]) }
+    end
+
+    context 'with filter' do
+      let(:filter) { worker_name }
+
+      it { is_expected.to eq([task]) }
+    end
+  end
+
+  describe '.create' do
+    subject { described_class.queue.first }
+
+    let(:expected_attrs) do
+      job_payload.merge(schedule_time: Time.at(job_payload[:schedule_time]))
+    end
+
+    before { described_class.create(job_payload.merge(id: task_id)) }
+    it { is_expected.to have_attributes(expected_attrs) }
+  end
+
+  describe '.find' do
+    subject { described_class.find(task_id) }
+
+    let(:filter) { nil }
+
+    before { described_class.create(job_payload.merge(id: task_id)) }
+    before { described_class.create(job_payload2.merge(id: task_id2)) }
+    it { is_expected.to eq(task) }
+  end
+
+  describe '.delete' do
+    subject { described_class.queue }
+
+    let(:filter) { nil }
+
+    before { described_class.create(job_payload.merge(id: task_id)) }
+    before { described_class.create(job_payload2.merge(id: task_id2)) }
+    before { described_class.delete(task_id) }
+    it { is_expected.to eq([task2]) }
+  end
+
+  describe '.clear' do
+    subject { described_class.queue }
+
+    before { described_class.create(job_payload.merge(id: task_id)) }
+    before { described_class.create(job_payload2.merge(id: task_id2)) }
+    before { described_class.clear }
+    it { is_expected.to be_empty }
+  end
+
+  describe '.new' do
+    subject { described_class.new(job_payload.merge(id: id)) }
+
+    let(:id) { '123' }
+    let(:expected_attrs) do
+      job_payload.merge(id: id, schedule_time: Time.at(job_payload[:schedule_time]))
+    end
+
+    it { is_expected.to have_attributes(expected_attrs) }
+  end
+
+  describe '#payload' do
+    subject { task.payload }
+
+    it { is_expected.to eq(JSON.parse(job_payload.dig(:http_request, :body), symbolize_names: true)) }
+  end
+
+  describe '#worker_class_name' do
+    subject { task.worker_class_name }
+
+    it { is_expected.to eq(worker_name) }
+  end
+
+  describe '#to_h' do
+    subject { task.to_h }
+
+    let(:expected_hash) do
+      {
+        id: task.id,
+        http_request: task.http_request,
+        schedule_time: task.schedule_time.to_i
+      }
+    end
+
+    it { is_expected.to eq(expected_hash) }
+  end
+
+  describe '#worker' do
+    subject { task.worker }
+
+    let(:resp) { instance_double('Cloudtasker::Worker') }
+
+    before { allow(Cloudtasker::Worker).to receive(:from_hash).with(task.payload).and_return(resp) }
+    it { is_expected.to eq(resp) }
+  end
+
+  describe '#execute' do
+    subject { task.execute }
+
+    let(:worker) { instance_double('Cloudtasker::Worker') }
+    let(:resp) { 'some-response' }
+
+    before { allow(task).to receive(:worker).and_return(worker) }
+    before { allow(worker).to receive(:execute).and_return(resp) }
+    before { allow(described_class).to receive(:delete).with(task_id) }
+    it { is_expected.to eq(resp) }
+  end
+
+  describe '#==' do
+    subject { task }
+
+    context 'with same id' do
+      it { is_expected.to eq(described_class.new(job_payload.merge(id: task_id))) }
+    end
+
+    context 'with different id' do
+      it { is_expected.not_to eq(described_class.new(job_payload.merge(id: task_id + 'a'))) }
+    end
+
+    context 'with different object' do
+      it { is_expected.not_to eq('foo') }
+    end
+  end
+end
