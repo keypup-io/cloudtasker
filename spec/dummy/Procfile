@@ -1,2 +1,0 @@
-web: rails s -p 3000
-worker: ../../exe/cloudtasker

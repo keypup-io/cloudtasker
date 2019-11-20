@@ -11,6 +11,9 @@ require 'rspec/rails'
 
 # Require main library (after Rails has done so)
 require 'cloudtasker'
+require 'cloudtasker/unique_job'
+require 'cloudtasker/cron'
+require 'cloudtasker/batch'
 
 # Require supporting files
 Dir['./spec/support/**/*.rb'].each { |f| require f }

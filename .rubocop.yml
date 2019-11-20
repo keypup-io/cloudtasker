@@ -25,3 +25,8 @@ Metrics/BlockLength:
   Exclude:
     - cloudtasker.gemspec
     - 'spec/**/*'
+
+Style/Documentation:
+  Exclude:
+    - 'examples/**/*'
+    - 'spec/**/*'
