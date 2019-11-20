@@ -13,9 +13,11 @@ module Cloudtasker
         def execute
           job.lock!
           yield
-          job.unlock!
         rescue LockError
           conflict_instance.on_execute { yield }
+        ensure
+          # Unlock the job on any error to avoid deadlocks.
+          job.unlock!
         end
       end
     end

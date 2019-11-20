@@ -14,10 +14,11 @@ RSpec.describe Cloudtasker::UniqueJob::Lock::WhileExecuting do
   end
 
   describe '#execute' do
+    before { allow(job).to receive(:lock!) }
+    before { allow(job).to receive(:unlock!) }
+    after { expect(job).to have_received(:unlock!) }
+
     context 'with lock available' do
-      before { allow(job).to receive(:lock!) }
-      before { allow(job).to receive(:unlock!) }
-      after { expect(job).to have_received(:unlock!) }
       it { expect { |b| lock.execute(&b) }.to yield_control }
     end
 
@@ -26,6 +27,13 @@ RSpec.describe Cloudtasker::UniqueJob::Lock::WhileExecuting do
       before { allow(lock.conflict_instance).to receive(:on_execute) }
       after { expect(lock.conflict_instance).to have_received(:on_execute) { |&b| expect(b).to be_a(Proc) } }
       it { expect { |b| lock.execute(&b) }.not_to yield_control }
+    end
+
+    context 'with runtime error' do
+      let(:error) { ArgumentError }
+      let(:block) { proc { raise(error) } }
+
+      it { expect { lock.execute(&block) }.to raise_error(error) }
     end
   end
 end
