@@ -35,7 +35,7 @@ module Cloudtasker
       #
       # Return all tasks stored in Redis.
       #
-      # @return [Array<Cloudtasker::Local::Task>] All the tasks.
+      # @return [Array<Cloudtasker::Backend::RedisTask>] All the tasks.
       #
       def self.all
         redis.search(key('*')).map do |gid|
@@ -47,7 +47,7 @@ module Cloudtasker
       #
       # Reeturn all tasks ready to process.
       #
-      # @return [Array<Cloudtasker::Local::Task>] All the tasks ready to process.
+      # @return [Array<Cloudtasker::Backend::RedisTask>] All the tasks ready to process.
       #
       def self.ready_to_process
         all.select { |e| e.schedule_time <= Time.now }
@@ -56,7 +56,7 @@ module Cloudtasker
       #
       # Retrieve and remove a task from the queue.
       #
-      # @return [Cloudtasker::Local::Task] A task ready to process.
+      # @return [Cloudtasker::Backend::RedisTask] A task ready to process.
       #
       def self.pop
         ready_to_process.first&.tap(&:destroy)
@@ -81,7 +81,7 @@ module Cloudtasker
       #
       # @param [String] id The id of the task.
       #
-      # @return [Cloudtasker::Local::Task, nil] The task.
+      # @return [Cloudtasker::Backend::RedisTask, nil] The task.
       #
       def self.find(id)
         gid = key(id)
