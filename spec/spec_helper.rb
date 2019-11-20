@@ -11,6 +11,7 @@ require 'rspec/rails'
 
 # Require main library (after Rails has done so)
 require 'cloudtasker'
+require 'cloudtasker/testing'
 require 'cloudtasker/unique_job'
 require 'cloudtasker/cron'
 require 'cloudtasker/batch'

@@ -64,8 +64,14 @@ module Cloudtasker
         id = payload[:id] || SecureRandom.uuid
         payload = payload.merge(schedule_time: payload[:schedule_time].to_i)
 
-        # Save job
-        queue << new(payload.merge(id: id))
+        # Save task
+        task = new(payload.merge(id: id))
+        queue << task
+
+        # Execute task immediately if in testing and inline mode enabled
+        task.execute if defined?(Cloudtasker::Testing) && Cloudtasker::Testing.inline?
+
+        task
       end
 
       #

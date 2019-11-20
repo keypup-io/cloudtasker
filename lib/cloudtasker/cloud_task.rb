@@ -11,16 +11,16 @@ module Cloudtasker
     # @return [Cloudtasker::Backend::GoogleCloudTask, Cloudtasker::Backend::RedisTask] The cloud task backend.
     #
     def self.backend
-      @backend ||=
-        begin
-          if Cloudtasker.config.mode.to_sym == :development
-            require 'cloudtasker/backend/redis_task'
-            Backend::RedisTask
-          else
-            require 'cloudtasker/backend/google_cloud_task'
-            Backend::GoogleCloudTask
-          end
-        end
+      if defined?(Cloudtasker::Testing) && Cloudtasker::Testing.in_memory?
+        require 'cloudtasker/backend/memory_task'
+        Backend::MemoryTask
+      elsif Cloudtasker.config.mode.to_sym == :development
+        require 'cloudtasker/backend/redis_task'
+        Backend::RedisTask
+      else
+        require 'cloudtasker/backend/google_cloud_task'
+        Backend::GoogleCloudTask
+      end
     end
 
     #
