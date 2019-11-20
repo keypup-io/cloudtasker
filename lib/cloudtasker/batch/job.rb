@@ -2,9 +2,6 @@
 
 module Cloudtasker
   module Batch
-    # TODO: cleanup redis keys recursively from top parent
-    # once the top parent has completed.
-    #
     # Handle batch management
     class Job
       attr_reader :worker
@@ -31,13 +28,13 @@ module Cloudtasker
       def self.find(worker_id)
         return nil unless worker_id
 
-        # Retrieve parent worker
-        parent_payload = redis.fetch(key(worker_id))
-        parent_worker = Cloudtasker::Worker.from_hash(parent_payload)
-        return nil unless parent_worker
+        # Retrieve related worker
+        payload = redis.fetch(key(worker_id))
+        worker = Cloudtasker::Worker.from_hash(payload)
+        return nil unless worker
 
         # Build batch job
-        self.for(parent_worker)
+        self.for(worker)
       end
 
       #
@@ -231,11 +228,33 @@ module Cloudtasker
       end
 
       #
+      # Run worker callback in a controlled environment to
+      # avoid interruption of the callback flow.
+      #
+      # @param [String, Symbol] callback The callback to run.
+      # @param [Array<any>] *args The callback arguments.
+      #
+      # @return [any] The callback return value
+      #
+      def run_worker_callback(callback, *args)
+        worker.try(callback, *args)
+      rescue StandardError => e
+        Cloudtasker.logger.error("Error running callback #{callback}: #{e}")
+        Cloudtasker.logger.error(e.backtrace.join("\n"))
+        nil
+      end
+
+      #
       # Callback invoked when the batch is complete
       #
       def on_complete
-        worker.try(:on_batch_complete)
+        run_worker_callback(:on_batch_complete)
+
+        # Propagate event
         parent_batch&.on_child_complete(self)
+      ensure
+        # The batch tree is complete. Cleanup the tree.
+        cleanup unless parent_batch
       end
 
       #
@@ -248,7 +267,7 @@ module Cloudtasker
         update_state(child_batch.batch_id, :completed)
 
         # Notify the worker that a direct batch child worker has completed
-        worker.try(:on_child_complete, child_batch.worker)
+        run_worker_callback(:on_child_complete, child_batch.worker)
 
         # Notify the parent batch that we are done with this batch
         on_complete if complete?
@@ -261,10 +280,25 @@ module Cloudtasker
       #
       def on_batch_node_complete(child_batch)
         # Notify the worker that a batch node worker has completed
-        worker.try(:on_batch_node_complete, child_batch.worker)
+        run_worker_callback(:on_batch_node_complete, child_batch.worker)
 
         # Notify the parent batch that a node is complete
         parent_batch&.on_batch_node_complete(child_batch)
+      end
+
+      #
+      # Remove all batch and sub-batch keys from Redis.
+      #
+      def cleanup
+        # Capture batch state
+        state = batch_state
+
+        # Delete child batches recursively
+        state.to_h.keys.each { |id| self.class.find(id)&.cleanup }
+
+        # Delete batch redis entries
+        redis.del(batch_gid)
+        redis.del(batch_state_gid)
       end
 
       #

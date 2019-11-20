@@ -258,6 +258,24 @@ RSpec.describe Cloudtasker::Batch::Job do
     end
   end
 
+  describe '#run_worker_callback' do
+    subject { batch.run_worker_callback(callback, *args) }
+
+    let(:callback) { :some_callback }
+    let(:args) { [1, 'arg'] }
+    let(:resp) { 'some-response' }
+
+    context 'with success response' do
+      before { allow(worker).to receive(callback).with(*args).and_return(resp) }
+      it { is_expected.to eq(resp) }
+    end
+
+    context 'with error' do
+      before { allow(worker).to receive(callback).with(*args).and_raise(ArgumentError) }
+      it { is_expected.to be_nil }
+    end
+  end
+
   describe '#on_complete' do
     subject { batch.on_complete }
 
@@ -265,17 +283,21 @@ RSpec.describe Cloudtasker::Batch::Job do
     let(:parent_batch) { instance_double(described_class.to_s) }
 
     before { allow(batch).to receive(:parent_batch).and_return(parent_batch) }
-    before { allow(worker).to receive(:on_batch_complete) }
+    before { allow(batch).to receive(:cleanup) }
+    before { allow(batch).to receive(:run_worker_callback).with(:on_batch_complete) }
     before { parent_batch && allow(parent_batch).to(receive(:on_child_complete).with(batch)).and_return(true) }
-    after { expect(worker).to have_received(:on_batch_complete) }
 
-    context 'without parent batch' do
+    after { expect(batch).to have_received(:run_worker_callback) }
+
+    context 'with no parent batch' do
       let(:parent_batch) { nil }
 
+      after { expect(batch).to have_received(:cleanup) }
       it { is_expected.to be_falsey }
     end
 
     context 'with parent batch' do
+      after { expect(batch).not_to have_received(:cleanup) }
       after { expect(parent_batch).to have_received(:on_child_complete) }
       it { is_expected.to be_truthy }
     end
@@ -289,13 +311,13 @@ RSpec.describe Cloudtasker::Batch::Job do
     before { allow(batch).to receive(:complete?).and_return(complete) }
     before { allow(batch).to receive(:on_complete).and_return(true) }
     before { allow(batch).to receive(:update_state).with(child_batch.batch_id, :completed) }
-    before { allow(worker).to receive(:on_child_complete).with(child_batch.worker) }
+    before { allow(batch).to receive(:run_worker_callback).with(:on_child_complete, child_batch.worker) }
     before { batch.jobs.push(child_worker) }
     before { batch.save }
 
     context 'with batch complete' do
       after { expect(batch).to have_received(:update_state) }
-      after { expect(worker).to have_received(:on_child_complete) }
+      after { expect(batch).to have_received(:run_worker_callback) }
       after { expect(batch).to have_received(:on_complete) }
       it { is_expected.to be_truthy }
     end
@@ -304,7 +326,7 @@ RSpec.describe Cloudtasker::Batch::Job do
       let(:complete) { false }
 
       after { expect(batch).to have_received(:update_state) }
-      after { expect(worker).to have_received(:on_child_complete) }
+      after { expect(batch).to have_received(:run_worker_callback) }
       after { expect(batch).not_to have_received(:on_complete) }
       it { is_expected.to be_falsey }
     end
@@ -317,7 +339,7 @@ RSpec.describe Cloudtasker::Batch::Job do
 
     before do
       allow(batch).to receive(:parent_batch).and_return(parent_batch)
-      allow(worker).to receive(:on_batch_node_complete).with(child_batch.worker)
+      allow(batch).to receive(:run_worker_callback).with(:on_batch_node_complete, child_batch.worker)
 
       if parent_batch
         allow(parent_batch).to(
@@ -327,7 +349,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     end
 
     context 'with parent batch' do
-      after { expect(worker).to have_received(:on_batch_node_complete) }
+      after { expect(batch).to have_received(:run_worker_callback) }
       after { expect(parent_batch).to have_received(:on_batch_node_complete) }
       it { is_expected.to be_truthy }
     end
@@ -335,9 +357,36 @@ RSpec.describe Cloudtasker::Batch::Job do
     context 'with no parent batch' do
       let(:parent_batch) { nil }
 
-      after { expect(worker).to have_received(:on_batch_node_complete) }
+      after { expect(batch).to have_received(:run_worker_callback) }
       it { is_expected.to be_falsey }
     end
+  end
+
+  describe '#cleanup' do
+    subject { described_class.redis.keys.sort }
+
+    let(:side_batch) { described_class.new(worker.new_instance) }
+    let(:expected_keys) { [side_batch.batch_gid, side_batch.batch_state_gid].sort }
+
+    before do
+      # Create un-related batch
+      side_batch.jobs.push(worker.new_instance)
+      side_batch.save
+
+      # Create child batch
+      child_batch.jobs.push(worker.new_instance)
+      child_batch.jobs.push(worker.new_instance)
+      child_batch.jobs.push(worker.new_instance)
+      child_batch.save
+
+      # Attach child batch to main batch
+      batch.jobs.push(child_worker)
+      batch.save
+
+      batch.cleanup
+    end
+
+    it { is_expected.to eq(expected_keys) }
   end
 
   describe '#progress' do
