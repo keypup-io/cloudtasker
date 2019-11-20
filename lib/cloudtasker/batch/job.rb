@@ -2,6 +2,9 @@
 
 module Cloudtasker
   module Batch
+    # TODO: cleanup redis keys recursively from top parent
+    # once the top parent has completed.
+    #
     # Handle batch management
     class Job
       attr_reader :worker
@@ -228,6 +231,14 @@ module Cloudtasker
       end
 
       #
+      # Callback invoked when the batch is complete
+      #
+      def on_complete
+        worker.try(:on_batch_complete)
+        parent_batch&.on_child_complete(self)
+      end
+
+      #
       # Callback invoked when a direct child batch is complete.
       #
       # @param [Cloudtasker::Batch::Job] child_batch The completed child batch.
@@ -240,7 +251,7 @@ module Cloudtasker
         worker.try(:on_child_complete, child_batch.worker)
 
         # Notify the parent batch that we are done with this batch
-        parent_batch&.on_child_complete(self) if complete?
+        on_complete if complete?
       end
 
       #
@@ -293,10 +304,7 @@ module Cloudtasker
         return true if reenqueued? || jobs.any?
 
         # Notify the parent batch that a child is complete
-        if complete?
-          worker.try(:on_batch_complete)
-          parent_batch&.on_child_complete(self)
-        end
+        on_complete if complete?
 
         # Notify the parent that a batch node has completed
         parent_batch&.on_batch_node_complete(self)

@@ -258,24 +258,45 @@ RSpec.describe Cloudtasker::Batch::Job do
     end
   end
 
-  describe '#on_child_complete' do
-    subject { batch.on_child_complete(child_batch) }
+  describe '#on_complete' do
+    subject { batch.on_complete }
 
     let(:complete) { true }
     let(:parent_batch) { instance_double(described_class.to_s) }
 
-    before { allow(batch).to receive(:complete?).and_return(complete) }
     before { allow(batch).to receive(:parent_batch).and_return(parent_batch) }
+    before { allow(worker).to receive(:on_batch_complete) }
+    before { parent_batch && allow(parent_batch).to(receive(:on_child_complete).with(batch)).and_return(true) }
+    after { expect(worker).to have_received(:on_batch_complete) }
+
+    context 'without parent batch' do
+      let(:parent_batch) { nil }
+
+      it { is_expected.to be_falsey }
+    end
+
+    context 'with parent batch' do
+      after { expect(parent_batch).to have_received(:on_child_complete) }
+      it { is_expected.to be_truthy }
+    end
+  end
+
+  describe '#on_child_complete' do
+    subject { batch.on_child_complete(child_batch) }
+
+    let(:complete) { true }
+
+    before { allow(batch).to receive(:complete?).and_return(complete) }
+    before { allow(batch).to receive(:on_complete).and_return(true) }
     before { allow(batch).to receive(:update_state).with(child_batch.batch_id, :completed) }
     before { allow(worker).to receive(:on_child_complete).with(child_batch.worker) }
-    before { parent_batch && allow(parent_batch).to(receive(:on_child_complete).with(batch)).and_return(true) }
     before { batch.jobs.push(child_worker) }
     before { batch.save }
 
     context 'with batch complete' do
       after { expect(batch).to have_received(:update_state) }
       after { expect(worker).to have_received(:on_child_complete) }
-      after { expect(parent_batch).to have_received(:on_child_complete) }
+      after { expect(batch).to have_received(:on_complete) }
       it { is_expected.to be_truthy }
     end
 
@@ -284,15 +305,7 @@ RSpec.describe Cloudtasker::Batch::Job do
 
       after { expect(batch).to have_received(:update_state) }
       after { expect(worker).to have_received(:on_child_complete) }
-      after { expect(parent_batch).not_to have_received(:on_child_complete) }
-      it { is_expected.to be_falsey }
-    end
-
-    context 'with no parent batch' do
-      let(:parent_batch) { nil }
-
-      after { expect(batch).to have_received(:update_state) }
-      after { expect(worker).to have_received(:on_child_complete) }
+      after { expect(batch).not_to have_received(:on_complete) }
       it { is_expected.to be_falsey }
     end
   end
@@ -355,34 +368,27 @@ RSpec.describe Cloudtasker::Batch::Job do
     before do
       allow(batch).to receive(:complete?).and_return(complete)
       allow(batch).to receive(:parent_batch).and_return(parent_batch)
-      allow(batch).to receive(:on_child_complete)
-      allow(worker).to receive(:on_batch_complete)
+      allow(batch).to receive(:on_complete)
 
-      if parent_batch
-        allow(parent_batch).to(receive(:on_child_complete).with(batch)).and_return(true)
-        allow(parent_batch).to(receive(:on_batch_node_complete).with(batch)).and_return(true)
-      end
+      allow(parent_batch).to(receive(:on_batch_node_complete).with(batch)).and_return(true) if parent_batch
     end
 
     context 'with job reenqueued' do
       before { worker.job_reenqueued = true }
-      after { expect(worker).not_to have_received(:on_batch_complete) }
-      after { expect(parent_batch).not_to have_received(:on_child_complete) }
+      after { expect(batch).not_to have_received(:on_complete) }
       after { expect(parent_batch).not_to have_received(:on_batch_node_complete) }
       it { is_expected.to be_truthy }
     end
 
     context 'with child jobs' do
       before { batch.jobs.push(worker.new_instance) }
-      after { expect(worker).not_to have_received(:on_batch_complete) }
-      after { expect(parent_batch).not_to have_received(:on_child_complete) }
+      after { expect(batch).not_to have_received(:on_complete) }
       after { expect(parent_batch).not_to have_received(:on_batch_node_complete) }
       it { is_expected.to be_truthy }
     end
 
     context 'with batch incomplete' do
-      after { expect(worker).not_to have_received(:on_batch_complete) }
-      after { expect(parent_batch).not_to have_received(:on_child_complete) }
+      after { expect(batch).not_to have_received(:on_complete) }
       after { expect(parent_batch).to have_received(:on_batch_node_complete) }
       it { is_expected.to be_truthy }
     end
@@ -390,8 +396,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     context 'with batch complete' do
       let(:complete) { true }
 
-      after { expect(worker).to have_received(:on_batch_complete) }
-      after { expect(parent_batch).to have_received(:on_child_complete) }
+      after { expect(batch).to have_received(:on_complete) }
       after { expect(parent_batch).to have_received(:on_batch_node_complete) }
       it { is_expected.to be_truthy }
     end
@@ -399,7 +404,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     context 'with batch complete no parent batch' do
       let(:complete) { true }
 
-      after { expect(worker).to have_received(:on_batch_complete) }
+      after { expect(batch).to have_received(:on_complete) }
       it { is_expected.to be_truthy }
     end
   end
