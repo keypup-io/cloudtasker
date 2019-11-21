@@ -165,7 +165,7 @@ module Cloudtasker
       # Deliver the task to the processing endpoint.
       #
       def deliver
-        Cloudtasker.logger.info("[#{id}] Processing task...")
+        Cloudtasker.logger.info(format_log_message('Processing task...'))
 
         # Send request
         resp = http_client.request(request_content)
@@ -173,10 +173,10 @@ module Cloudtasker
         # Delete task if successful
         if resp.code.to_s =~ /20\d/
           destroy
-          Cloudtasker.logger.info("[#{id}] Task processed successfully")
+          Cloudtasker.logger.info(format_log_message('Task handled successfully'))
         else
           retry_later(RETRY_INTERVAL)
-          Cloudtasker.logger.info("[#{id}] Task failure - Retry in #{RETRY_INTERVAL} seconds...")
+          Cloudtasker.logger.info(format_log_message("Task failure - Retry in #{RETRY_INTERVAL} seconds..."))
         end
 
         resp
@@ -194,6 +194,17 @@ module Cloudtasker
       end
 
       private
+
+      #
+      # Format a log message
+      #
+      # @param [String] msg The message to log.
+      #
+      # @return [String] The formatted message
+      #
+      def format_log_message(msg)
+        "[Cloudtasker/Server][#{id}] #{msg}"
+      end
 
       #
       # Return the HTTP client.

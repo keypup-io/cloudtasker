@@ -35,7 +35,7 @@ module Cloudtasker
           process_jobs
           sleep 1
         end
-        Cloudtasker.logger.info('Local server exiting...')
+        Cloudtasker.logger.info('[Cloudtasker/Server] Local server exiting...')
       end
     end
 

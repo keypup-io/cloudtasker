@@ -72,8 +72,14 @@ module Cloudtasker
     #
     def run
       boot_system
+
+      # Print banner
       environment == 'development' ? print_banner : print_non_dev_warning
-      logger.info "Booted Rails #{::Rails.version} application in #{environment} environment" if rails_app?
+
+      # Print rails info
+      if rails_app?
+        logger.info "[Cloudtasker/Server] Booted Rails #{::Rails.version} application in #{environment} environment"
+      end
 
       # Get internal read/write pip
       self_read, self_write = IO.pipe
@@ -81,7 +87,7 @@ module Cloudtasker
       # Setup signals to trap
       setup_signals(self_write)
 
-      logger.info "Running in #{RUBY_DESCRIPTION}"
+      logger.info "[Cloudtasker/Server] Running in #{RUBY_DESCRIPTION}"
 
       # Wait for signals
       wait_for_signal(self_read)
