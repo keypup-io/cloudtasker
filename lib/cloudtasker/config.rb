@@ -7,7 +7,7 @@ module Cloudtasker
   class Config
     attr_accessor :redis
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
-                :gcp_queue_id, :processor_host, :processor_path, :logger, :mode
+                :gcp_queue_id, :processor_path, :logger, :mode
 
     DEFAULT_LOCATION_ID = 'us-east1'
     DEFAULT_PROCESSOR_PATH = '/cloudtasker/run'
@@ -52,7 +52,7 @@ module Cloudtasker
     #
     # Return the Cloudtasker logger.
     #
-    # @return [Logger] The cloudtasker logger.
+    # @return [Logger, any] The cloudtasker logger.
     #
     def logger
       @logger ||= ::Logger.new(STDOUT)
@@ -66,6 +66,13 @@ module Cloudtasker
     #
     def processor_url
       File.join(processor_host, processor_path)
+    end
+
+    def processor_host=(val)
+      @processor_host = val
+
+      # Add processor host to the list of authorized hosts
+      Rails.application.config.hosts << val.gsub(%r{https?://}, '') if val && defined?(Rails)
     end
 
     #
@@ -124,7 +131,7 @@ module Cloudtasker
     #
     def secret
       @secret || (
-        defined?(Rails) && Rails.application.credentials&.secret_key_base
+        defined?(Rails) && Rails.application.credentials&.dig(:secret_key_base)
       ) || raise(StandardError, SECRET_MISSING_ERROR)
     end
 

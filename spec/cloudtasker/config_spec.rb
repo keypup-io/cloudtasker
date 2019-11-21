@@ -10,6 +10,12 @@ RSpec.describe Cloudtasker::Config do
   let(:logger) { Logger.new(nil) }
   let(:mode) { :production }
 
+  let(:rails_secret) { 'rails_secret' }
+  let(:rails_credentials) { { secret_key_base: rails_secret } }
+  let(:rails_config) { instance_double('Rails::Application::Configuration', hosts: []) }
+  let(:rails_app) { instance_double('Dummy::Application', credentials: rails_credentials, config: rails_config) }
+  let(:rails_klass) { class_double('Rails', application: rails_app) }
+
   let(:config) do
     Cloudtasker.configure do |c|
       c.mode = mode
@@ -97,14 +103,8 @@ RSpec.describe Cloudtasker::Config do
 
     context 'with Rails secret available' do
       let(:secret) { nil }
-      let(:rails_secret) { 'rails_secret' }
-      let(:rails_app) { instance_double('application') }
-      let(:credentials) { instance_double('credentials') }
 
-      before { stub_const('Rails', Class.new) }
-      before { allow(Rails).to receive(:application).and_return(rails_app) }
-      before { allow(rails_app).to receive(:credentials).and_return(credentials) }
-      before { allow(credentials).to receive(:secret_key_base).and_return(rails_secret) }
+      before { stub_const('Rails', rails_klass) }
       it { is_expected.to eq(rails_secret) }
     end
 
@@ -159,6 +159,16 @@ RSpec.describe Cloudtasker::Config do
 
   describe '#processor_host' do
     subject(:method) { config.processor_host }
+
+    context 'with rails' do
+      subject { rails_klass.application.config.hosts }
+
+      let(:expected_host) { 'localhost' }
+
+      before { stub_const('Rails', rails_klass) }
+      before { config }
+      it { is_expected.to include(expected_host) }
+    end
 
     context 'with value specified via config' do
       it { is_expected.to eq(processor_host) }
