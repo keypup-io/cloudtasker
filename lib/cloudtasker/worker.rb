@@ -54,9 +54,9 @@ module Cloudtasker
       #
       # Set the worker runtime options.
       #
-      # @param [Hash] opts The worker options
+      # @param [Hash] opts The worker options.
       #
-      # @return [<Type>] <description>
+      # @return [Hash] The options set.
       #
       def cloudtasker_options(opts = {})
         opt_list = opts&.map { |k, v| [k.to_s, v] } || [] # stringify
@@ -69,7 +69,7 @@ module Cloudtasker
       # @return [Hash] The worker runtime options.
       #
       def cloudtasker_options_hash
-        @cloudtasker_options_hash
+        @cloudtasker_options_hash || {}
       end
 
       #
@@ -121,14 +121,26 @@ module Cloudtasker
     end
 
     #
+    # Return the Cloudtasker logger instance.
+    #
+    # @return [Logger, any] The cloudtasker logger.
+    #
+    def logger
+      @logger ||= WorkerLogger.new(self)
+    end
+
+    #
     # Execute the worker by calling the `perform` with the args.
     #
     # @return [Any] The result of the perform.
     #
     def execute
-      Cloudtasker.config.server_middleware.invoke(self) do
+      logger.info('Starting job...')
+      resp = Cloudtasker.config.server_middleware.invoke(self) do
         perform(*job_args)
       end
+      logger.info('Job done')
+      resp
     end
 
     #

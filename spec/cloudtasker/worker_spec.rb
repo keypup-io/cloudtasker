@@ -141,6 +141,15 @@ RSpec.describe Cloudtasker::Worker do
     end
   end
 
+  describe '#logger' do
+    subject { worker.logger }
+
+    let(:worker) { worker_class.new(job_args: [1, 2]) }
+
+    it { is_expected.to be_a(Cloudtasker::WorkerLogger) }
+    it { is_expected.to have_attributes(worker: worker) }
+  end
+
   describe '#schedule' do
     subject { worker.schedule(interval: delay, time_at: time_at) }
 
