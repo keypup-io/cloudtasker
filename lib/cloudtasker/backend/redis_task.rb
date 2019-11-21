@@ -59,7 +59,9 @@ module Cloudtasker
       # @return [Cloudtasker::Backend::RedisTask] A task ready to process.
       #
       def self.pop
-        ready_to_process.first&.tap(&:destroy)
+        redis.with_lock('cloudtasker/server') do
+          ready_to_process.first&.tap(&:destroy)
+        end
       end
 
       #

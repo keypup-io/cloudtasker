@@ -53,7 +53,20 @@ module Cloudtasker
       while @threads.count < CONCURRENCY && (task = Cloudtasker::Backend::RedisTask.pop)
         @threads << Thread.new do
           Thread.current['task'] = task
-          task.deliver
+          Thread.current['attempts'] = 0
+
+          # Deliver task
+          begin
+            Thread.current['task'].deliver
+          rescue Errno::ECONNREFUSED => e
+            raise(e) unless Thread.current['attempts'] < 3
+
+            # Retry on connection error, in case the web server is not
+            # started yet.
+            Thread.current['attempts'] += 1
+            sleep(3)
+            retry
+          end
         end
       end
     end
