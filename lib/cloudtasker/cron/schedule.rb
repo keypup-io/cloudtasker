@@ -252,15 +252,25 @@ module Cloudtasker
       # then any existing cloud task is removed and a task is recreated.
       #
       def save(update_task: true)
-        return false unless valid? && changed?
+        return false unless valid?
 
         # Save schedule
         config_was_changed = config_changed?
         redis.write(gid, to_h)
 
         # Stop there if backend does not need update
-        return true unless update_task && config_was_changed
+        return true unless update_task && (config_was_changed || !task_id || !CloudTask.find(task_id))
 
+        # Update backend
+        persist_cloud_task
+      end
+
+      private
+
+      #
+      # Update the task in backend.
+      #
+      def persist_cloud_task
         # Delete previous instance
         CloudTask.delete(task_id) if task_id
 

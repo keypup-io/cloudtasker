@@ -292,11 +292,17 @@ RSpec.describe Cloudtasker::Cron::Schedule do
     subject { schedule.save }
 
     let(:job) { instance_double('Cloudtasker::Cron::Job') }
+    let(:existing_task) { nil }
+    let(:task_id) { nil }
 
-    before { allow(Cloudtasker::Cron::Job).to receive(:new).with(be_a(worker_klass)).and_return(job) }
-    before { allow(job).to receive(:set).with(schedule_id: id).and_return(job) }
-    before { allow(job).to receive(:schedule!).and_return(true) }
-    before { allow(Cloudtasker::CloudTask).to receive(:delete).with(be_a(String)) }
+    before do
+      schedule.task_id = task_id
+      allow(Cloudtasker::Cron::Job).to receive(:new).with(be_a(worker_klass)).and_return(job)
+      allow(job).to receive(:set).with(schedule_id: id).and_return(job)
+      allow(job).to receive(:schedule!).and_return(true)
+      allow(Cloudtasker::CloudTask).to receive(:delete).with(be_a(String))
+      allow(Cloudtasker::CloudTask).to receive(:find).with(be_a(String)).and_return(existing_task)
+    end
 
     context 'with invalid schedule' do
       before { allow(schedule).to receive(:valid?).and_return(false) }
@@ -315,7 +321,6 @@ RSpec.describe Cloudtasker::Cron::Schedule do
     context 'with config changed and task id' do
       let(:task_id) { '222' }
 
-      before { schedule.task_id = task_id }
       before { allow(schedule).to receive(:config_changed?).and_return(true) }
       after { expect(described_class.find(id)).to eq(schedule) }
       after { expect(job).to have_received(:schedule!) }
@@ -324,17 +329,24 @@ RSpec.describe Cloudtasker::Cron::Schedule do
     end
 
     context 'with non-config attributes changed' do
+      let(:task_id) { '222' }
+      let(:existing_task) { instance_double('Cloudtasker::CloudTask') }
+
       before { allow(schedule).to receive(:config_changed?).and_return(false) }
       after { expect(described_class.find(id)).to eq(schedule) }
       after { expect(job).not_to have_received(:schedule!) }
       it { is_expected.to be_truthy }
     end
 
-    context 'with attributes unchanged' do
-      before { allow(schedule).to receive(:changed?).and_return(false) }
-      after { expect(described_class.find(id)).to be_nil }
-      after { expect(job).not_to have_received(:schedule!) }
-      it { is_expected.to be_falsey }
+    context 'with no change but cloud task absent in backend' do
+      let(:task_id) { '222' }
+      let(:existing_task) { nil }
+
+      before { allow(schedule).to receive(:config_changed?).and_return(false) }
+      after { expect(described_class.find(id)).to eq(schedule) }
+      after { expect(job).to have_received(:schedule!) }
+      after { expect(Cloudtasker::CloudTask).to have_received(:delete).with(task_id) }
+      it { is_expected.to be_truthy }
     end
   end
 end
