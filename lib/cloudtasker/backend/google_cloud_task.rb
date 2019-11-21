@@ -117,7 +117,7 @@ module Cloudtasker
         {
           id: gcp_task.name,
           http_request: gcp_task.to_h[:http_request],
-          schedule_time: gcp_task.to_h[:schedule_time].to_i
+          schedule_time: gcp_task.to_h.dig(:schedule_time, :seconds).to_i
         }
       end
     end

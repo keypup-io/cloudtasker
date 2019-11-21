@@ -154,7 +154,7 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
       instance_double(
         'Google::Cloud::Tasks::V2beta3::Task',
         name: id,
-        to_h: job_payload
+        to_h: job_payload.merge(schedule_time: { seconds: job_payload[:schedule_time] })
       )
     end
 
