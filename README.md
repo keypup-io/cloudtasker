@@ -447,6 +447,6 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 Everyone interacting in the Cloudtasker project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/alachaum/cloudtasker/blob/master/CODE_OF_CONDUCT.md).
 
-## Credits
+## Author
 
-Provided with :love: by keypup.io
+Provided with :heart: by [keypup.io](https://keypup.io/)
