@@ -14,7 +14,8 @@ RSpec.describe Cloudtasker::Config do
   let(:rails_credentials) { { secret_key_base: rails_secret } }
   let(:rails_config) { instance_double('Rails::Application::Configuration', hosts: []) }
   let(:rails_app) { instance_double('Dummy::Application', credentials: rails_credentials, config: rails_config) }
-  let(:rails_klass) { class_double('Rails', application: rails_app) }
+  let(:rails_logger) { instance_double('ActiveSupport::Logger') }
+  let(:rails_klass) { class_double('Rails', application: rails_app, logger: rails_logger) }
 
   let(:config) do
     Cloudtasker.configure do |c|
@@ -83,14 +84,21 @@ RSpec.describe Cloudtasker::Config do
   describe '#logger' do
     subject { config.logger }
 
-    context 'with no logger provider' do
+    context 'with no logger provided' do
       let(:logger) { nil }
 
       it { is_expected.to be_a(::Logger) }
     end
 
-    context 'with logger provider' do
+    context 'with logger provided' do
       it { is_expected.to eq(logger) }
+    end
+
+    context 'with Rails and no logger provided' do
+      let(:logger) { nil }
+
+      before { stub_const('Rails', rails_klass) }
+      it { is_expected.to eq(rails_logger) }
     end
   end
 

@@ -55,7 +55,7 @@ module Cloudtasker
     # @return [Logger, any] The cloudtasker logger.
     #
     def logger
-      @logger ||= ::Logger.new(STDOUT)
+      @logger ||= defined?(Rails) ? Rails.logger : ::Logger.new(STDOUT)
     end
 
     #
@@ -68,6 +68,12 @@ module Cloudtasker
       File.join(processor_host, processor_path)
     end
 
+    #
+    # Set the processor host. In the context of Rails the host will
+    # also be added to the list of authorized Rails hosts.
+    #
+    # @param [String] val The processor host to set.
+    #
     def processor_host=(val)
       @processor_host = val
 
