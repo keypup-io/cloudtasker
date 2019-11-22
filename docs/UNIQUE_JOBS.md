@@ -4,6 +4,20 @@
 
 The Cloudtasker unique job extension allows you to define uniqueness rules for jobs you schedule or process based on job arguments.
 
+## Configuration
+
+You can enable unique jobs by adding the following to your cloudtasker initializer:
+```ruby
+# The unique job extension is optional and must be explicitly required
+require 'cloudtasker/unique_job'
+
+Cloudtasker.configure do |config|
+  # Specify your redis url.
+  # Defaults to `redis://localhost:6379/0` if unspecified
+  config.redis = { url: 'redis://some-host:6379/0' }
+end
+```
+
 ## Example
 
 The following example defines a worker that prevents more than one instance to run at the same time for the set of provided arguments. Any identical job scheduled after the first one will be re-enqueued until the first job has finished running.
@@ -19,6 +33,7 @@ class UniqAtRuntimeWorker
   #
   # on_conflict: specify what to do if another identical instance enter the lock phase. 
   # In this case the worker will be rescheduled until the lock becomes available.
+  #
   cloudtasker_options lock: :while_executing, on_conflict: :reschedule
 
   def perform(arg1, arg2)
@@ -109,4 +124,4 @@ end
 
 ## Beware of default method arguments
 
-Default method arguments are ignored when evaluating worker uniqueness. See [this section](../#be-careful-with-default-arguments) for more details.
+Default method arguments are ignored when evaluating worker uniqueness. See [this section](../../../#be-careful-with-default-arguments) for more details.
