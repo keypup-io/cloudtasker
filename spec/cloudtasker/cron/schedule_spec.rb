@@ -51,7 +51,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
     let(:existing) { described_class.new(id: 'ToDelete', cron: cron, worker: worker_klass.to_s) }
     let(:hash) do
       {
-        id => { 'cron' => cron, 'worker' => worker_klass.to_s }
+        id.to_sym => { cron: cron, worker: worker_klass.to_s }
       }
     end
 

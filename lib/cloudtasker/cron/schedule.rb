@@ -56,7 +56,7 @@ module Cloudtasker
       #
       def self.load_from_hash!(hash)
         schedules = hash.map do |id, config|
-          schedule_config = JSON.parse(config.to_json, symbolize_names: true).merge(id: id)
+          schedule_config = JSON.parse(config.to_json, symbolize_names: true).merge(id: id.to_s)
           create(schedule_config)
         end
 
