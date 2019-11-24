@@ -141,6 +141,9 @@ module Cloudtasker
       end
       logger.info('Job done')
       resp
+    rescue StandardError => e
+      try(:on_error, e)
+      raise(e)
     end
 
     #

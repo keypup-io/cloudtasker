@@ -200,6 +200,12 @@ class FetchResourceWorker
 end
 ```
 
+## Extensions
+Cloudtasker comes with three optional features:
+- Cron Jobs [[docs](docs/CRON_JOBS.md)]: Run jobs at fixed intervals.
+- Batch Jobs [[docs](docs/BATCH_JOBS.md)]: Run jobs in jobs and track completion of the overall batch.
+- Unique Jobs [[docs](docs/UNIQUE_JOBS.md)]: Ensure uniqueness of jobs based on job arguments. 
+
 ## Working locally
 
 Cloudtasker pushes jobs to Google Cloud Tasks, which in turn sends jobs for processing to your application via HTTP POST requests to the `/cloudtasker/run` endpoint of the publicly accessible domain of your application.
@@ -334,13 +340,41 @@ end
 
 See the [Cloudtasker::Worker class](blob/master/lib/cloudtasker/worker.rb) for more information on attributes available to be logged in your `log_context_processor` proc.
 
-## Extensions
-Cloudtasker comes with three optional features:
-- Cron Jobs [[docs](docs/CRON_JOBS.md)]: Run jobs at fixed intervals.
-- Batch Jobs [[docs](docs/BATCH_JOBS.md)]: Run jobs in jobs and track completion of the overall batch.
-- Unique Jobs [[docs](docs/UNIQUE_JOBS.md)]: Ensure uniqueness of jobs based on job arguments. 
+## Error Handling
+
+Jobs failing will automatically return an HTTP error to Cloud Task and trigger a retry at a later time. The number of retries Cloud Task will do depends on the configuration of your queue in Cloud Tasks.
+
+### HTTP Error codes
+
+Jobs failing will automatically return the following HTTP error code to Cloud Tasks, based on the actual reason:
+
+| Code | Description |
+|------|-------------|-----------|
+| 404 | The job has specified an incorrect worker class.  |
+| 422 | An error happened during the execution of the worker (`perform` method) |
+
+### Error callback
+
+Your workers can implement the `on_error(error)` callback to do things when a job fails during its execution:
+
+E.g.
+```ruby
+class HandleErrorWorker
+  include Cloudtasker::Worker
+
+  def perform()
+    raise(ArgumentError)
+  end
+
+  # The runtime error is passed as an argument.
+  def on_error(error)
+    logger.error("The following error happened: #{error}")
+  end
+end
+```
 
 ## Best practices building workers
+
 Below are recommendations and notes about creating workers.
 
 ### Use primitive arguments

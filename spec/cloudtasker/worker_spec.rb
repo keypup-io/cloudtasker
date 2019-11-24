@@ -176,7 +176,7 @@ RSpec.describe Cloudtasker::Worker do
   end
 
   describe '#execute' do
-    subject { worker.execute }
+    subject(:execute) { worker.execute }
 
     let(:worker) { worker_class.new(job_args: args, job_id: SecureRandom.uuid) }
     let(:args) { [1, 2] }
@@ -190,6 +190,14 @@ RSpec.describe Cloudtasker::Worker do
       before { Cloudtasker.config.server_middleware.add(TestMiddleware) }
       after { expect(worker.middleware_called).to be_truthy }
       it { is_expected.to eq(resp) }
+    end
+
+    context 'with runtime error' do
+      let(:error) { StandardError.new('some-message') }
+
+      before { allow(worker).to receive(:perform).and_raise(error) }
+      before { allow(worker).to receive(:on_error).with(error) }
+      it { expect { execute }.to raise_error(error) }
     end
   end
 
