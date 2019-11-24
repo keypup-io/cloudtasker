@@ -18,7 +18,7 @@ module Cloudtasker
       # Terminate threads and repush tasks
       @threads&.each do |t|
         t.terminate
-        t['task']&.retry_later(0)
+        t['task']&.retry_later(0, is_error: false)
       end
 
       # Wait for main server to be done

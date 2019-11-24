@@ -9,6 +9,7 @@ RSpec.describe Cloudtasker::Config do
   let(:processor_path) { nil }
   let(:logger) { Logger.new(nil) }
   let(:mode) { :production }
+  let(:max_retries) { 10 }
 
   let(:rails_secret) { 'rails_secret' }
   let(:rails_credentials) { { secret_key_base: rails_secret } }
@@ -27,9 +28,24 @@ RSpec.describe Cloudtasker::Config do
       c.gcp_queue_id = gcp_queue_id
       c.processor_host = processor_host
       c.processor_path = processor_path
+      c.max_retries = max_retries
     end
 
     Cloudtasker.config
+  end
+
+  describe '#max_retries' do
+    subject { config.max_retries }
+
+    context 'with value specified via config' do
+      it { is_expected.to eq(max_retries) }
+    end
+
+    context 'with no value' do
+      let(:max_retries) { nil }
+
+      it { is_expected.to eq(described_class::DEFAULT_MAX_RETRY_ATTEMPTS) }
+    end
   end
 
   describe '#mode' do

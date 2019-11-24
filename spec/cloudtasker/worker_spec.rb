@@ -29,19 +29,23 @@ RSpec.describe Cloudtasker::Worker do
     let(:job_id) { '123' }
     let(:job_args) { [1, 2] }
     let(:job_meta) { { foo: 'bar' } }
+    let(:job_retries) { 3 }
     let(:worker_class_name) { worker_class.to_s }
     let(:worker_hash) do
       {
         worker: worker_class_name,
         job_id: job_id,
         job_args: job_args,
-        job_meta: job_meta
+        job_meta: job_meta,
+        job_retries: job_retries
       }
     end
 
     context 'with valid worker' do
+      let(:expected_attrs) { { job_id: job_id, job_args: job_args, job_meta: eq(job_meta), job_retries: job_retries } }
+
       it { is_expected.to be_a(worker_class) }
-      it { is_expected.to have_attributes(job_id: job_id, job_args: job_args, job_meta: eq(job_meta)) }
+      it { is_expected.to have_attributes(expected_attrs) }
     end
 
     context 'with invalid worker' do
@@ -118,7 +122,28 @@ RSpec.describe Cloudtasker::Worker do
 
     before { worker_class.cloudtasker_options(opts) }
     after { worker_class.cloudtasker_options(original_opts) }
-    it { is_expected.to eq(Hash[opts.map { |k, v| [k.to_s, v] }]) }
+    it { is_expected.to eq(Hash[opts.map { |k, v| [k.to_sym, v] }]) }
+  end
+
+  describe '.max_retries' do
+    subject { worker_class.max_retries }
+
+    let(:opts) { {} }
+    let!(:original_opts) { worker_class.cloudtasker_options_hash }
+
+    before { worker_class.cloudtasker_options(opts) }
+    after { worker_class.cloudtasker_options(original_opts) }
+
+    context 'with value configured locally' do
+      let(:retries) { Cloudtasker.config.max_retries - 5 }
+      let(:opts) { { max_retries: retries } }
+
+      it { is_expected.to eq(retries) }
+    end
+
+    context 'with value configured globally' do
+      it { is_expected.to eq(Cloudtasker.config.max_retries) }
+    end
   end
 
   describe '.new' do
@@ -127,17 +152,18 @@ RSpec.describe Cloudtasker::Worker do
     let(:id) { SecureRandom.uuid }
     let(:args) { [1, 2] }
     let(:meta) { { foo: 'bar' } }
+    let(:retries) { 3 }
 
     context 'without args' do
       let(:worker_args) { {} }
 
-      it { is_expected.to have_attributes(job_args: [], job_id: be_present) }
+      it { is_expected.to have_attributes(job_args: [], job_id: be_present, job_retries: 0) }
     end
 
     context 'with args' do
-      let(:worker_args) { { job_args: args, job_id: id, job_meta: meta } }
+      let(:worker_args) { { job_args: args, job_id: id, job_meta: meta, job_retries: retries } }
 
-      it { is_expected.to have_attributes(job_args: args, job_id: id, job_meta: eq(meta)) }
+      it { is_expected.to have_attributes(job_args: args, job_id: id, job_meta: eq(meta), job_retries: retries) }
     end
   end
 
@@ -197,7 +223,20 @@ RSpec.describe Cloudtasker::Worker do
 
       before { allow(worker).to receive(:perform).and_raise(error) }
       before { allow(worker).to receive(:on_error).with(error) }
+      after { expect(worker).to have_received(:on_error) }
       it { expect { execute }.to raise_error(error) }
+    end
+
+    context 'with dead job' do
+      let(:error) { StandardError.new('some-message') }
+
+      before { worker.job_retries = worker_class.max_retries }
+      before { allow(worker).to receive(:perform).and_raise(error) }
+      before { allow(worker).to receive(:on_error).with(error) }
+      before { allow(worker).to receive(:on_dead).with(error) }
+      after { expect(worker).to have_received(:on_error) }
+      after { expect(worker).to have_received(:on_dead) }
+      it { expect { execute }.to raise_error(Cloudtasker::DeadWorkerError) }
     end
   end
 
@@ -231,13 +270,15 @@ RSpec.describe Cloudtasker::Worker do
 
     let(:job_args) { [1, 2] }
     let(:job_meta) { { foo: 'bar' } }
-    let(:worker) { worker_class.new(job_args: job_args, job_meta: job_meta) }
+    let(:job_retries) { 3 }
+    let(:worker) { worker_class.new(job_args: job_args, job_meta: job_meta, job_retries: job_retries) }
     let(:expected_hash) do
       {
         worker: worker.class.to_s,
         job_id: worker.job_id,
         job_args: worker.job_args,
-        job_meta: worker.job_meta.to_h
+        job_meta: worker.job_meta.to_h,
+        job_retries: worker.job_retries
       }
     end
 
@@ -267,6 +308,24 @@ RSpec.describe Cloudtasker::Worker do
 
     context 'with different object' do
       it { is_expected.not_to eq('foo') }
+    end
+  end
+
+  describe '#job_dead?' do
+    subject { worker }
+
+    let(:worker) { worker_class.new(job_retries: job_retries) }
+
+    context 'with job retries exceeded' do
+      let(:job_retries) { Cloudtasker.config.max_retries }
+
+      it { is_expected.to be_job_dead }
+    end
+
+    context 'with job retrieve below max' do
+      let(:job_retries) { Cloudtasker.config.max_retries - 1 }
+
+      it { is_expected.not_to be_job_dead }
     end
   end
 end

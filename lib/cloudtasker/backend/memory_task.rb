@@ -168,8 +168,11 @@ module Cloudtasker
       # @return [Any] The return value of the worker perform method.
       #
       def execute
+        resp = worker.execute
         self.class.delete(id)
-        worker.execute
+        resp
+      rescue StandardError
+        worker.job_retries += 1
       end
 
       #

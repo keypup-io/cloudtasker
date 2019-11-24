@@ -6,7 +6,7 @@ module Cloudtasker
   module Backend
     # Manage local tasks pushed to Redis
     class RedisTask
-      attr_reader :id, :http_request, :schedule_time
+      attr_reader :id, :http_request, :schedule_time, :retries
 
       RETRY_INTERVAL = 20 # seconds
 
@@ -107,11 +107,13 @@ module Cloudtasker
       # @param [String] id The ID of the task.
       # @param [Hash] http_request The HTTP request content.
       # @param [Integer] schedule_time When to run the task (Unix timestamp)
+      # @param [Integer] retries The number of times the job failed.
       #
-      def initialize(id:, http_request:, schedule_time: nil)
+      def initialize(id:, http_request:, schedule_time: nil, retries: 0)
         @id = id
         @http_request = http_request
         @schedule_time = Time.at(schedule_time || 0)
+        @retries = retries || 0
       end
 
       #
@@ -132,7 +134,8 @@ module Cloudtasker
         {
           id: id,
           http_request: http_request,
-          schedule_time: schedule_time.to_i
+          schedule_time: schedule_time.to_i,
+          retries: retries
         }
       end
 
@@ -150,8 +153,9 @@ module Cloudtasker
       #
       # @param [Integer] interval The delay in seconds before retrying the task
       #
-      def retry_later(interval)
+      def retry_later(interval, is_error: true)
         redis.write(gid,
+                    retries: is_error ? retries + 1 : retries,
                     http_request: http_request,
                     schedule_time: (Time.now + interval).to_i)
       end
@@ -230,6 +234,11 @@ module Cloudtasker
         @request_content ||= begin
           uri = URI(http_request[:url])
           req = Net::HTTP::Post.new(uri.path, http_request[:headers])
+
+          # Add retries header
+          req['X-CloudTasks-TaskExecutionCount'] = retries
+
+          # Set job payload
           req.body = http_request[:body]
           req
         end

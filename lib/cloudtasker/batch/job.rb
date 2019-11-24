@@ -9,6 +9,9 @@ module Cloudtasker
       # Key Namespace used for object saved under this class
       SUB_NAMESPACE = 'job'
 
+      # List of statuses triggering a completion callback
+      COMPLETION_STATUSES = %w[completed dead].freeze
+
       #
       # Return the cloudtasker redis client
       #
@@ -223,7 +226,7 @@ module Cloudtasker
           return true unless state
 
           # Check that all children are complete
-          state.values.all? { |e| e == 'completed' }
+          state.values.all? { |e| COMPLETION_STATUSES.include?(e) }
         end
       end
 
@@ -247,11 +250,12 @@ module Cloudtasker
       #
       # Callback invoked when the batch is complete
       #
-      def on_complete
-        run_worker_callback(:on_batch_complete)
+      def on_complete(status = :completed)
+        # Invoke worker callback
+        run_worker_callback(:on_batch_complete) if status == :completed
 
         # Propagate event
-        parent_batch&.on_child_complete(self)
+        parent_batch&.on_child_complete(self, status)
       ensure
         # The batch tree is complete. Cleanup the tree.
         cleanup unless parent_batch
@@ -262,15 +266,22 @@ module Cloudtasker
       #
       # @param [Cloudtasker::Batch::Job] child_batch The completed child batch.
       #
-      def on_child_complete(child_batch)
+      def on_child_complete(child_batch, status = :completed)
         # Update batch state
-        update_state(child_batch.batch_id, :completed)
+        update_state(child_batch.batch_id, status)
 
         # Notify the worker that a direct batch child worker has completed
-        run_worker_callback(:on_child_complete, child_batch.worker)
+        case status
+        when :completed
+          run_worker_callback(:on_child_complete, child_batch.worker)
+        when :errored
+          run_worker_callback(:on_child_error, child_batch.worker)
+        when :dead
+          run_worker_callback(:on_child_dead, child_batch.worker)
+        end
 
         # Notify the parent batch that we are done with this batch
-        on_complete if complete?
+        on_complete if status != :errored && complete?
       end
 
       #
@@ -278,7 +289,9 @@ module Cloudtasker
       #
       # @param [Cloudtasker::Batch::Job] child_batch The completed child batch.
       #
-      def on_batch_node_complete(child_batch)
+      def on_batch_node_complete(child_batch, status = :completed)
+        return false unless status == :completed
+
         # Notify the worker that a batch node worker has completed
         run_worker_callback(:on_batch_node_complete, child_batch.worker)
 
@@ -334,14 +347,14 @@ module Cloudtasker
       #
       # Post-perform logic. The parent batch is notified if the job is complete.
       #
-      def complete
+      def complete(status = :completed)
         return true if reenqueued? || jobs.any?
 
         # Notify the parent batch that a child is complete
-        on_complete if complete?
+        on_complete(status) if complete?
 
         # Notify the parent that a batch node has completed
-        parent_batch&.on_batch_node_complete(self)
+        parent_batch&.on_batch_node_complete(self, status)
       end
 
       #
@@ -358,7 +371,13 @@ module Cloudtasker
         setup
 
         # Complete batch
-        complete
+        complete(:success)
+      rescue DeadWorkerError => e
+        complete(:dead)
+        raise(e)
+      rescue StandardError => e
+        complete(:errored)
+        raise(e)
       end
     end
   end

@@ -189,15 +189,25 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
   end
 
   describe '#execute' do
-    subject { task.execute }
+    subject(:execute) { task.execute }
 
-    let(:worker) { instance_double('Cloudtasker::Worker') }
+    let(:worker) { TestWorker.new }
     let(:resp) { 'some-response' }
 
     before { allow(task).to receive(:worker).and_return(worker) }
     before { allow(worker).to receive(:execute).and_return(resp) }
     before { allow(described_class).to receive(:delete).with(task_id) }
-    it { is_expected.to eq(resp) }
+
+    context 'with success' do
+      it { is_expected.to eq(resp) }
+    end
+
+    context 'with error' do
+      before { allow(worker).to receive(:execute).and_raise(StandardError) }
+      after { expect(described_class).not_to have_received(:delete) }
+      after { expect(task.worker).to have_attributes(job_retries: 1) }
+      it { expect { execute }.not_to raise_error }
+    end
   end
 
   describe '#==' do

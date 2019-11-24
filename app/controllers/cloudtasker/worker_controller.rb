@@ -17,18 +17,34 @@ module Cloudtasker
     #
     def run
       WorkerHandler.execute_from_payload!(
-        request.params.slice(:worker, :job_id, :job_args, :job_meta)
+        request.params.slice(:worker, :job_id, :job_args, :job_meta).merge(
+          job_retries: job_retries
+        )
       )
       head :no_content
+    rescue Cloudtasker::DeadWorkerError
+      # 205: job will NOT be retried
+      head :reset_content
     rescue InvalidWorkerError
+      # 404: Job will be retried
       head :not_found
     rescue StandardError => e
+      # 404: Job will be retried
       Cloudtasker.logger.error(e)
       Cloudtasker.logger.error(e.backtrace.join("\n"))
       head :unprocessable_entity
     end
 
     private
+
+    #
+    # Extract the number of times this task failed at runtime.
+    #
+    # @return [Integer] The number of failures
+    #
+    def job_retries
+      request.headers[Cloudtasker::Config::RETRY_HEADER].to_i
+    end
 
     #
     # Authenticate incoming requests using a bearer token

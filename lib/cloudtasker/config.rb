@@ -7,10 +7,17 @@ module Cloudtasker
   class Config
     attr_accessor :redis
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
-                :gcp_queue_id, :processor_path, :logger, :mode
+                :gcp_queue_id, :processor_path, :logger, :mode, :max_retries
 
+    # Retry header in Cloud Task responses
+    RETRY_HEADER = 'X-CloudTasks-TaskExecutionCount'
+
+    # Default values
     DEFAULT_LOCATION_ID = 'us-east1'
     DEFAULT_PROCESSOR_PATH = '/cloudtasker/run'
+
+    # The number of times jobs will be attempted before declaring them dead
+    DEFAULT_MAX_RETRY_ATTEMPTS = 25
 
     PROCESSOR_HOST_MISSING = <<~DOC
       Missing host for processing.
@@ -28,6 +35,17 @@ module Cloudtasker
       Missing cloudtasker secret.
       Please specify a secret in the cloudtasker initializer or add Rails secret_key_base in your credentials
     DOC
+
+    #
+    # The number of times jobs will be retried. This number of
+    # retries does not include failures due to the application being unreachable.
+    #
+    #
+    # @return [Integer] The number of retries
+    #
+    def max_retries
+      @max_retries ||= DEFAULT_MAX_RETRY_ATTEMPTS
+    end
 
     #
     # The operating mode.

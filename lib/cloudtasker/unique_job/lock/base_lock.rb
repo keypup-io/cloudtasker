@@ -43,7 +43,7 @@ module Cloudtasker
           @conflict_instance ||=
             begin
               # Infer lock class and get instance
-              strategy_name = options[:on_conflict] || options['on_conflict']
+              strategy_name = options[:on_conflict]
               strategy_klass = ConflictStrategy.const_get(strategy_name.to_s.split('_').collect(&:capitalize).join)
               strategy_klass.new(job)
             rescue NameError

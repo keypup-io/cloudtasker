@@ -54,12 +54,30 @@ module Cloudtasker
       end
 
       #
+      # Return the number of jobs with errors.
+      #
+      # @return [Integer] The number of errored jobs.
+      #
+      def errored
+        @errored ||= count('errored')
+      end
+
+      #
+      # Return the number of dead jobs.
+      #
+      # @return [Integer] The number of dead jobs.
+      #
+      def dead
+        @dead ||= count('dead')
+      end
+
+      #
       # Return the number of jobs not completed yet.
       #
       # @return [Integer] The number of jobs pending.
       #
       def pending
-        total - completed
+        total - completed - dead
       end
 
       #

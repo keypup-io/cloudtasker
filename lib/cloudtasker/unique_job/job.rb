@@ -40,7 +40,7 @@ module Cloudtasker
         @lock_instance ||=
           begin
             # Infer lock class and get instance
-            lock_name = options[:lock] || options['lock']
+            lock_name = options[:lock]
             lock_klass = Lock.const_get(lock_name.to_s.split('_').collect(&:capitalize).join)
             lock_klass.new(self)
           rescue NameError

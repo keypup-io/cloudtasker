@@ -150,14 +150,21 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
     subject { described_class.new(resp).to_h }
 
     let(:id) { '123' }
+    let(:retries) { 3 }
+    let(:resp_payload) do
+      job_payload.merge(
+        schedule_time: { seconds: job_payload[:schedule_time] },
+        response_count: retries
+      )
+    end
     let(:resp) do
       instance_double(
         'Google::Cloud::Tasks::V2beta3::Task',
         name: id,
-        to_h: job_payload.merge(schedule_time: { seconds: job_payload[:schedule_time] })
+        to_h: resp_payload
       )
     end
 
-    it { is_expected.to eq(job_payload.merge(id: id)) }
+    it { is_expected.to eq(job_payload.merge(id: id, retries: retries)) }
   end
 end

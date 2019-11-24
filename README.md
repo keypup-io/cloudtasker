@@ -149,6 +149,14 @@ Cloudtasker.configure do |config|
   # config.logger = MyLogger.new(STDOUT)
 
   # 
+  # Specify how many retries are allowed on jobs. This number of retries excludes any
+  # connectivity error that would be due to the application being down or unreachable.
+  # 
+  # Default: 25
+  # 
+  # config.max_retries = 10
+
+  # 
   # Specify the redis connection hash.
   #
   # This is ONLY required in development for the Cloudtasker local server and in
@@ -350,19 +358,20 @@ Jobs failing will automatically return the following HTTP error code to Cloud Ta
 
 | Code | Description |
 |------|-------------|-----------|
+| 205 | The job is dead and has been removed from the queue |
 | 404 | The job has specified an incorrect worker class.  |
 | 422 | An error happened during the execution of the worker (`perform` method) |
 
-### Error callback
+### Error callbacks
 
-Your workers can implement the `on_error(error)` callback to do things when a job fails during its execution:
+Workers can implement the `on_error(error)` and `on_dead(error)` callbacks to do things when a job fails during its execution:
 
 E.g.
 ```ruby
 class HandleErrorWorker
   include Cloudtasker::Worker
 
-  def perform()
+  def perform
     raise(ArgumentError)
   end
 
@@ -370,8 +379,53 @@ class HandleErrorWorker
   def on_error(error)
     logger.error("The following error happened: #{error}")
   end
+
+  # The job has been retried too many times and will be removed
+  # from the queue.
+  def on_dead(error)
+    logger.error("The job died with the following error: #{error}")
+  end
 end
 ```
+
+### Max retries
+
+By default jobs are retried 25 times - using an exponential backoff - before being declared dead. This number of retries can be customized locally on workers and/or globally via the Cloudtasker initializer.
+
+Note that the number of retries set on your Cloud Task queue should be many times higher than the number of retries configured in Cloudtasker because Cloud Task also includes failures to connect to your application. Ideally set the number of retries to `unlimited` in Cloud Tasks.
+
+E.g. Set max number of retries globally via the cloudtasker initializer.
+```ruby
+# config/initializers/cloudtasker.rb
+
+Cloudtasker.configure do |config|
+  # 
+  # Specify how many retries are allowed on jobs. This number of retries excludes any
+  # connectivity error that would be due to the application being down or unreachable.
+  # 
+  # Default: 25
+  # 
+  config.max_retries = 10
+end
+```
+
+E.g. Set max number of retries to 3 on a given worker
+
+E.g.
+```ruby
+class SomeErrorWorker
+  include Cloudtasker::Worker
+
+  # This will override the global setting
+  cloudtasker_options max_retries: 3
+
+  def perform()
+    raise(ArgumentError)
+  end
+end
+```
+
+
 
 ## Best practices building workers
 

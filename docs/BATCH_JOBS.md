@@ -53,6 +53,14 @@ The following callbacks are available on your workers to track the progress of t
 
 | Callback | Argument | Description |
 |------|-------------|-----------|
-| `on_batch_node_complete` | `The child job` | Invoked when any descendant (e.g. sub-sub job) is complete   |
-| `on_child_complete` | `The child job` | Invoked when a direct descendant is complete   |
-| `on_batch_complete` | none | Invoked when all chidren have finished   |
+| `on_batch_node_complete` | `The child job` | Invoked when any descendant (e.g. sub-sub job) successfully completess   |
+| `on_child_complete` | `The child job` | Invoked when a direct descendant successfully completes   |
+| `on_child_error` | `The child job` | Invoked when a child fails |
+| `on_child_dead` | `The child job` | Invoked when a child has exhausted all of its retries |s
+| `on_batch_complete` | none | Invoked when all chidren have finished or died  |
+
+## Batch completion
+
+Batches complete when all children have successfully completed or died (all retries exhausted).
+
+Jobs that fail in a batch will be retried based on the `max_retries` setting configured globally or on the worker itself. The batch will be considered `pending` while workers retry. Therefore it may be a good idea to reduce the number of retries on your workers using `cloudtasker_options max_retries: 5` to ensure your batches don't hang for too long.

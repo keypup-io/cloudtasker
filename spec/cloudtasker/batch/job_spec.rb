@@ -251,6 +251,12 @@ RSpec.describe Cloudtasker::Batch::Job do
       it { is_expected.to be_complete }
     end
 
+    context 'with some jobs dead' do
+      let(:status) { 'dead' }
+
+      it { is_expected.to be_complete }
+    end
+
     context 'with some jobs pending' do
       let(:status) { 'processing' }
 
@@ -277,26 +283,44 @@ RSpec.describe Cloudtasker::Batch::Job do
   end
 
   describe '#on_complete' do
-    subject { batch.on_complete }
+    subject { batch.on_complete(status) }
 
-    let(:complete) { true }
+    let(:status) { :completed }
     let(:parent_batch) { instance_double(described_class.to_s) }
 
     before { allow(batch).to receive(:parent_batch).and_return(parent_batch) }
     before { allow(batch).to receive(:cleanup) }
     before { allow(batch).to receive(:run_worker_callback).with(:on_batch_complete) }
-    before { parent_batch && allow(parent_batch).to(receive(:on_child_complete).with(batch)).and_return(true) }
-
-    after { expect(batch).to have_received(:run_worker_callback) }
+    before { parent_batch && allow(parent_batch).to(receive(:on_child_complete).with(batch, status)).and_return(true) }
 
     context 'with no parent batch' do
       let(:parent_batch) { nil }
 
+      after { expect(batch).to have_received(:run_worker_callback) }
       after { expect(batch).to have_received(:cleanup) }
       it { is_expected.to be_falsey }
     end
 
     context 'with parent batch' do
+      after { expect(batch).to have_received(:run_worker_callback) }
+      after { expect(batch).not_to have_received(:cleanup) }
+      after { expect(parent_batch).to have_received(:on_child_complete) }
+      it { is_expected.to be_truthy }
+    end
+
+    context 'with status: errored' do
+      let(:status) { :errored }
+
+      after { expect(batch).not_to have_received(:run_worker_callback) }
+      after { expect(batch).not_to have_received(:cleanup) }
+      after { expect(parent_batch).to have_received(:on_child_complete) }
+      it { is_expected.to be_truthy }
+    end
+
+    context 'with status: dead' do
+      let(:status) { :dead }
+
+      after { expect(batch).not_to have_received(:run_worker_callback) }
       after { expect(batch).not_to have_received(:cleanup) }
       after { expect(parent_batch).to have_received(:on_child_complete) }
       it { is_expected.to be_truthy }
@@ -304,20 +328,21 @@ RSpec.describe Cloudtasker::Batch::Job do
   end
 
   describe '#on_child_complete' do
-    subject { batch.on_child_complete(child_batch) }
+    subject { batch.on_child_complete(child_batch, status) }
 
+    let(:status) { :completed }
     let(:complete) { true }
 
     before { allow(batch).to receive(:complete?).and_return(complete) }
     before { allow(batch).to receive(:on_complete).and_return(true) }
-    before { allow(batch).to receive(:update_state).with(child_batch.batch_id, :completed) }
-    before { allow(batch).to receive(:run_worker_callback).with(:on_child_complete, child_batch.worker) }
+    before { allow(batch).to receive(:update_state).with(child_batch.batch_id, status) }
+    before { allow(batch).to receive(:run_worker_callback) }
     before { batch.jobs.push(child_worker) }
     before { batch.save }
 
     context 'with batch complete' do
       after { expect(batch).to have_received(:update_state) }
-      after { expect(batch).to have_received(:run_worker_callback) }
+      after { expect(batch).to have_received(:run_worker_callback).with(:on_child_complete, child_batch.worker) }
       after { expect(batch).to have_received(:on_complete) }
       it { is_expected.to be_truthy }
     end
@@ -326,15 +351,34 @@ RSpec.describe Cloudtasker::Batch::Job do
       let(:complete) { false }
 
       after { expect(batch).to have_received(:update_state) }
-      after { expect(batch).to have_received(:run_worker_callback) }
+      after { expect(batch).to have_received(:run_worker_callback).with(:on_child_complete, child_batch.worker) }
       after { expect(batch).not_to have_received(:on_complete) }
       it { is_expected.to be_falsey }
+    end
+
+    context 'with status: errored' do
+      let(:status) { :errored }
+
+      after { expect(batch).to have_received(:update_state) }
+      after { expect(batch).to have_received(:run_worker_callback).with(:on_child_error, child_batch.worker) }
+      after { expect(batch).not_to have_received(:on_complete) }
+      it { is_expected.to be_falsey }
+    end
+
+    context 'with status: dead' do
+      let(:status) { :dead }
+
+      after { expect(batch).to have_received(:update_state) }
+      after { expect(batch).to have_received(:run_worker_callback).with(:on_child_dead, child_batch.worker) }
+      after { expect(batch).to have_received(:on_complete) }
+      it { is_expected.to be_truthy }
     end
   end
 
   describe '#on_batch_node_complete' do
-    subject { batch.on_batch_node_complete(child_batch) }
+    subject { batch.on_batch_node_complete(child_batch, status) }
 
+    let(:status) { :completed }
     let(:parent_batch) { instance_double(described_class.to_s) }
 
     before do
@@ -358,6 +402,22 @@ RSpec.describe Cloudtasker::Batch::Job do
       let(:parent_batch) { nil }
 
       after { expect(batch).to have_received(:run_worker_callback) }
+      it { is_expected.to be_falsey }
+    end
+
+    context 'with status: :errored' do
+      let(:status) { :errored }
+
+      after { expect(batch).not_to have_received(:run_worker_callback) }
+      after { expect(parent_batch).not_to have_received(:on_batch_node_complete) }
+      it { is_expected.to be_falsey }
+    end
+
+    context 'with status: :dead' do
+      let(:status) { :dead }
+
+      after { expect(batch).not_to have_received(:run_worker_callback) }
+      after { expect(parent_batch).not_to have_received(:on_batch_node_complete) }
       it { is_expected.to be_falsey }
     end
   end
@@ -409,17 +469,18 @@ RSpec.describe Cloudtasker::Batch::Job do
   end
 
   describe '#complete' do
-    subject { batch.complete }
+    subject { batch.complete(status) }
 
+    let(:status) { :completed }
     let(:complete) { false }
     let(:parent_batch) { instance_double(described_class.to_s) }
 
     before do
       allow(batch).to receive(:complete?).and_return(complete)
       allow(batch).to receive(:parent_batch).and_return(parent_batch)
-      allow(batch).to receive(:on_complete)
+      allow(batch).to receive(:on_complete).with(status)
 
-      allow(parent_batch).to(receive(:on_batch_node_complete).with(batch)).and_return(true) if parent_batch
+      allow(parent_batch).to(receive(:on_batch_node_complete).with(batch, status)).and_return(true) if parent_batch
     end
 
     context 'with job reenqueued' do
@@ -464,22 +525,41 @@ RSpec.describe Cloudtasker::Batch::Job do
     let(:parent_batch) { instance_double(described_class.to_s) }
 
     before { allow(batch).to receive(:parent_batch).and_return(parent_batch) }
-    before { parent_batch && allow(parent_batch).to(receive(:update_state).with(batch.batch_id, :processing)) }
+    before { parent_batch && allow(parent_batch).to(receive(:update_state).with(any_args)) }
     before { allow(batch).to receive(:setup) }
-    before { allow(batch).to receive(:complete) }
-
-    after { expect(batch).to have_received(:setup) }
-    after { expect(batch).to have_received(:complete) }
+    before { allow(batch).to receive(:complete).with(any_args) }
 
     context 'with parent_batch' do
-      after { expect(parent_batch).to have_received(:update_state) }
+      after { expect(parent_batch).to have_received(:update_state).with(batch.batch_id, :processing) }
+      after { expect(batch).to have_received(:setup) }
+      after { expect(batch).to have_received(:complete).with(:success) }
       it { expect { |b| batch.execute(&b) }.to yield_control }
     end
 
     context 'with no parent batch' do
       let(:parent_batch) { nil }
 
+      after { expect(batch).to have_received(:setup) }
+      after { expect(batch).to have_received(:complete).with(:success) }
       it { expect { |b| batch.execute(&b) }.to yield_control }
+    end
+
+    context 'with runtime error' do
+      let(:error) { ArgumentError.new }
+      let(:block) { proc { raise(error) } }
+
+      after { expect(batch).not_to have_received(:setup) }
+      after { expect(batch).to have_received(:complete).with(:errored) }
+      it { expect { batch.execute(&block) }.to raise_error(error) }
+    end
+
+    context 'with dead error' do
+      let(:error) { Cloudtasker::DeadWorkerError.new }
+      let(:block) { proc { raise(error) } }
+
+      after { expect(batch).not_to have_received(:setup) }
+      after { expect(batch).to have_received(:complete).with(:dead) }
+      it { expect { batch.execute(&block) }.to raise_error(error) }
     end
   end
 end

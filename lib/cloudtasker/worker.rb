@@ -6,7 +6,7 @@ module Cloudtasker
     # Add class method to including class
     def self.included(base)
       base.extend(ClassMethods)
-      base.attr_accessor :job_args, :job_id, :job_meta, :job_reenqueued
+      base.attr_accessor :job_args, :job_id, :job_meta, :job_reenqueued, :job_retries
     end
 
     #
@@ -44,7 +44,7 @@ module Cloudtasker
       return nil unless worker_klass.include?(self)
 
       # Return instantiated worker
-      worker_klass.new(payload.slice(:job_args, :job_id, :job_meta))
+      worker_klass.new(payload.slice(:job_args, :job_id, :job_meta, :job_retries))
     rescue NameError
       nil
     end
@@ -59,7 +59,7 @@ module Cloudtasker
       # @return [Hash] The options set.
       #
       def cloudtasker_options(opts = {})
-        opt_list = opts&.map { |k, v| [k.to_s, v] } || [] # stringify
+        opt_list = opts&.map { |k, v| [k.to_sym, v] } || [] # symbolize
         @cloudtasker_options_hash = Hash[opt_list]
       end
 
@@ -106,6 +106,15 @@ module Cloudtasker
       def perform_at(time_at, *args)
         new(job_args: args).schedule(time_at: time_at)
       end
+
+      #
+      # Return the numbeer of times this worker will be retried.
+      #
+      # @return [Integer] The number of retries.
+      #
+      def max_retries
+        cloudtasker_options_hash[:max_retries] || Cloudtasker.config.max_retries
+      end
     end
 
     #
@@ -114,10 +123,11 @@ module Cloudtasker
     # @param [Array<any>] job_args The list of perform args.
     # @param [String] job_id A unique ID identifying this job.
     #
-    def initialize(job_args: [], job_id: nil, job_meta: {})
+    def initialize(job_args: [], job_id: nil, job_meta: {}, job_retries: 0)
       @job_args = job_args
       @job_id = job_id || SecureRandom.uuid
       @job_meta = MetaStore.new(job_meta)
+      @job_retries = job_retries || 0
     end
 
     #
@@ -137,13 +147,20 @@ module Cloudtasker
     def execute
       logger.info('Starting job...')
       resp = Cloudtasker.config.server_middleware.invoke(self) do
-        perform(*job_args)
+        begin
+          perform(*job_args)
+        rescue StandardError => e
+          try(:on_error, e)
+          return raise(e) unless job_dead?
+
+          # Flag job as dead
+          logger.info('Job dead')
+          try(:on_dead, e)
+          raise(DeadWorkerError, e)
+        end
       end
       logger.info('Job done')
       resp
-    rescue StandardError => e
-      try(:on_error, e)
-      raise(e)
     end
 
     #
@@ -197,7 +214,8 @@ module Cloudtasker
         worker: self.class.to_s,
         job_id: job_id,
         job_args: job_args,
-        job_meta: job_meta.to_h
+        job_meta: job_meta.to_h,
+        job_retries: job_retries
       }
     end
 
@@ -221,6 +239,16 @@ module Cloudtasker
     #
     def ==(other)
       other.is_a?(self.class) && other.job_id == job_id
+    end
+
+    #
+    # Return true if the job has excceeded its maximum number
+    # of retries
+    #
+    # @return [Boolean] True if the job is dead
+    #
+    def job_dead?
+      job_retries >= Cloudtasker.config.max_retries
     end
   end
 end

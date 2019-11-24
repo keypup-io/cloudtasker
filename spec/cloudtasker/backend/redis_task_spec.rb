@@ -14,7 +14,8 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
         },
         body: { foo: 'bar' }.to_json
       },
-      schedule_time: 2
+      schedule_time: 2,
+      retries: 3
     }
   end
   let(:task_id) { '1234' }
@@ -149,7 +150,8 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
       {
         id: task.id,
         http_request: task.http_request,
-        schedule_time: task.schedule_time.to_i
+        schedule_time: task.schedule_time.to_i,
+        retries: task.retries
       }
     end
 
@@ -167,11 +169,21 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
 
     let(:delay) { 3600 }
     let(:task) { described_class.create(job_payload) }
+    let(:retries) { job_payload[:retries] + 1 }
+    let(:opts) { {} }
 
     before { Timecop.freeze }
-    before { task.retry_later(delay) }
+    before { task.retry_later(delay, opts) }
     after { Timecop.return }
-    it { is_expected.to have_attributes(schedule_time: Time.at(Time.now.to_i + delay)) }
+
+    it { is_expected.to have_attributes(retries: retries, schedule_time: Time.at(Time.now.to_i + delay)) }
+
+    context 'with is_error: false' do
+      let(:opts) { { is_error: false } }
+      let(:retries) { job_payload[:retries] }
+
+      it { is_expected.to have_attributes(retries: retries, schedule_time: Time.at(Time.now.to_i + delay)) }
+    end
   end
 
   describe '#destroy' do
@@ -189,7 +201,12 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
     let(:status) { 200 }
     let!(:http_stub) do
       stub_request(:post, job_payload.dig(:http_request, :url))
-        .with(body: job_payload.dig(:http_request, :body))
+        .with(
+          headers: {
+            Cloudtasker::Config::RETRY_HEADER => job_payload[:retries]
+          },
+          body: job_payload.dig(:http_request, :body)
+        )
         .to_return(status: status)
     end
 

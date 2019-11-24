@@ -11,8 +11,11 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
     let(:worker_class_name) { 'TestWorker' }
     let(:args) { [1, 2] }
     let(:meta) { { 'foo' => 'bar' } }
-    let(:expected_payload) { payload.slice(:worker, :job_id, :job_args, :job_meta) }
+    let(:retries) { 3 }
+    let(:expected_payload) { payload.slice(:worker, :job_id, :job_args, :job_meta).merge(job_retries: retries) }
     let(:auth_token) { Cloudtasker::Authenticator.verification_token }
+
+    before { request.env['HTTP_X_CLOUDTASKS_TASKEXECUTIONCOUNT'] = retries }
 
     context 'with valid worker' do
       before do
@@ -25,7 +28,7 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
       it { is_expected.to be_successful }
     end
 
-    context 'with valid worker and execution errors' do
+    context 'with execution errors' do
       before do
         request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"
         allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
@@ -33,6 +36,16 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
           .and_raise(ArgumentError)
       end
       it { is_expected.to have_http_status(:unprocessable_entity) }
+    end
+
+    context 'with dead worker' do
+      before do
+        request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"
+        allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
+          .with(expected_payload)
+          .and_raise(Cloudtasker::DeadWorkerError)
+      end
+      it { is_expected.to have_http_status(:reset_content) }
     end
 
     context 'with invalid worker' do

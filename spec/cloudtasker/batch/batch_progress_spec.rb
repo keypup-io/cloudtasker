@@ -7,7 +7,9 @@ RSpec.describe Cloudtasker::Batch::BatchProgress do
     {
       '1' => 'completed',
       '2' => 'scheduled',
-      '3' => 'processing'
+      '3' => 'processing',
+      '4' => 'errored',
+      '5' => 'dead'
     }
   end
   let(:batch_progress) { described_class.new(batch_state) }
@@ -36,6 +38,18 @@ RSpec.describe Cloudtasker::Batch::BatchProgress do
     it { is_expected.to eq(batch_state.values.count { |e| e == 'scheduled' }) }
   end
 
+  describe '#errored' do
+    subject { batch_progress.errored }
+
+    it { is_expected.to eq(batch_state.values.count { |e| e == 'errored' }) }
+  end
+
+  describe '#dead' do
+    subject { batch_progress.dead }
+
+    it { is_expected.to eq(batch_state.values.count { |e| e == 'dead' }) }
+  end
+
   describe '#processing' do
     subject { batch_progress.processing }
 
@@ -45,7 +59,7 @@ RSpec.describe Cloudtasker::Batch::BatchProgress do
   describe '#pending' do
     subject { batch_progress.pending }
 
-    it { is_expected.to eq(batch_state.values.count { |e| e != 'completed' }) }
+    it { is_expected.to eq(batch_state.values.count { |e| %w[dead completed].exclude?(e) }) }
   end
 
   describe '#percent' do
