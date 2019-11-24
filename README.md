@@ -170,6 +170,11 @@ Cloudtasker.configure do |config|
 end
 ```
 
+If your queue does not exist in Cloud Tasks you should [create it using the gcloud sdk](https://cloud.google.com/tasks/docs/creating-queues). Alternatively with Rails you can simply run the following task:
+```bash
+bundle exec rake cloudtasker:setup_queue
+```
+
 ## Enqueuing jobs
 
 Cloudtasker provides multiple ways of enqueuing jobs.

@@ -20,6 +20,43 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
   let(:config) { Cloudtasker.config }
   let(:client) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
 
+  describe '.setup_queue' do
+    subject { described_class.setup_queue }
+
+    let(:queue) { instance_double('Google::Cloud::Tasks::V2beta3::Queue') }
+    let(:base_path) { 'foo/bar' }
+    let(:queue_path) { 'foo/bar/baz' }
+    let(:expected_payload) do
+      [
+        base_path,
+        { name: queue_path, retry_config: { max_attempts: -1 } }
+      ]
+    end
+
+    before do
+      allow(described_class).to receive(:client).and_return(client)
+      allow(client).to receive(:location_path).with(config.gcp_project_id, config.gcp_location_id).and_return(base_path)
+      allow(described_class).to receive(:queue_path).and_return(queue_path)
+      allow(client).to receive(:create_queue).with(*expected_payload).and_return(queue)
+    end
+
+    context 'with existing queue' do
+      before { allow(client).to receive(:get_queue).with(queue_path).and_return(queue) }
+      after { expect(client).not_to have_received(:create_queue) }
+      it { is_expected.to eq(queue) }
+    end
+
+    context 'with no existing queue' do
+      before do
+        allow(client).to receive(:get_queue)
+          .with(queue_path)
+          .and_raise(Google::Gax::RetryError.new('msg'))
+      end
+      after { expect(client).to have_received(:create_queue) }
+      it { is_expected.to eq(queue) }
+    end
+  end
+
   describe '.client' do
     subject { described_class.client }
 

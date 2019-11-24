@@ -1,12 +1,25 @@
 # frozen_string_literal: true
 
-require 'cloudtasker/redis_client'
-
 module Cloudtasker
   module Backend
     # Manage tasks pushed to GCP Cloud Task
     class GoogleCloudTask
       attr_accessor :gcp_task
+
+      #
+      # Create the queue configured in Cloudtasker if it does not already exist.
+      #
+      # @return [Google::Cloud::Tasks::V2beta3::Queue] The queue
+      #
+      def self.setup_queue
+        client.get_queue(queue_path)
+      rescue Google::Gax::RetryError
+        client.create_queue(
+          client.location_path(config.gcp_project_id, config.gcp_location_id),
+          name: queue_path,
+          retry_config: { max_attempts: -1 }
+        )
+      end
 
       #
       # Return the Google Cloud Task client.
