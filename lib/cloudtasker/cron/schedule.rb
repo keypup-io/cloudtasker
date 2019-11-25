@@ -72,8 +72,10 @@ module Cloudtasker
       # @return [Cloudtasker::Cron::Schedule] The schedule instance.
       #
       def self.create(**opts)
-        config = find(opts[:id]).to_h.merge(opts)
-        new(config).tap(&:save)
+        redis.with_lock(key(opts[:id])) do
+          config = find(opts[:id]).to_h.merge(opts)
+          new(config).tap(&:save)
+        end
       end
 
       #
@@ -95,12 +97,14 @@ module Cloudtasker
       # @param [String] id The schedule id.
       #
       def self.delete(id)
-        schedule = find(id)
-        return false unless schedule
+        redis.with_lock(key(id)) do
+          schedule = find(id)
+          return false unless schedule
 
-        # Delete task and stored schedule
-        CloudTask.delete(schedule.task_id) if schedule.task_id
-        redis.del(schedule.gid)
+          # Delete task and stored schedule
+          CloudTask.delete(schedule.task_id) if schedule.task_id
+          redis.del(schedule.gid)
+        end
       end
 
       #
