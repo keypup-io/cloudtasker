@@ -77,7 +77,16 @@ module Cloudtasker
       # @return [Integer] The number of jobs pending.
       #
       def pending
-        total - completed - dead
+        total - done
+      end
+
+      #
+      # Return the number of jobs completed or dead.
+      #
+      # @return [Integer] The number of jobs done.
+      #
+      def done
+        completed + dead
       end
 
       #
@@ -88,7 +97,7 @@ module Cloudtasker
       def percent
         return 0 if total.zero?
 
-        pending.to_f / total
+        done.to_f / total
       end
 
       #

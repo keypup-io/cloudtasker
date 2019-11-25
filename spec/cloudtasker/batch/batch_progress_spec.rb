@@ -62,11 +62,17 @@ RSpec.describe Cloudtasker::Batch::BatchProgress do
     it { is_expected.to eq(batch_state.values.count { |e| %w[dead completed].exclude?(e) }) }
   end
 
+  describe '#done' do
+    subject { batch_progress.done }
+
+    it { is_expected.to eq(batch_state.values.count { |e| %w[dead completed].include?(e) }) }
+  end
+
   describe '#percent' do
     subject { batch_progress.percent }
 
     context 'with batch' do
-      it { is_expected.to eq(batch_progress.pending.to_f / batch_progress.total) }
+      it { is_expected.to eq(batch_progress.done.to_f / batch_progress.total) }
     end
 
     context 'with empty elements' do
