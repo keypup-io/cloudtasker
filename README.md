@@ -293,8 +293,6 @@ end
 
 The Cloudtasker server can then be started using:
 ```bash
-cloudtasker
-# or
 bundle exec cloudtasker
 ```
 

@@ -27,7 +27,7 @@ RSpec.describe Cloudtasker::Worker do
     subject { described_class.from_hash(worker_hash) }
 
     let(:job_id) { '123' }
-    let(:job_args) { [1, 2] }
+    let(:job_args) { [1, { 'foo' => 'bar' }] }
     let(:job_meta) { { foo: 'bar' } }
     let(:job_retries) { 3 }
     let(:worker_class_name) { worker_class.to_s }
