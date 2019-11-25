@@ -43,7 +43,7 @@ RSpec.describe Cloudtasker::RedisClient do
 
   describe '#with_lock' do
     let(:key) { 'cache-key' }
-    let(:lock_key) { 'cache-key/lock' }
+    let(:lock_key) { 'cloudtasker/lock/cache-key' }
 
     before { allow(described_class.client).to receive(:setnx).with(lock_key, true).and_return(true) }
     after { expect(described_class.client).to have_received(:setnx) }

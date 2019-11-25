@@ -8,7 +8,7 @@ module Cloudtasker
     module_function
 
     # Suffix added to cache keys when locking them
-    LOCK_KEY_SUFFIX = 'lock'
+    LOCK_KEY_PREFIX = 'cloudtasker/lock'
 
     #
     # Return the underlying redis client.
@@ -61,7 +61,7 @@ module Cloudtasker
       return nil unless cache_key
 
       # Wait to acquire lock
-      lock_key = [cache_key, LOCK_KEY_SUFFIX].join('/')
+      lock_key = [LOCK_KEY_PREFIX, cache_key].join('/')
       true until client.setnx(lock_key, true)
 
       # yield content
