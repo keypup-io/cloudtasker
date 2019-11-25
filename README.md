@@ -10,6 +10,27 @@ Cloudtasker also provides optional modules for running [cron jobs](docs/CRON_JOB
 
 A local processing server is also available in development. This local server processes jobs in lieu of Cloud Tasks and allow you to work offline.
 
+## Summary
+
+1. [Installation](#installation)
+2. [Get started with Rails](#get-started-with-rails)
+3. [Configuring Cloudtasker](#configuring-cloudtasker)
+    1. [Cloud Tasks authentication & permissions](#cloud-tasks-authentication--permissions)
+    2. [Cloudtasker initializer](#cloudtasker-initializer)
+4. [Enqueuing jobs](#enqueuing-jobs)
+5. [Extensions](#extensions)
+6. [Working locally](#working-locally)
+    1. [Option 1: Cloudtasker local server](#option-1-cloudtasker-local-server)
+    2. [Option 2: Using ngrok](#option-2-using-ngrok)
+7. [Logging](#logging)
+    1. [Configuring a logger](#configuring-a-logger)
+    2. [Logging context](#logging-context)
+8. [Error Handling](#error-handling)
+    1. [HTTP Error codes](#http-error-codes)
+    2. [Error callbacks](#error-callbacks)
+    3. [Max retries](#max-retries)
+9. [Best practices building workers](#best-practices-building-workers)
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -77,7 +98,7 @@ Launch Rails and the local Cloudtasker processing server (or add `cloudtasker` t
 > cloudtasker
 ```
 
-Open a Rails console and enqueue your job
+Open a Rails console and enqueue some jobs
 ```ruby
   # Process job as soon as possible
   DummyWorker.perform_async('foo')
@@ -394,7 +415,7 @@ Jobs failing will automatically return an HTTP error to Cloud Task and trigger a
 Jobs failing will automatically return the following HTTP error code to Cloud Tasks, based on the actual reason:
 
 | Code | Description |
-|------|-------------|-----------|
+|------|-------------|
 | 205 | The job is dead and has been removed from the queue |
 | 404 | The job has specified an incorrect worker class.  |
 | 422 | An error happened during the execution of the worker (`perform` method) |
