@@ -10,8 +10,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Arnaud Lachaume']
   spec.email         = ['arnaud.lachaume@keypup.io']
 
-  spec.summary       = 'Manage GCP Cloud Tasks in your app. (alpha)'
-  spec.description   = 'Manage GCP Cloud Tasks in your app. (alpha)'
+  spec.summary       = 'Background jobs for Ruby using Google Cloud Tasks (alpha)'
+  spec.description   = 'Background jobs for Ruby using Google Cloud Tasks (alpha)'
   spec.homepage      = 'https://github.com/keypup-io/cloudtasker'
   spec.license       = 'MIT'
 
@@ -38,6 +38,7 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency 'appraisal'
   spec.add_development_dependency 'bundler', '~> 2.0'
+  spec.add_development_dependency 'github_changelog_generator'
   spec.add_development_dependency 'rake', '~> 10.0'
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'rubocop', '0.76.0'
