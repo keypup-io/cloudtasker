@@ -16,13 +16,15 @@ module Cloudtasker
     # Run a worker from a Cloud Task payload
     #
     def run
-      WorkerHandler.execute_from_payload!(
-        request.params.slice(:worker, :job_id, :job_args, :job_meta).merge(
-          job_retries: job_retries
-        )
-      )
+      # Build payload
+      payload = request.params
+                       .slice(:worker, :job_id, :job_args, :job_meta)
+                       .merge(job_retries: job_retries)
+
+      # Process payload
+      WorkerHandler.execute_from_payload!(payload)
       head :no_content
-    rescue Cloudtasker::DeadWorkerError
+    rescue DeadWorkerError
       # 205: job will NOT be retried
       head :reset_content
     rescue InvalidWorkerError
