@@ -371,7 +371,7 @@ module Cloudtasker
         setup
 
         # Complete batch
-        complete(:success)
+        complete(:completed)
       rescue DeadWorkerError => e
         complete(:dead)
         raise(e)

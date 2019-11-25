@@ -532,7 +532,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     context 'with parent_batch' do
       after { expect(parent_batch).to have_received(:update_state).with(batch.batch_id, :processing) }
       after { expect(batch).to have_received(:setup) }
-      after { expect(batch).to have_received(:complete).with(:success) }
+      after { expect(batch).to have_received(:complete).with(:completed) }
       it { expect { |b| batch.execute(&b) }.to yield_control }
     end
 
@@ -540,7 +540,7 @@ RSpec.describe Cloudtasker::Batch::Job do
       let(:parent_batch) { nil }
 
       after { expect(batch).to have_received(:setup) }
-      after { expect(batch).to have_received(:complete).with(:success) }
+      after { expect(batch).to have_received(:complete).with(:completed) }
       it { expect { |b| batch.execute(&b) }.to yield_control }
     end
 
