@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'cloudtasker/redis_client'
+require 'net/http'
 
 module Cloudtasker
   module Backend
