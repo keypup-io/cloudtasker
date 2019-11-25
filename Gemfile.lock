@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    cloudtasker (0.3.0)
+    cloudtasker (0.4.0)
       activesupport
       fugit
       google-cloud-tasks
