@@ -10,8 +10,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Arnaud Lachaume']
   spec.email         = ['arnaud.lachaume@keypup.io']
 
-  spec.summary       = 'Manage GCP Cloud Tasks in your app. (under development)'
-  spec.description   = 'Manage GCP Cloud Tasks in your app. (under development)'
+  spec.summary       = 'Manage GCP Cloud Tasks in your app. (alpha)'
+  spec.description   = 'Manage GCP Cloud Tasks in your app. (alpha)'
   spec.homepage      = 'https://github.com/keypup-io/cloudtasker'
   spec.license       = 'MIT'
 
