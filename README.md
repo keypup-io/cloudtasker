@@ -4,7 +4,7 @@ Background jobs for Ruby using Google Cloud Tasks.
 
 Cloudtasker provides an easy to manage interface to Google Cloud Tasks for background job processing. Workers can be defined programmatically using the Cloudtasker DSL and enqueued for processing using a simple to use API.
 
-Cloudtasker is particularly suited for serverless applications only responding to HTTP requests and where running a dedicated job processing is not an options. All jobs enqueued in Cloud Tasks via Cloudtasker eventually gets processed by your application via HTTP requests.
+Cloudtasker is particularly suited for serverless applications only responding to HTTP requests and where running a dedicated job processing is not an option (e.g. deploy via [Cloud Run](https://cloud.google.com/run)). All jobs enqueued in Cloud Tasks via Cloudtasker eventually gets processed by your application via HTTP requests.
 
 Cloudtasker also provides optional modules for running [cron jobs](docs/CRON_JOBS.md), [batch jobs](docs/BATCH_JOBS.md) and [unique jobs](docs/UNIQUE_JOBS.md).
 
@@ -30,7 +30,7 @@ Or install it yourself as:
 
 Cloudtasker is pre-integrated with Rails. Follow the steps below to get started.
 
-Install redis on your machine (this required by the Cloudtasker local processing server)
+Install redis on your machine (this is required by the Cloudtasker local processing server)
 ```bash
 # E.g. using brew
 brew install redis
@@ -41,18 +41,24 @@ Add the following initializer
 # config/initializers/cloudtasker.rb
 
 Cloudtasker.configure do |config|
+  #
   # Adapt the server port to be the one used by your Rails web process
+  #
   config.processor_host = 'http://localhost:3000'
   
+  #
   # If you do not have any Rails secret_key_base defined, uncomment the following
   # This secret is used to authenticate jobs sent to the processing endpoint
   # of your application.
+  #
   # config.secret = 'some-long-token'
 end
 ```
 
-Define your first worker
+Define your first worker:
 ```ruby
+# app/workers/dummy_worker.rb
+
 class DummyWorker
   include Cloudtasker::Worker
 
@@ -94,11 +100,27 @@ I, [2019-11-22T09:20:09.320966 #49257]  INFO -- [Cloudtasker][d76040a1-367e-4e3b
 
 That's it! Your job was picked up by the Cloudtasker local server and sent for processing to your Rails web process.
 
-Now jump to the next section to configure your app to use Google Tasks.
+Now jump to the next section to configure your app to use Google Cloud Tasks as a backend.
 
 ## Configuring Cloudtasker
 
-The Cloustaker gem can be configured through an initializer. See below all the available configuration options.
+### Cloud Tasks authentication & permissions
+
+The Google Cloud library authenticates via the Google Cloud SDK by default. If you do not have it setup then we recommend you [install it](https://cloud.google.com/sdk/docs/quickstarts).
+
+Other options are available such as using a service account. You can see all authentication options in the [Google Cloud Authentication guide](https://github.com/googleapis/google-cloud-ruby/blob/master/google-cloud-bigquery/AUTHENTICATION.md).
+
+In order to function properly Cloudtasker requires the authenticated account to have the following IAM permissions:
+- `cloudtasks.tasks.get`
+- `cloudtasks.tasks.create`
+- `cloudtasks.tasks.delete`
+
+To get started quickly you can add the `roles/cloudtasks.queueAdmin` role to your account via the [IAM Console](https://console.cloud.google.com/iam-admin/iam). This is not required if your account is a project admin account.
+
+
+### Cloudtasker initializer
+
+The gem can be configured through an initializer. See below all the available configuration options.
 
 ```ruby
 # config/initializers/cloudtasker.rb
@@ -108,6 +130,8 @@ Cloudtasker.configure do |config|
   # If you do not have any Rails secret_key_base defined, uncomment the following.
   # This secret is used to authenticate jobs sent to the processing endpoint 
   # of your application.
+  #
+  # Default with Rails: Rails.application.credentials.secret_key_base
   #
   # config.secret = 'some-long-token'
 
@@ -133,8 +157,8 @@ Cloudtasker.configure do |config|
 
   # 
   # Specify the mode of operation:
-  # :development => jobs will be pushed to Redis and picked up by the Cloudtasker local server
-  # :production => jobs will be pushed to Google Cloud Tasks. Requires a publicly accessible domain.
+  # - :development => jobs will be pushed to Redis and picked up by the Cloudtasker local server
+  # - :production => jobs will be pushed to Google Cloud Tasks. Requires a publicly accessible domain.
   #
   # Defaults to :development unless CLOUDTASKER_ENV or RAILS_ENV or RACK_ENV is set to something else.
   #
@@ -170,7 +194,9 @@ Cloudtasker.configure do |config|
 end
 ```
 
-If your queue does not exist in Cloud Tasks you should [create it using the gcloud sdk](https://cloud.google.com/tasks/docs/creating-queues). Alternatively with Rails you can simply run the following task:
+If your queue does not exist in Cloud Tasks you should [create it using the gcloud sdk](https://cloud.google.com/tasks/docs/creating-queues). 
+
+Alternatively with Rails you can simply run the following rake task if you have queue admin permissions (`cloudtasks.queues.get` and `cloudtasks.queues.create`).
 ```bash
 bundle exec rake cloudtasker:setup_queue
 ```
@@ -198,6 +224,8 @@ Cloudtasker also provides a helper for re-enqueuing jobs. Re-enqueued jobs keep 
 
 E.g.
 ```ruby
+# app/workers/fetch_resource_worker.rb
+
 class FetchResourceWorker
   include Cloudtasker::Worker
 
@@ -308,6 +336,8 @@ Cloudtasker provides worker contextual information to the worker `logger` method
 
 For example:
 ```ruby
+# app/workers/dummy_worker.rb
+
 class DummyWorker
   include Cloudtasker::Worker
 
@@ -340,6 +370,8 @@ Cloudtasker::WorkerLogger.log_context_processor = lambda { |worker|
 
 You could also decide to log all available context (including arguments passed to perform) for specific workers only:
 ```ruby
+# app/workers/full_context_worker.rb
+
 class FullContextWorker
   include Cloudtasker::Worker
 
@@ -373,6 +405,8 @@ Workers can implement the `on_error(error)` and `on_dead(error)` callbacks to do
 
 E.g.
 ```ruby
+# app/workers/handle_error_worker.rb
+
 class HandleErrorWorker
   include Cloudtasker::Worker
 
@@ -418,6 +452,8 @@ E.g. Set max number of retries to 3 on a given worker
 
 E.g.
 ```ruby
+# app/workers/some_error_worker.rb
+
 class SomeErrorWorker
   include Cloudtasker::Worker
 
@@ -443,6 +479,8 @@ When defining your worker `perform` method, use primitive arguments (integers, s
 
 Don't do that:
 ```ruby
+# app/workers/user_email_worker.rb
+
 class UserEmailWorker
   include Cloudtasker::Worker
 
@@ -454,6 +492,8 @@ end
 
 Do that:
 ```ruby
+# app/workers/user_email_worker.rb
+
 class UserEmailWorker
   include Cloudtasker::Worker
 
@@ -479,6 +519,8 @@ Default arguments passed to the `perform` method are not actually considered as 
 
 Consider the following worker:
 ```ruby
+# app/workers/user_email_worker.rb
+
 class UserEmailWorker
   include Cloudtasker::Worker
 
@@ -501,6 +543,8 @@ If you feel that a job payload is going to get big, prefer to store the payload 
 
 E.g. Define a job like this
 ```ruby
+# app/workers/big_payload_worker.rb
+
 class BigPayloadWorker
   include Cloudtasker::Worker
 
