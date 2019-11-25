@@ -59,7 +59,7 @@ GEM
     addressable (2.7.0)
       public_suffix (>= 2.0.2, < 5.0)
     builder (3.2.3)
-    cloudtasker (0.5.0)
+    cloudtasker (0.7.0)
       activesupport
       fugit
       google-cloud-tasks
