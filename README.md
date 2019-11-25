@@ -290,7 +290,7 @@ Want to test your application end to end with Google Cloud Task? Then [ngrok](ht
 
 First start your ngrok tunnel and take note of the :
 ```bash
-ngrok tls 3000
+ngrok http 3000
 ```
 
 Take note of your ngrok domain and configure Cloudtasker to use Google Cloud Task in development via ngrok.
