@@ -13,11 +13,12 @@ Cloudtasker.configure do |config|
   config.processor_host = 'http://localhost:3000'
 end
 
-unless Rails.env.test?
-  Cloudtasker::Cron::Schedule.load_from_hash!(
-    'my_worker' => {
-      'worker' => 'CronWorker',
-      'cron' => '* * * * *'
-    }
-  )
-end
+#
+# Setup cron job
+#
+# Cloudtasker::Cron::Schedule.load_from_hash!(
+#   'my_worker' => {
+#     'worker' => 'CronWorker',
+#     'cron' => '* * * * *'
+#   }
+# )
