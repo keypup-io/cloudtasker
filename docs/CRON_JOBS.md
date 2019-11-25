@@ -9,7 +9,7 @@ The Cloudtasker cron job extension allows you to register workers to run at fixe
 You can schedule cron jobs by adding the following to your cloudtasker initializer:
 ```ruby
 # The cron job extension is optional and must be explicitly required
-require 'cloudtasker/cron_job'
+require 'cloudtasker/cron'
 
 Cloudtasker.configure do |config|
   # Specify your redis url.
@@ -18,18 +18,20 @@ Cloudtasker.configure do |config|
 end
 
 # Specify all your cron jobs below. This will synchronize your list of cron jobs (cron jobs previously created and not listed below will be removed).
-Cloudtasker::Cron::Schedule.load_from_hash!(
-  # Run job every minute
-  some_schedule_name: {
-    worker: 'SomeCronWorker',
-    cron: '* * * * *'
-  },
-  # Run job every hour on the fifteenth minute 
-  other_cron_schedule: {
-    worker: 'OtherCronWorker',
-    cron: '15 * * * *'
-  }
-)
+unless Rails.env.test?
+  Cloudtasker::Cron::Schedule.load_from_hash!(
+    # Run job every minute
+    some_schedule_name: {
+      worker: 'SomeCronWorker',
+      cron: '* * * * *'
+    },
+    # Run job every hour on the fifteenth minute 
+    other_cron_schedule: {
+      worker: 'OtherCronWorker',
+      cron: '15 * * * *'
+    }
+  )
+end
 ```
 
 ## Using a configuration file
@@ -56,7 +58,7 @@ Then register the jobs inside your Cloudtasker initializer this way:
 # ... Cloudtasker configuration ...
 
 schedule_file = 'config/cloudtasker_cron.yml'
-if File.exist?(schedule_file)
+if File.exist?(schedule_file) && !Rails.env.test?
   Cloudtasker::Cron::Schedule.load_from_hash!(YAML.load_file(schedule_file))
 end
 ```

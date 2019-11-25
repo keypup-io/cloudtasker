@@ -9,7 +9,7 @@ The Cloudtasker batch job extension allows to add sub-jobs to regular jobs. This
 You can enable batch jobs by adding the following to your cloudtasker initializer:
 ```ruby
 # The batch job extension is optional and must be explicitly required
-require 'cloudtasker/batch_job'
+require 'cloudtasker/batch'
 
 Cloudtasker.configure do |config|
   # Specify your redis url.
