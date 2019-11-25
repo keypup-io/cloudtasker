@@ -1,2 +1,2 @@
 web: ruby app.rb -p 3000
-worker: cloudtasker
+worker: bundle exec cloudtasker
