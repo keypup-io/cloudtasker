@@ -7,7 +7,8 @@ module Cloudtasker
       attr_reader :worker
 
       # Key Namespace used for object saved under this class
-      SUB_NAMESPACE = 'job'
+      JOBS_NAMESPACE = 'jobs'
+      STATES_NAMESPACE = 'states'
 
       # List of statuses triggering a completion callback
       COMPLETION_STATUSES = %w[completed dead].freeze
@@ -32,7 +33,7 @@ module Cloudtasker
         return nil unless worker_id
 
         # Retrieve related worker
-        payload = redis.fetch(key(worker_id))
+        payload = redis.fetch(key("#{JOBS_NAMESPACE}/#{worker_id}"))
         worker = Cloudtasker::Worker.from_hash(payload)
         return nil unless worker
 
@@ -140,7 +141,7 @@ module Cloudtasker
       # @return [String] The worker namespaced id.
       #
       def batch_gid
-        key(batch_id)
+        key("#{JOBS_NAMESPACE}/#{batch_id}")
       end
 
       #
@@ -149,7 +150,7 @@ module Cloudtasker
       # @return [String] The batch state namespaced id.
       #
       def batch_state_gid
-        [batch_gid, 'state'].join('/')
+        key("#{STATES_NAMESPACE}/#{batch_id}")
       end
 
       #

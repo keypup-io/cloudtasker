@@ -133,13 +133,13 @@ RSpec.describe Cloudtasker::Batch::Job do
   describe '#batch_gid' do
     subject { batch.batch_gid }
 
-    it { is_expected.to eq(described_class.key(batch.batch_id)) }
+    it { is_expected.to eq(batch.key("#{described_class::JOBS_NAMESPACE}/#{batch.batch_id}")) }
   end
 
   describe 'batch_state_gid' do
     subject { batch.batch_state_gid }
 
-    it { is_expected.to eq([batch.batch_gid, 'state'].join('/')) }
+    it { is_expected.to eq(batch.key("#{described_class::STATES_NAMESPACE}/#{batch.batch_id}")) }
   end
 
   describe '#jobs' do
