@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Require cloudtasker and its extensions
 require 'cloudtasker'
 require 'cloudtasker/unique_job'
