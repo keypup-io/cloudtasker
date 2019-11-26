@@ -306,6 +306,11 @@ E.g. Create a `real-time` queue with a concurrency of 15 via the rake task (Rail
 rake cloudtasker:setup_queue name=real-time concurrency=15
 ```
 
+When running the Cloudtasker local processing server, you can specify the concurrency for each queue using:
+```bash
+cloudtasker -q critical,5 -q important,4 -q default,3
+```
+
 ### Assigning queues to workers
 
 Queues can be assigned to workers via the `cloudtasker_options` directive on the worker class:
@@ -368,6 +373,11 @@ You can as well define a Procfile to manage the cloudtasker process via foreman.
 # Procfile
 web: rails s
 worker: cloudtasker
+```
+
+Note that the local development server runs with `5` concurrent threads by default. You can tune the number of threads per queue by running `cloudtasker` the following options:
+```bash
+cloudtasker -q critical,5 -q important,4 -q default,3
 ```
 
 ### Option 2: Using ngrok
@@ -651,6 +661,45 @@ Rails.cache.write(payload_id, data)
 # Enqueue the processing job
 BigPayloadWorker.perform_async(payload_id)
 ```
+
+### Sizing the concurrency of your queues
+
+When defining the max concurrency concurrency of your queues (`max_concurrent_dispatches` in Cloud Tasks) you must keep in mind the maximum number of threads that your application provides. Otherwise your application threads may eventually get exhausted and your users will experience outages if all your web threads are busy running jobs.
+
+#### With server based applications
+
+Let's consider an application deployed in production with 3 instances, each having `RAILS_MAX_THREADS` set to `20`. This gives us a total of `60` threads available.
+
+Now let's say that we distribute jobs across two queues: `default` and `critical`. We can set the concurrency of each each queue depending on the profile of the application:
+
+E.g. 1: The application serves requests from web users and runs backgrounds jobs in a balanced way
+```
+concurrency for default queue: 20
+concurrency for critical queue: 10
+
+Total threads consumed by jobs at most: 30
+Total threads always available to web users at worst: 30
+```
+
+E.g. 2: The application is a micro-service API heavily focused on running jobs (e.g. data processing)
+```
+concurrency for default queue: 35
+concurrency for critical queue: 15
+
+Total threads consumed by jobs at most: 50
+Total threads always available to web users at worst: 10
+```
+
+Also always ensure that your total number of threads does not exceed the available number of database connections (if you use any).
+
+#### With serverless applications
+
+In a serverless context your application will be scaled up/down based on traffic. When we say 'traffic' this includes requests from Cloud Tasks to run jobs.
+
+Because your application is auto-scaled - and assuming you haven't set a maximum - your job processing capacity if theoretically unlimited. The main limiting factor in a serverless context becomes external constraints such as the number of database connections available.
+
+To size the concurrency of your queues you should therefore take the most limiting factor - which is often the database connection pool size for RDBMS databases - and use the calculations of the previous section with this limiting factor as the capping parameter instead of the threads.
+
 
 ## Development
 
