@@ -10,7 +10,8 @@ RSpec.describe Cloudtasker::CloudTask do
       id: '123',
       http_request: { foo: 'bar' },
       schedule_time: 2,
-      retries: 3
+      retries: 3,
+      queue: 'critical'
     }
   end
   let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task', to_h: payload) }

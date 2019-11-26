@@ -9,15 +9,28 @@ module Cloudtasker
       #
       # Create the queue configured in Cloudtasker if it does not already exist.
       #
+      # @param [String] queue_name The relative name of the queue.
+      #
       # @return [Google::Cloud::Tasks::V2beta3::Queue] The queue
       #
-      def self.setup_queue
-        client.get_queue(queue_path)
+      def self.setup_queue(**opts)
+        # Build full queue path
+        queue_name = opts[:name] || Cloudtasker::Config::DEFAULT_JOB_QUEUE
+        full_queue_name = queue_path(queue_name)
+
+        # Try to get existing queue
+        client.get_queue(full_queue_name)
       rescue Google::Gax::RetryError
+        # Extract options
+        concurrency = (opts[:concurrency] || Cloudtasker::Config::DEFAULT_QUEUE_CONCURRENCY).to_i
+        retries = (opts[:retries] || Cloudtasker::Config::DEFAULT_QUEUE_RETRIES).to_i
+
+        # Create queue on 'not found' error
         client.create_queue(
           client.location_path(config.gcp_project_id, config.gcp_location_id),
-          name: queue_path,
-          retry_config: { max_attempts: -1 }
+          name: full_queue_name,
+          retry_config: { max_attempts: retries },
+          rate_limits: { max_concurrent_dispatches: concurrency }
         )
       end
 
@@ -42,13 +55,15 @@ module Cloudtasker
       #
       # Return the fully qualified path for the Cloud Task queue.
       #
+      # @param [String] queue_name The relative name of the queue.
+      #
       # @return [String] The queue path.
       #
-      def self.queue_path
+      def self.queue_path(queue_name)
         client.queue_path(
           config.gcp_project_id,
           config.gcp_location_id,
-          config.gcp_queue_id
+          [config.gcp_queue_prefix, queue_name].join('-')
         )
       end
 
@@ -94,8 +109,11 @@ module Cloudtasker
           schedule_time: format_schedule_time(payload[:schedule_time])
         ).compact
 
+        # Extract relative queue name
+        relative_queue = payload.delete(:queue)
+
         # Create task
-        resp = client.create_task(queue_path, payload)
+        resp = client.create_task(queue_path(relative_queue), payload)
         resp ? new(resp) : nil
       rescue Google::Gax::RetryError
         nil
@@ -122,6 +140,20 @@ module Cloudtasker
       end
 
       #
+      # Return the relative queue (queue name minus prefix) the task is in.
+      #
+      # @return [String] The relative queue name
+      #
+      def relative_queue
+        gcp_task
+          .name
+          .match(%r{/queues/([^/]+)})
+          &.captures
+          &.first
+          &.sub("#{self.class.config.gcp_queue_prefix}-", '')
+      end
+
+      #
       # Return a hash description of the task.
       #
       # @return [Hash] A hash description of the task.
@@ -131,7 +163,8 @@ module Cloudtasker
           id: gcp_task.name,
           http_request: gcp_task.to_h[:http_request],
           schedule_time: gcp_task.to_h.dig(:schedule_time, :seconds).to_i,
-          retries: gcp_task.to_h[:response_count]
+          retries: gcp_task.to_h[:response_count],
+          queue: relative_queue
         }
       end
     end

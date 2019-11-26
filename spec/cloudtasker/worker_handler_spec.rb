@@ -49,7 +49,8 @@ RSpec.describe Cloudtasker::WorkerHandler do
             'Authorization' => "Bearer #{Cloudtasker::Authenticator.verification_token}"
           },
           body: task.worker_payload.to_json
-        }
+        },
+        queue: task.worker.job_queue
       }
     end
 
@@ -63,6 +64,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
     let(:expected_payload) do
       {
         worker: worker.class.to_s,
+        job_queue: worker.job_queue,
         job_id: worker.job_id,
         job_args: job_args,
         job_meta: job_meta

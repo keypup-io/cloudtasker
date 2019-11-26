@@ -30,6 +30,7 @@ RSpec.describe Cloudtasker::Worker do
     let(:job_args) { [1, { 'foo' => 'bar' }] }
     let(:job_meta) { { foo: 'bar' } }
     let(:job_retries) { 3 }
+    let(:job_queue) { 'critical' }
     let(:worker_class_name) { worker_class.to_s }
     let(:worker_hash) do
       {
@@ -37,12 +38,21 @@ RSpec.describe Cloudtasker::Worker do
         job_id: job_id,
         job_args: job_args,
         job_meta: job_meta,
-        job_retries: job_retries
+        job_retries: job_retries,
+        job_queue: job_queue
       }
     end
 
     context 'with valid worker' do
-      let(:expected_attrs) { { job_id: job_id, job_args: job_args, job_meta: eq(job_meta), job_retries: job_retries } }
+      let(:expected_attrs) do
+        {
+          job_queue: job_queue,
+          job_id: job_id,
+          job_args: job_args,
+          job_meta: eq(job_meta),
+          job_retries: job_retries
+        }
+      end
 
       it { is_expected.to be_a(worker_class) }
       it { is_expected.to have_attributes(expected_attrs) }
@@ -73,14 +83,9 @@ RSpec.describe Cloudtasker::Worker do
     let(:time_at) { Time.now }
     let(:arg1) { 1 }
     let(:arg2) { 2 }
-    let(:task) { instance_double('Cloudtasker::WorkerHandler') }
     let(:resp) { instance_double('Cloudtasker::CloudTask') }
-    let(:worker) { instance_double(worker_class.to_s) }
 
-    before do
-      allow(worker_class).to receive(:new).with(job_args: [arg1, arg2]).and_return(worker)
-      allow(worker).to receive(:schedule).with(time_at: time_at).and_return(resp)
-    end
+    before { allow(worker_class).to receive(:schedule).with(time_at: time_at, args: [arg1, arg2]).and_return(resp) }
 
     it { is_expected.to eq(resp) }
   end
@@ -91,14 +96,9 @@ RSpec.describe Cloudtasker::Worker do
     let(:delay) { 10 }
     let(:arg1) { 1 }
     let(:arg2) { 2 }
-    let(:task) { instance_double('Cloudtasker::WorkerHandler') }
     let(:resp) { instance_double('Cloudtasker::CloudTask') }
-    let(:worker) { instance_double(worker_class.to_s) }
 
-    before do
-      allow(worker_class).to receive(:new).with(job_args: [arg1, arg2]).and_return(worker)
-      allow(worker).to receive(:schedule).with(interval: delay).and_return(resp)
-    end
+    before { allow(worker_class).to receive(:schedule).with(time_in: delay, args: [arg1, arg2]).and_return(resp) }
 
     it { is_expected.to eq(resp) }
   end
@@ -110,8 +110,36 @@ RSpec.describe Cloudtasker::Worker do
     let(:arg2) { 2 }
     let(:resp) { instance_double('Cloudtasker::CloudTask') }
 
-    before { allow(worker_class).to receive(:perform_in).with(nil, arg1, arg2).and_return(resp) }
+    before { allow(worker_class).to receive(:schedule).with(args: [arg1, arg2]).and_return(resp) }
     it { is_expected.to eq(resp) }
+  end
+
+  describe '.schedule' do
+    subject { worker_class.schedule(opts) }
+
+    let(:queue) { 'some-queue' }
+    let(:delay) { 10 }
+    let(:arg1) { 1 }
+    let(:arg2) { 2 }
+    let(:task) { instance_double('Cloudtasker::WorkerHandler') }
+    let(:resp) { instance_double('Cloudtasker::CloudTask') }
+    let(:worker) { instance_double(worker_class.to_s) }
+
+    before { allow(worker_class).to receive(:new).with(job_queue: queue, job_args: [arg1, arg2]).and_return(worker) }
+
+    context 'with time_in' do
+      let(:opts) { { time_in: delay, args: [arg1, arg2], queue: queue } }
+
+      before { allow(worker).to receive(:schedule).with(interval: delay).and_return(resp) }
+      it { is_expected.to eq(resp) }
+    end
+
+    context 'with time_at' do
+      let(:opts) { { time_at: delay, args: [arg1, arg2], queue: queue } }
+
+      before { allow(worker).to receive(:schedule).with(time_at: delay).and_return(resp) }
+      it { is_expected.to eq(resp) }
+    end
   end
 
   describe '.cloudtasker_options_hash' do
@@ -153,17 +181,51 @@ RSpec.describe Cloudtasker::Worker do
     let(:args) { [1, 2] }
     let(:meta) { { foo: 'bar' } }
     let(:retries) { 3 }
+    let(:queue) { 'critical' }
 
     context 'without args' do
       let(:worker_args) { {} }
 
-      it { is_expected.to have_attributes(job_args: [], job_id: be_present, job_retries: 0) }
+      it { is_expected.to have_attributes(job_queue: 'default', job_args: [], job_id: be_present, job_retries: 0) }
     end
 
     context 'with args' do
-      let(:worker_args) { { job_args: args, job_id: id, job_meta: meta, job_retries: retries } }
+      let(:worker_args) { { job_queue: queue, job_args: args, job_id: id, job_meta: meta, job_retries: retries } }
+      let(:expected_args) do
+        {
+          job_queue: queue,
+          job_args: args,
+          job_id: id,
+          job_meta: eq(meta),
+          job_retries: retries
+        }
+      end
 
-      it { is_expected.to have_attributes(job_args: args, job_id: id, job_meta: eq(meta), job_retries: retries) }
+      it { is_expected.to have_attributes(expected_args) }
+    end
+  end
+
+  describe '#job_queue' do
+    subject { worker.job_queue }
+
+    let(:worker_queue) { nil }
+    let(:worker) { worker_class.new(job_queue: worker_queue) }
+
+    context 'with no queue specified' do
+      it { is_expected.to eq('default') }
+    end
+
+    context 'with queue specified at class level' do
+      let(:opts) { { queue: 'real-time' } }
+
+      before { allow(worker_class).to receive(:cloudtasker_options_hash).and_return(opts) }
+      it { is_expected.to eq(opts[:queue]) }
+    end
+
+    context 'with queue specified on worker' do
+      let(:worker_queue) { 'critical' }
+
+      it { is_expected.to eq(worker_queue) }
     end
   end
 
@@ -278,7 +340,8 @@ RSpec.describe Cloudtasker::Worker do
         job_id: worker.job_id,
         job_args: worker.job_args,
         job_meta: worker.job_meta.to_h,
-        job_retries: worker.job_retries
+        job_retries: worker.job_retries,
+        job_queue: worker.job_queue
       }
     end
 

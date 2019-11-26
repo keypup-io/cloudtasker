@@ -46,7 +46,7 @@ Cloudtasker.configure do |config|
   # GCP
   config.gcp_project_id = 'my-project-id'
   config.gcp_location_id = 'us-east2'
-  config.gcp_queue_id = 'my-queue'
+  config.gcp_queue_prefix = 'my-queue'
 
   # Processor
   config.secret = 'my$s3cr3t'

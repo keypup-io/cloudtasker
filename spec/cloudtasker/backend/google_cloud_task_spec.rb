@@ -3,6 +3,19 @@
 require 'cloudtasker/backend/google_cloud_task'
 
 RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
+  let(:relative_queue) { 'critical' }
+  let(:task_name) do
+    [
+      'projects',
+      config.gcp_project_id,
+      'locations',
+      config.gcp_location_id,
+      'queues',
+      "#{config.gcp_queue_prefix}-#{relative_queue}",
+      'tasks',
+      '111-222'
+    ].join('/')
+  end
   let(:job_payload) do
     {
       http_request: {
@@ -14,30 +27,40 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
         },
         body: { foo: 'bar' }.to_json
       },
-      schedule_time: 2
+      schedule_time: 2,
+      queue: relative_queue
     }
   end
   let(:config) { Cloudtasker.config }
   let(:client) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
 
   describe '.setup_queue' do
-    subject { described_class.setup_queue }
+    subject { described_class.setup_queue(opts) }
 
+    let(:opts) { { name: relative_queue, concurrency: 20, retries: 100 } }
     let(:queue) { instance_double('Google::Cloud::Tasks::V2beta3::Queue') }
     let(:base_path) { 'foo/bar' }
     let(:queue_path) { 'foo/bar/baz' }
     let(:expected_payload) do
       [
         base_path,
-        { name: queue_path, retry_config: { max_attempts: -1 } }
+        {
+          name: queue_path,
+          retry_config: { max_attempts: opts[:retries] },
+          rate_limits: { max_concurrent_dispatches: opts[:concurrency] }
+        }
       ]
     end
 
     before do
       allow(described_class).to receive(:client).and_return(client)
       allow(client).to receive(:location_path).with(config.gcp_project_id, config.gcp_location_id).and_return(base_path)
-      allow(described_class).to receive(:queue_path).and_return(queue_path)
+      allow(described_class).to receive(:queue_path).with(relative_queue).and_return(queue_path)
       allow(client).to receive(:create_queue).with(*expected_payload).and_return(queue)
+
+      allow(client).to receive(:get_queue)
+        .with(queue_path)
+        .and_raise(Google::Gax::RetryError.new('msg'))
     end
 
     context 'with existing queue' do
@@ -47,11 +70,24 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
     end
 
     context 'with no existing queue' do
-      before do
-        allow(client).to receive(:get_queue)
-          .with(queue_path)
-          .and_raise(Google::Gax::RetryError.new('msg'))
+      after { expect(client).to have_received(:create_queue) }
+      it { is_expected.to eq(queue) }
+    end
+
+    context 'with empty opts' do
+      let(:opts) { {} }
+      let(:relative_queue) { Cloudtasker::Config::DEFAULT_JOB_QUEUE }
+      let(:expected_payload) do
+        [
+          base_path,
+          {
+            name: queue_path,
+            retry_config: { max_attempts: Cloudtasker::Config::DEFAULT_QUEUE_RETRIES },
+            rate_limits: { max_concurrent_dispatches: Cloudtasker::Config::DEFAULT_QUEUE_CONCURRENCY }
+          }
+        ]
       end
+
       after { expect(client).to have_received(:create_queue) }
       it { is_expected.to eq(queue) }
     end
@@ -72,14 +108,14 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
   end
 
   describe '.queue_path' do
-    subject { described_class.queue_path }
+    subject { described_class.queue_path(relative_queue) }
 
     let(:queue) { 'some-queue' }
     let(:expected_args) do
       [
         config.gcp_project_id,
         config.gcp_location_id,
-        config.gcp_queue_id
+        [config.gcp_queue_prefix, relative_queue].join('-')
       ]
     end
 
@@ -135,11 +171,12 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
     let(:task) { instance_double(described_class.to_s) }
     let(:expected_payload) do
       job_payload.merge(
-        schedule_time: described_class.format_schedule_time(job_payload[:schedule_time])
-      )
+        schedule_time: described_class.format_schedule_time(job_payload[:schedule_time]),
+        queue: nil
+      ).compact
     end
 
-    before { allow(described_class).to receive(:queue_path).and_return(queue) }
+    before { allow(described_class).to receive(:queue_path).with(job_payload[:queue]).and_return(queue) }
     before { allow(described_class).to receive(:client).and_return(client) }
 
     context 'with record' do
@@ -183,10 +220,18 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
     it { is_expected.to have_attributes(gcp_task: resp) }
   end
 
+  describe '#relative_queue' do
+    subject { described_class.new(resp).relative_queue }
+
+    let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task', name: task_name, to_h: resp_payload) }
+    let(:resp_payload) { job_payload.merge(schedule_time: { seconds: job_payload[:schedule_time] }) }
+
+    it { is_expected.to eq(relative_queue) }
+  end
+
   describe '#to_h' do
     subject { described_class.new(resp).to_h }
 
-    let(:id) { '123' }
     let(:retries) { 3 }
     let(:resp_payload) do
       job_payload.merge(
@@ -197,11 +242,11 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
     let(:resp) do
       instance_double(
         'Google::Cloud::Tasks::V2beta3::Task',
-        name: id,
+        name: task_name,
         to_h: resp_payload
       )
     end
 
-    it { is_expected.to eq(job_payload.merge(id: id, retries: retries)) }
+    it { is_expected.to eq(job_payload.merge(id: task_name, retries: retries)) }
   end
 end

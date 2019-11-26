@@ -5,7 +5,7 @@ require 'google/cloud/tasks'
 module Cloudtasker
   # Build, serialize and schedule tasks on the processing backend.
   class WorkerHandler
-    attr_reader :worker, :job_args
+    attr_reader :worker
 
     # Alrogith used to sign the verification token
     JWT_ALG = 'HS256'
@@ -46,7 +46,8 @@ module Cloudtasker
             'Authorization' => "Bearer #{Authenticator.verification_token}"
           },
           body: worker_payload.to_json
-        }
+        },
+        queue: worker.job_queue
       }
     end
 
@@ -65,6 +66,7 @@ module Cloudtasker
     def worker_payload
       @worker_payload ||= {
         worker: worker.class.to_s,
+        job_queue: worker.job_queue,
         job_id: worker.job_id,
         job_args: worker.job_args,
         job_meta: worker.job_meta.to_h

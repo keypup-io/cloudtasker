@@ -15,7 +15,8 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
         body: { foo: 'bar' }.to_json
       },
       schedule_time: 2,
-      retries: 3
+      retries: 3,
+      queue: 'critical'
     }
   end
   let(:task_id) { '1234' }
@@ -58,22 +59,34 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
   end
 
   describe '.ready_to_process' do
-    subject { described_class.ready_to_process }
+    subject { described_class.ready_to_process(queue) }
 
+    let(:queue) { nil }
     let(:tasks) do
       [
-        described_class.new(job_payload.merge(id: 1)),
-        described_class.new(job_payload.merge(id: 2, schedule_time: Time.now + 3600))
+        described_class.new(job_payload.merge(id: 1, queue: 'critical')),
+        described_class.new(job_payload.merge(id: 2, queue: 'default')),
+        described_class.new(job_payload.merge(id: 3, schedule_time: Time.now + 3600))
       ]
     end
 
     before { allow(described_class).to receive(:all).and_return(tasks) }
-    it { is_expected.to eq([tasks[0]]) }
+
+    context 'with no queue specified' do
+      it { is_expected.to eq(tasks[0..1]) }
+    end
+
+    context 'with queue specified' do
+      let(:queue) { 'critical' }
+
+      it { is_expected.to eq([tasks[0]]) }
+    end
   end
 
   describe '.pop' do
-    subject { described_class.pop }
+    subject { described_class.pop(queue) }
 
+    let(:queue) { 'some-queue' }
     let(:tasks) do
       [
         described_class.new(job_payload.merge(id: 1)),
@@ -81,7 +94,7 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
       ]
     end
 
-    before { allow(described_class).to receive(:ready_to_process).and_return(tasks) }
+    before { allow(described_class).to receive(:ready_to_process).with(queue).and_return(tasks) }
     before { allow(tasks[0]).to receive(:destroy) }
     after { expect(tasks[0]).to have_received(:destroy) }
     it { is_expected.to eq(tasks[0]) }
@@ -151,7 +164,8 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
         id: task.id,
         http_request: task.http_request,
         schedule_time: task.schedule_time.to_i,
-        retries: task.retries
+        retries: task.retries,
+        queue: task.queue
       }
     end
 

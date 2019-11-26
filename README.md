@@ -18,18 +18,21 @@ A local processing server is also available in development. This local server pr
     1. [Cloud Tasks authentication & permissions](#cloud-tasks-authentication--permissions)
     2. [Cloudtasker initializer](#cloudtasker-initializer)
 4. [Enqueuing jobs](#enqueuing-jobs)
-5. [Extensions](#extensions)
-6. [Working locally](#working-locally)
+5. [Managing worker queues](#managing-worker-queues)
+    1. [Creating queues](#creating-queues)
+    2. [Assigning queues to workers](#assigning-queues-to-workers)
+6. [Extensions](#extensions)
+7. [Working locally](#working-locally)
     1. [Option 1: Cloudtasker local server](#option-1-cloudtasker-local-server)
     2. [Option 2: Using ngrok](#option-2-using-ngrok)
-7. [Logging](#logging)
+8. [Logging](#logging)
     1. [Configuring a logger](#configuring-a-logger)
     2. [Logging context](#logging-context)
-8. [Error Handling](#error-handling)
+9. [Error Handling](#error-handling)
     1. [HTTP Error codes](#http-error-codes)
     2. [Error callbacks](#error-callbacks)
     3. [Max retries](#max-retries)
-9. [Best practices building workers](#best-practices-building-workers)
+10. [Best practices building workers](#best-practices-building-workers)
 
 ## Installation
 
@@ -157,13 +160,31 @@ Cloudtasker.configure do |config|
   # config.secret = 'some-long-token'
 
   # 
-  # Specify the details of your Google Cloud Task queue.
+  # Specify the details of your Google Cloud Task location.
   #
   # This not required in development using the Cloudtasker local server.
   #
   config.gcp_location_id = 'us-central1' # defaults to 'us-east1'
   config.gcp_project_id = 'my-gcp-project'
-  config.gcp_queue_id = 'my-queue'
+
+  #
+  # Specify the namespace for your Cloud Task queues.
+  #
+  # The gem assumes that a least a default queue named 'my-app-default'
+  # exists in Cloud Tasks. You can create this default queue using the
+  # gcloud SDK or via the `rake cloudtasker:setup_queue` task if you use Rails.
+  #
+  # Workers can be scheduled on different queues. The name of the queue
+  # in Cloud Tasks is always assumed to be prefixed with the prefix below.
+  #
+  # E.g.
+  # Setting `cloudtasker_options queue: 'critical'` on a worker means that
+  # the worker will be pushed to 'my-app-critical' in Cloud Tasks.
+  #
+  # Specific queues can be created in Cloud Tasks using the gcloud SDK or
+  # via the `rake cloudtasker:setup_queue name=<queue_name>` task.
+  # 
+  config.gcp_queue_prefix = 'my-app'
 
   # 
   # Specify the publicly accessible host for your application
@@ -215,7 +236,7 @@ Cloudtasker.configure do |config|
 end
 ```
 
-If your queue does not exist in Cloud Tasks you should [create it using the gcloud sdk](https://cloud.google.com/tasks/docs/creating-queues). 
+If the default queue `<gcp_queue_prefix>-default` does not exist in Cloud Tasks you should [create it using the gcloud sdk](https://cloud.google.com/tasks/docs/creating-queues). 
 
 Alternatively with Rails you can simply run the following rake task if you have queue admin permissions (`cloudtasks.queues.get` and `cloudtasks.queues.create`).
 ```bash
@@ -235,10 +256,15 @@ MyWorker.perform_in(5 * 60, arg1, arg2)
 # or with Rails
 MyWorker.perform_in(5.minutes, arg1, arg2)
 
-# Worker will be processed on specific date
+# Worker will be processed on a specific date
 MyWorker.perform_at(Time.parse('2025-01-01 00:50:00Z'), arg1, arg2)
 # also with Rails
 MyWorker.perform_at(3.days.from_now, arg1, arg2)
+
+# With all options, including which queue to run the worker on.
+MyWorker.schedule(args: [arg1, arg2], time_at: Time.parse('2025-01-01 00:50:00Z'), queue: 'critical')
+# or
+MyWorker.schedule(args: [arg1, arg2], time_in: 5 * 60, queue: 'critical')
 ```
 
 Cloudtasker also provides a helper for re-enqueuing jobs. Re-enqueued jobs keep the same worker id. Some middlewares may rely on this to track the fact that that a job didn't actually complete (e.g. Cloustasker batch). This is optional and you can always fallback to using exception management (raise an error) to retry/re-enqueue jobs.
@@ -260,6 +286,47 @@ class FetchResourceWorker
     end
   end
 end
+```
+
+## Managing worker queues
+
+Cloudtasker allows you to manage several queues and distribute workers across them based on job priority. By default jobs are pushed to the `default` queue, which is `<gcp_queue_prefix>-default` in Cloud Tasks.
+
+### Creating queues
+
+More queues can be created using the gcloud sdk or the `cloudtasker:setup_queue` rake task.
+
+E.g. Create a `critical` queue with a concurrency of 5 via the gcloud SDK
+```bash
+gcloud tasks queues create <gcp_queue_prefix>-critical --max-concurrent-dispatches=5
+```
+
+E.g. Create a `real-time` queue with a concurrency of 15 via the rake task (Rails only)
+```bash
+rake cloudtasker:setup_queue name=real-time concurrency=15
+```
+
+### Assigning queues to workers
+
+Queues can be assigned to workers via the `cloudtasker_options` directive on the worker class:
+
+```ruby
+# app/workers/critical_worker.rb
+
+class CriticalWorker
+  include Cloudtasker::Worker
+
+  cloudtasker_options queue: :critical
+
+  def perform(some_arg)
+    logger.info("This is a critical job run with arg=#{some_arg}.")
+  end
+end
+```
+
+Queues can also be assigned at runtime when scheduling a job:
+```ruby
+CriticalWorker.schedule(args: [1], queue: :important)
 ```
 
 ## Extensions
@@ -318,9 +385,9 @@ Take note of your ngrok domain and configure Cloudtasker to use Google Cloud Tas
 
 Cloudtasker.configure do |config|
   # Specify your Google Cloud Task queue configuration
-  # config.gcp_location_id = 'us-central1'
-  # config.gcp_project_id = 'my-gcp-project'
-  # config.gcp_queue_id = 'my-queue'
+  config.gcp_location_id = 'us-central1'
+  config.gcp_project_id = 'my-gcp-project'
+  config.gcp_queue_prefix = 'my-app'
 
   # Use your ngrok domain as the processor host
   config.processor_host = 'https://your-tunnel-id.ngrok.io'

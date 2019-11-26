@@ -17,7 +17,8 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
           job_id: 'aaa'
         }.to_json
       },
-      schedule_time: 2
+      schedule_time: 2,
+      queue: 'critical'
     }
   end
   let(:job_payload2) do
@@ -172,7 +173,8 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
       {
         id: task.id,
         http_request: task.http_request,
-        schedule_time: task.schedule_time.to_i
+        schedule_time: task.schedule_time.to_i,
+        queue: task.queue
       }
     end
 

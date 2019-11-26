@@ -18,7 +18,7 @@ module Cloudtasker
     def run
       # Build payload
       payload = request.params
-                       .slice(:worker, :job_id, :job_args, :job_meta)
+                       .slice(:worker, :job_id, :job_args, :job_meta, :job_queue)
                        .merge(job_retries: job_retries)
 
       # Process payload

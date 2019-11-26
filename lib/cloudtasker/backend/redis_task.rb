@@ -7,7 +7,7 @@ module Cloudtasker
   module Backend
     # Manage local tasks pushed to Redis
     class RedisTask
-      attr_reader :id, :http_request, :schedule_time, :retries
+      attr_reader :id, :http_request, :schedule_time, :retries, :queue
 
       RETRY_INTERVAL = 20 # seconds
 
@@ -48,20 +48,26 @@ module Cloudtasker
       #
       # Reeturn all tasks ready to process.
       #
+      # @param [String] queue The queue to retrieve items from.
+      #
       # @return [Array<Cloudtasker::Backend::RedisTask>] All the tasks ready to process.
       #
-      def self.ready_to_process
-        all.select { |e| e.schedule_time <= Time.now }
+      def self.ready_to_process(queue = nil)
+        list = all.select { |e| e.schedule_time <= Time.now }
+        list = list.select { |e| e.queue == queue } if queue
+        list
       end
 
       #
       # Retrieve and remove a task from the queue.
       #
+      # @param [String] queue The queue to retrieve items from.
+      #
       # @return [Cloudtasker::Backend::RedisTask] A task ready to process.
       #
-      def self.pop
+      def self.pop(queue = nil)
         redis.with_lock('cloudtasker/server') do
-          ready_to_process.first&.tap(&:destroy)
+          ready_to_process(queue).first&.tap(&:destroy)
         end
       end
 
@@ -110,11 +116,12 @@ module Cloudtasker
       # @param [Integer] schedule_time When to run the task (Unix timestamp)
       # @param [Integer] retries The number of times the job failed.
       #
-      def initialize(id:, http_request:, schedule_time: nil, retries: 0)
+      def initialize(id:, http_request:, schedule_time: nil, retries: 0, queue: nil)
         @id = id
         @http_request = http_request
         @schedule_time = Time.at(schedule_time || 0)
         @retries = retries || 0
+        @queue = queue
       end
 
       #
@@ -136,7 +143,8 @@ module Cloudtasker
           id: id,
           http_request: http_request,
           schedule_time: schedule_time.to_i,
-          retries: retries
+          retries: retries,
+          queue: queue
         }
       end
 

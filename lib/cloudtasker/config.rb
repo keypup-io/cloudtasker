@@ -7,7 +7,7 @@ module Cloudtasker
   class Config
     attr_accessor :redis
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
-                :gcp_queue_id, :processor_path, :logger, :mode, :max_retries
+                :gcp_queue_prefix, :processor_path, :logger, :mode, :max_retries
 
     # Retry header in Cloud Task responses
     RETRY_HEADER = 'X-CloudTasks-TaskExecutionCount'
@@ -16,6 +16,11 @@ module Cloudtasker
     DEFAULT_LOCATION_ID = 'us-east1'
     DEFAULT_PROCESSOR_PATH = '/cloudtasker/run'
 
+    # Default queue values
+    DEFAULT_JOB_QUEUE = 'default'
+    DEFAULT_QUEUE_CONCURRENCY = 10
+    DEFAULT_QUEUE_RETRIES = -1 # unlimited
+
     # The number of times jobs will be attempted before declaring them dead
     DEFAULT_MAX_RETRY_ATTEMPTS = 25
 
@@ -23,9 +28,10 @@ module Cloudtasker
       Missing host for processing.
       Please specify a processor hostname in form of `https://some-public-dns.example.com`'
     DOC
-    QUEUE_ID_MISSING_ERROR = <<~DOC
-      Missing GCP queue ID.
-      Please specify a queue ID in the form of `my-queue-id`. You can create a queue using the Google SDK via `gcloud tasks queues create my-queue-id`
+    QUEUE_PREFIX_MISSING_ERROR = <<~DOC
+      Missing GCP queue prefix.
+      Please specify a queue prefix in the form of `my-app`.
+      You can create a default queue using the Google SDK via `gcloud tasks queues create my-app-default`
     DOC
     PROJECT_ID_MISSING_ERROR = <<~DOC
       Missing GCP project ID.
@@ -121,12 +127,12 @@ module Cloudtasker
     end
 
     #
-    # Return the ID of GCP queue where tasks will be added.
+    # Return the prefix used for queues.
     #
-    # @return [String] The ID of the processing queue.
+    # @return [String] The prefix of the processing queues.
     #
-    def gcp_queue_id
-      @gcp_queue_id || raise(StandardError, QUEUE_ID_MISSING_ERROR)
+    def gcp_queue_prefix
+      @gcp_queue_prefix || raise(StandardError, QUEUE_PREFIX_MISSING_ERROR)
     end
 
     #

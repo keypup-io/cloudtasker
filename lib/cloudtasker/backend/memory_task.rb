@@ -7,7 +7,7 @@ module Cloudtasker
     # Manage local tasks pushed to memory.
     # Used for testing.
     class MemoryTask
-      attr_reader :id, :http_request, :schedule_time
+      attr_reader :id, :http_request, :schedule_time, :queue
 
       #
       # Return the task queue. A worker class name
@@ -116,10 +116,11 @@ module Cloudtasker
       # @param [Hash] http_request The HTTP request content.
       # @param [Integer] schedule_time When to run the task (Unix timestamp)
       #
-      def initialize(id:, http_request:, schedule_time: nil)
+      def initialize(id:, http_request:, schedule_time: nil, queue: nil)
         @id = id
         @http_request = http_request
         @schedule_time = Time.at(schedule_time || 0)
+        @queue = queue
       end
 
       #
@@ -149,7 +150,8 @@ module Cloudtasker
         {
           id: id,
           http_request: http_request,
-          schedule_time: schedule_time.to_i
+          schedule_time: schedule_time.to_i,
+          queue: queue
         }
       end
 

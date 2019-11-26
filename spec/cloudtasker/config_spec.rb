@@ -4,7 +4,7 @@ RSpec.describe Cloudtasker::Config do
   let(:secret) { 'some-secret' }
   let(:gcp_location_id) { 'some-location' }
   let(:gcp_project_id) { 'some-project-id' }
-  let(:gcp_queue_id) { 'some-queue-id' }
+  let(:gcp_queue_prefix) { 'some-queue' }
   let(:processor_host) { 'http://localhost' }
   let(:processor_path) { nil }
   let(:logger) { Logger.new(nil) }
@@ -25,7 +25,7 @@ RSpec.describe Cloudtasker::Config do
       c.secret = secret
       c.gcp_location_id = gcp_location_id
       c.gcp_project_id = gcp_project_id
-      c.gcp_queue_id = gcp_queue_id
+      c.gcp_queue_prefix = gcp_queue_prefix
       c.processor_host = processor_host
       c.processor_path = processor_path
       c.max_retries = max_retries
@@ -167,17 +167,17 @@ RSpec.describe Cloudtasker::Config do
     end
   end
 
-  describe '#gcp_queue_id' do
-    subject(:method) { config.gcp_queue_id }
+  describe '#gcp_queue_prefix' do
+    subject(:method) { config.gcp_queue_prefix }
 
     context 'with value specified via config' do
-      it { is_expected.to eq(gcp_queue_id) }
+      it { is_expected.to eq(gcp_queue_prefix) }
     end
 
     context 'with no value' do
-      let(:gcp_queue_id) { nil }
+      let(:gcp_queue_prefix) { nil }
 
-      it { expect { method }.to raise_error(StandardError, described_class::QUEUE_ID_MISSING_ERROR) }
+      it { expect { method }.to raise_error(StandardError, described_class::QUEUE_PREFIX_MISSING_ERROR) }
     end
   end
 

@@ -6,6 +6,7 @@ module Cloudtasker
     # Add class method to including class
     def self.included(base)
       base.extend(ClassMethods)
+      base.attr_writer :job_queue
       base.attr_accessor :job_args, :job_id, :job_meta, :job_reenqueued, :job_retries
     end
 
@@ -45,7 +46,7 @@ module Cloudtasker
       return nil unless worker_klass.include?(self)
 
       # Return instantiated worker
-      worker_klass.new(payload.slice(:job_args, :job_id, :job_meta, :job_retries))
+      worker_klass.new(payload.slice(:job_queue, :job_args, :job_id, :job_meta, :job_retries))
     rescue NameError
       nil
     end
@@ -81,7 +82,7 @@ module Cloudtasker
       # @return [Cloudtasker::CloudTask] The Google Task response
       #
       def perform_async(*args)
-        perform_in(nil, *args)
+        schedule(args: args)
       end
 
       #
@@ -93,7 +94,7 @@ module Cloudtasker
       # @return [Cloudtasker::CloudTask] The Google Task response
       #
       def perform_in(interval, *args)
-        new(job_args: args).schedule(interval: interval)
+        schedule(args: args, time_in: interval)
       end
 
       #
@@ -105,7 +106,21 @@ module Cloudtasker
       # @return [Cloudtasker::CloudTask] The Google Task response
       #
       def perform_at(time_at, *args)
-        new(job_args: args).schedule(time_at: time_at)
+        schedule(args: args, time_at: time_at)
+      end
+
+      #
+      # Enqueue a worker with explicity options.
+      #
+      # @param [Array<any>] args The job arguments.
+      # @param [Time, Integer] time_in The delay in seconds.
+      # @param [Time, Integer] time_at The time at which the job should run.
+      # @param [String, Symbol] queue The queue on which the worker should run.
+      #
+      # @return [Cloudtasker::CloudTask] The Google Task response
+      #
+      def schedule(args: nil, time_in: nil, time_at: nil, queue: nil)
+        new(job_args: args, job_queue: queue).schedule({ interval: time_in, time_at: time_at }.compact)
       end
 
       #
@@ -124,11 +139,21 @@ module Cloudtasker
     # @param [Array<any>] job_args The list of perform args.
     # @param [String] job_id A unique ID identifying this job.
     #
-    def initialize(job_args: [], job_id: nil, job_meta: {}, job_retries: 0)
-      @job_args = job_args
+    def initialize(job_queue: nil, job_args: nil, job_id: nil, job_meta: {}, job_retries: 0)
+      @job_args = job_args || []
       @job_id = job_id || SecureRandom.uuid
       @job_meta = MetaStore.new(job_meta)
       @job_retries = job_retries || 0
+      @job_queue = job_queue
+    end
+
+    #
+    # Return the queue to use for this worker.
+    #
+    # @return [String] The name of queue.
+    #
+    def job_queue
+      (@job_queue ||= self.class.cloudtasker_options_hash[:queue] || Config::DEFAULT_JOB_QUEUE).to_s
     end
 
     #
@@ -216,7 +241,8 @@ module Cloudtasker
         job_id: job_id,
         job_args: job_args,
         job_meta: job_meta.to_h,
-        job_retries: job_retries
+        job_retries: job_retries,
+        job_queue: job_queue
       }
     end
 

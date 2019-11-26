@@ -6,13 +6,26 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
   describe 'POST #run' do
     subject { post :run, body: payload.to_json, as: :json }
 
-    let(:payload) { { worker: worker_class_name, job_id: id, job_args: args, job_meta: meta, other: :foo } }
+    let(:payload) do
+      {
+        worker: worker_class_name,
+        job_id: id,
+        job_args: args,
+        job_meta: meta,
+        job_queue: queue,
+        other: :foo
+      }
+    end
+    let(:expected_payload) do
+      payload.slice(:worker, :job_id, :job_args, :job_meta, :job_queue)
+             .merge(job_retries: retries)
+    end
     let(:id) { '111' }
     let(:worker_class_name) { 'TestWorker' }
     let(:args) { [1, 2] }
     let(:meta) { { 'foo' => 'bar' } }
     let(:retries) { 3 }
-    let(:expected_payload) { payload.slice(:worker, :job_id, :job_args, :job_meta).merge(job_retries: retries) }
+    let(:queue) { 'some-queue' }
     let(:auth_token) { Cloudtasker::Authenticator.verification_token }
 
     before { request.env['HTTP_X_CLOUDTASKS_TASKEXECUTIONCOUNT'] = retries }

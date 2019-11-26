@@ -70,7 +70,7 @@ module Cloudtasker
     #
     # Run the cloudtasker development server.
     #
-    def run
+    def run(opts = {})
       boot_system
 
       # Print banner
@@ -90,16 +90,17 @@ module Cloudtasker
       logger.info "[Cloudtasker/Server] Running in #{RUBY_DESCRIPTION}"
 
       # Wait for signals
-      wait_for_signal(self_read)
+      run_server(self_read, opts)
     end
 
     #
-    # Wait for signals and handle them.
+    # Run server and wait for signals.
     #
     # @param [IO] read_pipe Where to read signals.
+    # @param [Hash] opts Server options.
     #
-    def wait_for_signal(read_pipe)
-      local_server.start
+    def run_server(read_pipe, opts = {})
+      local_server.start(opts)
 
       while (readable_io = IO.select([read_pipe]))
         signal = readable_io.first[0].gets.strip
