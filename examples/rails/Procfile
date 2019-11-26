@@ -1,2 +1,2 @@
 web: bundle exec rails s -p 3000
-worker: bundle exec cloudtasker
+worker: bundle exec cloudtasker -q critical,2 -q default,3

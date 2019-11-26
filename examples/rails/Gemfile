@@ -9,7 +9,7 @@ ruby '2.5.5'
 gem 'rails', '~> 6.0.0.rc1'
 
 # Background jobs via Cloud Tasks
-gem 'cloudtasker'
+gem 'cloudtasker', path: '../../'
 
 # Active record adapter
 gem 'sqlite3'

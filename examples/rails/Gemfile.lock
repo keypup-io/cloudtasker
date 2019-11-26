@@ -1,3 +1,13 @@
+PATH
+  remote: ../..
+  specs:
+    cloudtasker (0.7.0)
+      activesupport
+      fugit
+      google-cloud-tasks
+      jwt
+      redis
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -59,12 +69,6 @@ GEM
     addressable (2.7.0)
       public_suffix (>= 2.0.2, < 5.0)
     builder (3.2.3)
-    cloudtasker (0.7.0)
-      activesupport
-      fugit
-      google-cloud-tasks
-      jwt
-      redis
     concurrent-ruby (1.1.5)
     crass (1.0.5)
     erubi (1.9.0)
@@ -88,7 +92,7 @@ GEM
       googleauth (~> 0.9)
       grpc (~> 1.24)
       rly (~> 0.2.3)
-    google-protobuf (3.10.1)
+    google-protobuf (3.11.0)
     googleapis-common-protos (1.3.9)
       google-protobuf (~> 3.0)
       googleapis-common-protos-types (~> 1.0)
@@ -190,7 +194,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  cloudtasker
+  cloudtasker!
   rails (~> 6.0.0.rc1)
   sqlite3
 

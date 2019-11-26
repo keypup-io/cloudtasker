@@ -9,4 +9,4 @@ ruby '2.5.5'
 gem 'sinatra'
 
 # Background jobs via Cloud Tasks
-gem 'cloudtasker'
+gem 'cloudtasker', path: '../../'

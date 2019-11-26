@@ -5,7 +5,6 @@ require_relative 'boot'
 require 'rails/all'
 
 Bundler.require(*Rails.groups)
-require 'cloudtasker'
 
 module Dummy
   class Application < Rails::Application

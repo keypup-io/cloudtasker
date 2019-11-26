@@ -21,7 +21,7 @@ post '/cloudtasker/run' do
 
     # Build payload
     payload = JSON.parse(request.body.read, symbolize_names: true)
-                  .slice(:worker, :job_id, :job_args, :job_meta)
+                  .slice(:worker, :job_id, :job_args, :job_meta, :job_queue)
                   .merge(job_retries: request.env['HTTP_X_CLOUDTASKS_TASKEXECUTIONCOUNT'].to_i)
 
     # Process payload

@@ -10,7 +10,7 @@ Cloudtasker.configure do |config|
   #
   config.gcp_location_id = 'us-east1'
   config.gcp_project_id = 'some-project'
-  config.gcp_queue_id = 'some-queue'
+  config.gcp_queue_prefix = 'my-app'
 
   #
   # Domain
