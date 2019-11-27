@@ -1,5 +1,9 @@
 require: rubocop-rspec
 
+AllCops:
+  Exclude:
+    - 'vendor/**/*'
+
 Metrics/ClassLength:
   Max: 150
 
