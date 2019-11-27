@@ -2,11 +2,9 @@
 language: ruby
 cache: bundler
 rvm:
-  - 2.3
-  - 2.4
   - 2.5.5
 before_install: gem install bundler -v 2.0.2
-before_script: rubocop
+before_script: bundle exec rubocop
 gemfile:
   - gemfiles/google_cloud_tasks_1.0.gemfile
   - gemfiles/google_cloud_tasks_1.1.gemfile
