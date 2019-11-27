@@ -329,9 +329,10 @@ RSpec.describe Cloudtasker::Worker do
 
     let(:job_args) { [1, 2] }
     let(:job_meta) { { foo: 'bar' } }
-    let(:worker) { worker_class.new(job_args: job_args, job_meta: job_meta) }
+    let(:job_queue) { 'critical' }
+    let(:worker) { worker_class.new(job_args: job_args, job_meta: job_meta, job_queue: job_queue) }
 
-    it { is_expected.to have_attributes(job_args: job_args, job_meta: eq(job_meta)) }
+    it { is_expected.to have_attributes(job_queue: job_queue, job_args: job_args, job_meta: eq(job_meta)) }
     it { expect(new_instance.job_id).not_to eq(worker.job_id) }
   end
 

@@ -6,7 +6,17 @@ RSpec.describe Cloudtasker::Cron::Schedule do
   let(:id) { 'SomeScheduleId' }
   let(:cron) { '0 0 * * *' }
   let(:worker_klass) { TestWorker }
-  let(:schedule) { described_class.new(id: id, cron: cron, worker: worker_klass.to_s) }
+  let(:worker_args) { ['foo', 1] }
+  let(:worker_queue) { 'critical' }
+  let(:schedule) do
+    described_class.new(
+      id: id,
+      cron: cron,
+      worker: worker_klass.to_s,
+      args: worker_args,
+      queue: worker_queue
+    )
+  end
 
   describe '.redis' do
     subject { described_class.redis }
@@ -130,7 +140,17 @@ RSpec.describe Cloudtasker::Cron::Schedule do
   describe '.new' do
     subject { described_class.new(attrs) }
 
-    let(:attrs) { { id: id, cron: cron, worker: worker_klass.to_s, task_id: '1', job_id: '2' } }
+    let(:attrs) do
+      {
+        id: id,
+        cron: cron,
+        worker: worker_klass.to_s,
+        args: worker_args,
+        queue: worker_queue,
+        task_id: '1',
+        job_id: '2'
+      }
+    end
 
     it { is_expected.to have_attributes(attrs) }
   end
@@ -228,7 +248,9 @@ RSpec.describe Cloudtasker::Cron::Schedule do
       {
         id: id,
         cron: cron,
-        worker: worker_klass.to_s
+        worker: worker_klass.to_s,
+        args: worker_args,
+        queue: worker_queue
       }
     end
 
@@ -245,6 +267,8 @@ RSpec.describe Cloudtasker::Cron::Schedule do
         id: id,
         cron: cron,
         worker: worker_klass.to_s,
+        args: worker_args,
+        queue: worker_queue,
         task_id: task_id,
         job_id: job_id
       }
@@ -252,6 +276,15 @@ RSpec.describe Cloudtasker::Cron::Schedule do
 
     before { schedule.assign_attributes(task_id: task_id, job_id: job_id) }
     it { is_expected.to eq(expected_hash) }
+  end
+
+  describe '#worker_instance' do
+    subject { schedule.worker_instance }
+
+    let(:attrs) { { worker_name: worker_klass.to_s, job_args: worker_args, job_queue: worker_queue } }
+
+    it { is_expected.to be_a(Cloudtasker::WorkerWrapper) }
+    it { is_expected.to have_attributes(attrs) }
   end
 
   describe '#cron_schedule' do
@@ -298,7 +331,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
 
     before do
       schedule.task_id = task_id
-      allow(Cloudtasker::WorkerWrapper).to receive(:new).with(worker_name: worker_klass.to_s).and_return(wrapper)
+      allow(schedule).to receive(:worker_instance).and_return(wrapper)
       allow(Cloudtasker::Cron::Job).to receive(:new).with(wrapper).and_return(job)
       allow(job).to receive(:set).with(schedule_id: id).and_return(job)
       allow(job).to receive(:schedule!).and_return(true)

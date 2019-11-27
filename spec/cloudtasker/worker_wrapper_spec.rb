@@ -45,9 +45,11 @@ RSpec.describe Cloudtasker::WorkerWrapper do
 
     let(:job_args) { [1, 2] }
     let(:job_meta) { { foo: 'bar' } }
-    let(:worker) { described_class.new(worker_name: worker_class, job_args: job_args, job_meta: job_meta) }
+    let(:job_queue) { 'critical' }
+    let(:attrs) { { worker_name: worker_class, job_queue: job_queue, job_args: job_args, job_meta: job_meta } }
+    let(:worker) { described_class.new(attrs) }
 
-    it { is_expected.to have_attributes(worker_name: worker_class, job_args: job_args, job_meta: eq(job_meta)) }
+    it { is_expected.to have_attributes(attrs.merge(job_meta: eq(job_meta))) }
     it { expect(new_instance.job_id).not_to eq(worker.job_id) }
   end
 end

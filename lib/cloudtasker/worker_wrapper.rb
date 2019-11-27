@@ -43,10 +43,10 @@ module Cloudtasker
     # Return a new instance of the worker with the same args and metadata
     # but with a different id.
     #
-    # @return [<Type>] <description>
+    # @return [Cloudtasker::WorkerWrapper] <description>
     #
     def new_instance
-      self.class.new(worker_name: worker_name, job_args: job_args, job_meta: job_meta)
+      self.class.new(worker_name: worker_name, job_queue: job_queue, job_args: job_args, job_meta: job_meta)
     end
   end
 end

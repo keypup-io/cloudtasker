@@ -7,7 +7,7 @@ module Cloudtasker
   module Cron
     # Manage cron schedules
     class Schedule
-      attr_accessor :id, :cron, :worker, :task_id, :job_id
+      attr_accessor :id, :cron, :worker, :task_id, :job_id, :queue, :args
 
       # Key Namespace used for object saved under this class
       SUB_NAMESPACE = 'schedule'
@@ -114,15 +114,19 @@ module Cloudtasker
       # @param [String] id The schedule id.
       # @param [String] cron The cron expression.
       # @param [Class] worker The worker class to run.
+      # @param [Array<any>] args The worker arguments.
+      # @param [String] queue The queue to use for the cron job.
       # @param [String] task_id The ID of the actual backend task.
       # @param [String] job_id The ID of the Cloudtasker worker.
       #
-      def initialize(id:, cron:, worker:, task_id: nil, job_id: nil)
+      def initialize(id:, cron:, worker:, **opts)
         @id = id
         @cron = cron
         @worker = worker
-        @task_id = task_id
-        @job_id = job_id
+        @args = opts[:args]
+        @queue = opts[:queue]
+        @task_id = opts[:task_id]
+        @job_id = opts[:job_id]
       end
 
       #
@@ -192,7 +196,9 @@ module Cloudtasker
         {
           id: id,
           cron: cron,
-          worker: worker
+          worker: worker,
+          args: args,
+          queue: queue
         }
       end
 
@@ -202,13 +208,10 @@ module Cloudtasker
       # @return [Hash] The attributes hash.
       #
       def to_h
-        {
-          id: id,
-          cron: cron,
-          worker: worker,
+        to_config.merge(
           task_id: task_id,
           job_id: job_id
-        }
+        )
       end
 
       #
@@ -218,6 +221,15 @@ module Cloudtasker
       #
       def cron_schedule
         @cron_schedule ||= Fugit::Cron.parse(cron)
+      end
+
+      #
+      # Return an instance of the underlying worker.
+      #
+      # @return [Cloudtasker::WorkerWrapper] The worker instance
+      #
+      def worker_instance
+        WorkerWrapper.new(worker_name: worker, job_args: args, job_queue: queue)
       end
 
       #
@@ -280,7 +292,6 @@ module Cloudtasker
         CloudTask.delete(task_id) if task_id
 
         # Schedule worker
-        worker_instance = WorkerWrapper.new(worker_name: worker)
         Job.new(worker_instance).set(schedule_id: id).schedule!
       end
     end

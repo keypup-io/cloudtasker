@@ -28,7 +28,11 @@ unless Rails.env.test?
     # Run job every hour on the fifteenth minute 
     other_cron_schedule: {
       worker: 'OtherCronWorker',
-      cron: '15 * * * *'
+      cron: '15 * * * *',
+      queue: 'critical'
+      args:
+        - 'foo'
+        - 'bar
     }
   )
 end

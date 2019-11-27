@@ -32,6 +32,8 @@ end
 # Cloudtasker::Cron::Schedule.load_from_hash!(
 #   'my_worker' => {
 #     'worker' => 'CronWorker',
-#     'cron' => '* * * * *'
+#     'cron' => '* * * * *',
+#     'queue' => 'critical',
+#     'args' => ['foo']
 #   }
 # )
