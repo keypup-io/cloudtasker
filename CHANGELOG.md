@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.8.0](https://github.com/keypup-io/cloudtasker/tree/v0.8.0) (2019-11-27)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.7.0...v0.8.0)
+
 ## [v0.7.0](https://github.com/keypup-io/cloudtasker/tree/v0.7.0) (2019-11-25)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.6.0...v0.7.0)
