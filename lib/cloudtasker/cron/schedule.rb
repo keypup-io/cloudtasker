@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'fugit'
+require 'cloudtasker/worker_wrapper'
 
 module Cloudtasker
   module Cron
@@ -279,7 +280,7 @@ module Cloudtasker
         CloudTask.delete(task_id) if task_id
 
         # Schedule worker
-        worker_instance = Object.const_get(worker).new
+        worker_instance = WorkerWrapper.new(worker_name: worker)
         Job.new(worker_instance).set(schedule_id: id).schedule!
       end
     end

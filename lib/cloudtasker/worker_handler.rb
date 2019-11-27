@@ -65,7 +65,7 @@ module Cloudtasker
     #
     def worker_payload
       @worker_payload ||= {
-        worker: worker.class.to_s,
+        worker: worker.job_class_name,
         job_queue: worker.job_queue,
         job_id: worker.job_id,
         job_args: worker.job_args,

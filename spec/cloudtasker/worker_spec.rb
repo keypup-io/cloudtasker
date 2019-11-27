@@ -205,6 +205,14 @@ RSpec.describe Cloudtasker::Worker do
     end
   end
 
+  describe '#job_class_name' do
+    subject { worker.job_class_name }
+
+    let(:worker) { worker_class.new }
+
+    it { is_expected.to eq(worker.class.to_s) }
+  end
+
   describe '#job_queue' do
     subject { worker.job_queue }
 

@@ -294,10 +294,12 @@ RSpec.describe Cloudtasker::Cron::Schedule do
     let(:job) { instance_double('Cloudtasker::Cron::Job') }
     let(:existing_task) { nil }
     let(:task_id) { nil }
+    let(:wrapper) { instance_double('Cloudtasker::WorkerWrapper') }
 
     before do
       schedule.task_id = task_id
-      allow(Cloudtasker::Cron::Job).to receive(:new).with(be_a(worker_klass)).and_return(job)
+      allow(Cloudtasker::WorkerWrapper).to receive(:new).with(worker_name: worker_klass.to_s).and_return(wrapper)
+      allow(Cloudtasker::Cron::Job).to receive(:new).with(wrapper).and_return(job)
       allow(job).to receive(:set).with(schedule_id: id).and_return(job)
       allow(job).to receive(:schedule!).and_return(true)
       allow(Cloudtasker::CloudTask).to receive(:delete).with(be_a(String))

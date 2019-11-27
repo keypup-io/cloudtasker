@@ -148,6 +148,15 @@ module Cloudtasker
     end
 
     #
+    # Return the class name of the worker.
+    #
+    # @return [String] The class name.
+    #
+    def job_class_name
+      self.class.to_s
+    end
+
+    #
     # Return the queue to use for this worker.
     #
     # @return [String] The name of queue.

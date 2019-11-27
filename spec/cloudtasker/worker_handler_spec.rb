@@ -61,9 +61,10 @@ RSpec.describe Cloudtasker::WorkerHandler do
   describe '#worker_payload' do
     subject { task.worker_payload }
 
+    let(:class_name) { 'SomeWorker' }
     let(:expected_payload) do
       {
-        worker: worker.class.to_s,
+        worker: class_name,
         job_queue: worker.job_queue,
         job_id: worker.job_id,
         job_args: job_args,
@@ -71,6 +72,8 @@ RSpec.describe Cloudtasker::WorkerHandler do
       }
     end
 
+    before { allow(worker).to receive(:job_class_name).and_return(class_name) }
+    after { expect(worker).to have_received(:job_class_name) }
     it { is_expected.to eq(expected_payload) }
   end
 
