@@ -187,6 +187,18 @@ RSpec.describe Cloudtasker::Batch::Job do
     it { expect(meta_batch_id).to eq(batch.batch_id) }
   end
 
+  describe '#add_to_queue' do
+    subject { batch.jobs[0] }
+
+    let(:queue) { 'low' }
+    let(:meta_batch_id) { batch.jobs[0].job_meta.get(batch.key(:parent_id)) }
+
+    before { batch.add_to_queue(queue, child_worker.class, *child_worker.job_args) }
+    it { is_expected.to be_a(child_worker.class) }
+    it { is_expected.to have_attributes(job_args: child_worker.job_args, job_queue: queue) }
+    it { expect(meta_batch_id).to eq(batch.batch_id) }
+  end
+
   describe '#save' do
     let(:batch_content) { described_class.redis.fetch(batch.batch_gid) }
     let(:batch_state) { described_class.redis.fetch(batch.batch_state_gid) }

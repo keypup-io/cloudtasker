@@ -59,8 +59,33 @@ The following callbacks are available on your workers to track the progress of t
 | `on_child_dead` | `The child job` | Invoked when a child has exhausted all of its retries |s
 | `on_batch_complete` | none | Invoked when all chidren have finished or died  |
 
+## Queue management
+
+Jobs added to a batch inherit the queue of the parent. It is possible to specify a different queue when adding a job to a batch using `add_to_queue` batch method.
+
+E.g.
+
+```ruby
+def perform
+  batch.add_to_queue(:critical, SubWorker, arg1, arg2, arg3)
+end
+```
+
 ## Batch completion
 
 Batches complete when all children have successfully completed or died (all retries exhausted).
 
 Jobs that fail in a batch will be retried based on the `max_retries` setting configured globally or on the worker itself. The batch will be considered `pending` while workers retry. Therefore it may be a good idea to reduce the number of retries on your workers using `cloudtasker_options max_retries: 5` to ensure your batches don't hang for too long.
+
+## Batch progress tracking
+
+You can access progression statistics in callback using `batch.progress`. See the [BatchProgress](../lib/cloudtasker/batch/batch_progress.rb) class for more details.
+
+E.g.
+```ruby
+def on_batch_node_complete(_child_job)
+  logger.info("Total: #{batch.progress.total}")
+  logger.info("Completed: #{batch.progress.completed}")
+  logger.info("Progress: #{batch.progress.percent.to_i}%")
+end
+```

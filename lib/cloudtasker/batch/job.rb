@@ -180,10 +180,23 @@ module Cloudtasker
       # @return [Array<Cloudtasker::Worker>] The updated list of jobs.
       #
       def add(worker_klass, *args)
+        add_to_queue(worker.job_queue, worker_klass, *args)
+      end
+
+      #
+      # Add a worker to the batch using a specific queue.
+      #
+      # @param [String, Symbol] queue The name of the queue
+      # @param [Class] worker_klass The worker class.
+      # @param [Array<any>] *args The worker arguments.
+      #
+      # @return [Array<Cloudtasker::Worker>] The updated list of jobs.
+      #
+      def add_to_queue(queue, worker_klass, *args)
         jobs << worker_klass.new(
           job_args: args,
           job_meta: { key(:parent_id) => batch_id },
-          job_queue: worker.job_queue
+          job_queue: queue
         )
       end
 
