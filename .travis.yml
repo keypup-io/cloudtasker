@@ -3,6 +3,8 @@ language: ruby
 cache: bundler
 rvm:
   - 2.5.5
+services:
+  - redis-server
 before_install: gem install bundler -v 2.0.2
 before_script: bundle exec rubocop
 gemfile:
