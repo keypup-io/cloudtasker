@@ -101,8 +101,11 @@ module Cloudtasker
     def processor_host=(val)
       @processor_host = val
 
+      # Check if Rails supports host filtering
+      return unless val && defined?(Rails) && Rails.application.config.respond_to?(:hosts)
+
       # Add processor host to the list of authorized hosts
-      Rails.application.config.hosts << val.gsub(%r{https?://}, '') if val && defined?(Rails)
+      Rails.application.config.hosts << val.gsub(%r{https?://}, '')
     end
 
     #
