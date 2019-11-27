@@ -37,7 +37,7 @@ RSpec.configure do |config|
     Cloudtasker.config.server_middleware.clear
 
     # Flush redis keys
-    Cloudtasker::RedisClient.clear
+    Cloudtasker::RedisClient.new.clear
   end
 end
 

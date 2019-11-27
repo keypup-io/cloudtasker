@@ -25,7 +25,7 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
   describe '.redis' do
     subject { described_class.redis }
 
-    it { is_expected.to eq(Cloudtasker::RedisClient) }
+    it { is_expected.to be_a(Cloudtasker::RedisClient) }
   end
 
   describe '.key' do
@@ -153,7 +153,7 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
   describe '#redis' do
     subject { task.redis }
 
-    it { is_expected.to eq(Cloudtasker::RedisClient) }
+    it { is_expected.to be_a(Cloudtasker::RedisClient) }
   end
 
   describe '#to_h' do

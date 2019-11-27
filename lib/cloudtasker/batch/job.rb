@@ -16,10 +16,10 @@ module Cloudtasker
       #
       # Return the cloudtasker redis client
       #
-      # @return [Class] The redis client.
+      # @return [Cloudtasker::RedisClient] The cloudtasker redis client..
       #
       def self.redis
-        RedisClient
+        @redis ||= RedisClient.new
       end
 
       #
@@ -87,7 +87,7 @@ module Cloudtasker
       #
       # Return the cloudtasker redis client
       #
-      # @return [Class] The redis client.
+      # @return [Cloudtasker::RedisClient] The cloudtasker redis client..
       #
       def redis
         self.class.redis

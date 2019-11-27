@@ -19,7 +19,7 @@ RSpec.describe Cloudtasker::Batch::Job do
   describe '.redis' do
     subject { described_class.redis }
 
-    it { is_expected.to eq(Cloudtasker::RedisClient) }
+    it { is_expected.to be_a(Cloudtasker::RedisClient) }
   end
 
   describe '.for' do
@@ -82,7 +82,7 @@ RSpec.describe Cloudtasker::Batch::Job do
   describe '#redis' do
     subject { batch.redis }
 
-    it { is_expected.to eq(Cloudtasker::RedisClient) }
+    it { is_expected.to be_a(Cloudtasker::RedisClient) }
   end
 
   describe '#key' do

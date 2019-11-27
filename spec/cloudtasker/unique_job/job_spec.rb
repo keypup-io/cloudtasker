@@ -87,7 +87,7 @@ RSpec.describe Cloudtasker::UniqueJob::Job do
   describe '#redis' do
     subject { job.redis }
 
-    it { is_expected.to eq(Cloudtasker::RedisClient) }
+    it { is_expected.to be_a(Cloudtasker::RedisClient) }
   end
 
   describe '#lock!' do

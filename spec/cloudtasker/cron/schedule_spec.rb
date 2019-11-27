@@ -21,7 +21,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
   describe '.redis' do
     subject { described_class.redis }
 
-    it { is_expected.to eq(Cloudtasker::RedisClient) }
+    it { is_expected.to be_a(Cloudtasker::RedisClient) }
   end
 
   describe '.key' do
@@ -158,7 +158,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
   describe '#redis' do
     subject { schedule.redis }
 
-    it { is_expected.to eq(Cloudtasker::RedisClient) }
+    it { is_expected.to be_a(Cloudtasker::RedisClient) }
   end
 
   describe '#gid' do

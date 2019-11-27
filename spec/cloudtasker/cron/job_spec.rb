@@ -112,7 +112,7 @@ RSpec.describe Cloudtasker::Cron::Job do
   describe '#redis' do
     subject { job.redis }
 
-    it { is_expected.to eq(Cloudtasker::RedisClient) }
+    it { is_expected.to be_a(Cloudtasker::RedisClient) }
   end
 
   describe '#cron_schedule' do

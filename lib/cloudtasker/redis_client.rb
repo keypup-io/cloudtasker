@@ -4,9 +4,7 @@ require 'redis'
 
 module Cloudtasker
   # A wrapper with helper methods for redis
-  module RedisClient
-    module_function
-
+  class RedisClient
     # Suffix added to cache keys when locking them
     LOCK_KEY_PREFIX = 'cloudtasker/lock'
 
@@ -50,9 +48,10 @@ module Cloudtasker
     # Acquire a lock on a cache entry.
     #
     # @example
-    #   RedisClient.with_lock('foo')
-    #     content = RedisClient.fetch('foo')
-    #     RedisClient.set(content.merge(bar: 'bar).to_json)
+    #   redis = RedisClient.new
+    #   redis.with_lock('foo')
+    #     content = redis.fetch('foo')
+    #     redis.set(content.merge(bar: 'bar).to_json)
     #   end
     #
     # @param [String] cache_key The cache key to access.
