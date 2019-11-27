@@ -30,9 +30,7 @@ unless Rails.env.test?
       worker: 'OtherCronWorker',
       cron: '15 * * * *',
       queue: 'critical'
-      args:
-        - 'foo'
-        - 'bar
+      args: ['foo', 'bar']
     }
   )
 end
