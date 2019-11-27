@@ -2,6 +2,7 @@ require: rubocop-rspec
 
 AllCops:
   Exclude:
+    - 'gemfiles/vendor/**/*'
     - 'vendor/**/*'
 
 Metrics/ClassLength:
