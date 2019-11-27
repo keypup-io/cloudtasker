@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/keypup-io/cloudtasker.svg?branch=master)](https://travis-ci.org/keypup-io/cloudtasker) [![Gem Version](https://badge.fury.io/rb/cloudtasker.svg)](https://badge.fury.io/rb/cloudtasker)
+
 # Cloudtasker
 
 Background jobs for Ruby using Google Cloud Tasks.
