@@ -4,11 +4,11 @@ Background jobs for Ruby using Google Cloud Tasks.
 
 Cloudtasker provides an easy to manage interface to Google Cloud Tasks for background job processing. Workers can be defined programmatically using the Cloudtasker DSL and enqueued for processing using a simple to use API.
 
-Cloudtasker is particularly suited for serverless applications only responding to HTTP requests and where running a dedicated job processing is not an option (e.g. deploy via [Cloud Run](https://cloud.google.com/run)). All jobs enqueued in Cloud Tasks via Cloudtasker eventually gets processed by your application via HTTP requests.
+Cloudtasker is particularly suited for serverless applications only responding to HTTP requests and where running a dedicated job processing is not an option (e.g. deploy via [Cloud Run](https://cloud.google.com/run)). All jobs enqueued in Cloud Tasks via Cloudtasker eventually get processed by your application via HTTP requests.
 
 Cloudtasker also provides optional modules for running [cron jobs](docs/CRON_JOBS.md), [batch jobs](docs/BATCH_JOBS.md) and [unique jobs](docs/UNIQUE_JOBS.md).
 
-A local processing server is also available in development. This local server processes jobs in lieu of Cloud Tasks and allow you to work offline.
+A local processing server is also available in development. This local server processes jobs in lieu of Cloud Tasks and allows you to work offline.
 
 ## Summary
 
@@ -107,7 +107,7 @@ Open a Rails console and enqueue some jobs
   DummyWorker.perform_async('foo')
 
   # Process job in 60 seconds
-  DummyWorker.perform_in(10, 'foo')
+  DummyWorker.perform_in(60, 'foo')
 ```
 
 Your Rails logs should display the following:
@@ -349,7 +349,7 @@ When working locally on your application it is usually not possible to have a pu
 ### Option 1: Cloudtasker local server
 The Cloudtasker local server is a ruby daemon that looks for jobs pushed to Redis and sends them to your application via HTTP POST requests. The server mimics the way Google Cloud Tasks works, but locally!
 
-You can configure your applicatiion to use the Cloudtasker local server using the following initializer:
+You can configure your application to use the Cloudtasker local server using the following initializer:
 ```ruby
 # config/initializers/cloudtasker.rb
 
@@ -371,20 +371,20 @@ bundle exec cloudtasker
 You can as well define a Procfile to manage the cloudtasker process via foreman. Then use `foreman start` to launch both your Rails server and the Cloudtasker local server.
 ```yaml
 # Procfile
-web: rails s
-worker: cloudtasker
+web: bundle exec rails s
+worker: bundle exec cloudtasker
 ```
 
 Note that the local development server runs with `5` concurrent threads by default. You can tune the number of threads per queue by running `cloudtasker` the following options:
 ```bash
-cloudtasker -q critical,5 -q important,4 -q default,3
+bundle exec cloudtasker -q critical,5 -q important,4 -q default,3
 ```
 
 ### Option 2: Using ngrok
 
 Want to test your application end to end with Google Cloud Task? Then [ngrok](https://ngrok.io) is the way to go.
 
-First start your ngrok tunnel and take note of the :
+First start your ngrok tunnel:
 ```bash
 ngrok http 3000
 ```
@@ -409,7 +409,7 @@ end
 
 Finally start Rails to accept jobs from Google Cloud Tasks
 ```bash
-rails s
+bundle exec rails s
 ```
 
 ## Logging
@@ -418,7 +418,7 @@ There are several options available to configure logging and logging context.
 ### Configuring a logger
 Cloudtasker uses `Rails.logger` if Rails is available and falls back on a plain ruby logger `Logger.new(STDOUT)` if not.
 
-It is also possible to configure your own logger. For example you can setup Cloudtasker with [semantic_logger](http://rocketjob.github.io/semantic_logger) by doing the following your initializer:
+It is also possible to configure your own logger. For example you can setup Cloudtasker with [semantic_logger](http://rocketjob.github.io/semantic_logger) by doing the following in your initializer:
 ```ruby
 # config/initializers/cloudtasker.rb
 
@@ -464,7 +464,7 @@ Cloudtasker::WorkerLogger.log_context_processor = lambda { |worker|
 }
 ```
 
-You could also decide to log all available context (including arguments passed to perform) for specific workers only:
+You could also decide to log all available context - including arguments passed to `perform` - for specific workers only:
 ```ruby
 # app/workers/full_context_worker.rb
 
@@ -479,7 +479,7 @@ class FullContextWorker
 end
 ```
 
-See the [Cloudtasker::Worker class](blob/master/lib/cloudtasker/worker.rb) for more information on attributes available to be logged in your `log_context_processor` proc.
+See the [Cloudtasker::Worker class](lib/cloudtasker/worker.rb) for more information on attributes available to be logged in your `log_context_processor` proc.
 
 ## Error Handling
 
@@ -611,7 +611,7 @@ MyWorker.new.perform({ 'foo' => 'bar', 'baz' => { 'key' => 'value' } })
 ```
 
 ### Be careful with default arguments
-Default arguments passed to the `perform` method are not actually considered as job arguments. Default arguments will therefore be ignored in contextual logging and by extensions relying on arguments such as the `unique-job` extension.
+Default arguments passed to the `perform` method are not actually considered as job arguments. Default arguments will therefore be ignored in contextual logging and by extensions relying on arguments such as the [unique job](docs/UNIQUE_JOBS.md) extension.
 
 Consider the following worker:
 ```ruby
@@ -664,13 +664,13 @@ BigPayloadWorker.perform_async(payload_id)
 
 ### Sizing the concurrency of your queues
 
-When defining the max concurrency concurrency of your queues (`max_concurrent_dispatches` in Cloud Tasks) you must keep in mind the maximum number of threads that your application provides. Otherwise your application threads may eventually get exhausted and your users will experience outages if all your web threads are busy running jobs.
+When defining the max concurrency of your queues (`max_concurrent_dispatches` in Cloud Tasks) you must keep in mind the maximum number of threads that your application provides. Otherwise your application threads may eventually get exhausted and your users will experience outages if all your web threads are busy running jobs.
 
 #### With server based applications
 
 Let's consider an application deployed in production with 3 instances, each having `RAILS_MAX_THREADS` set to `20`. This gives us a total of `60` threads available.
 
-Now let's say that we distribute jobs across two queues: `default` and `critical`. We can set the concurrency of each each queue depending on the profile of the application:
+Now let's say that we distribute jobs across two queues: `default` and `critical`. We can set the concurrency of each queue depending on the profile of the application:
 
 E.g. 1: The application serves requests from web users and runs backgrounds jobs in a balanced way
 ```
@@ -687,7 +687,7 @@ concurrency for default queue: 35
 concurrency for critical queue: 15
 
 Total threads consumed by jobs at most: 50
-Total threads always available to web users at worst: 10
+Total threads always available to API clients at worst: 10
 ```
 
 Also always ensure that your total number of threads does not exceed the available number of database connections (if you use any).
@@ -698,7 +698,7 @@ In a serverless context your application will be scaled up/down based on traffic
 
 Because your application is auto-scaled - and assuming you haven't set a maximum - your job processing capacity if theoretically unlimited. The main limiting factor in a serverless context becomes external constraints such as the number of database connections available.
 
-To size the concurrency of your queues you should therefore take the most limiting factor - which is often the database connection pool size for RDBMS databases - and use the calculations of the previous section with this limiting factor as the capping parameter instead of the threads.
+To size the concurrency of your queues you should therefore take the most limiting factor - which is often the database connection pool size of relational databases - and use the calculations of the previous section with this limiting factor as the capping parameter instead of threads.
 
 
 ## Development
