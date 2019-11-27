@@ -10,8 +10,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Arnaud Lachaume']
   spec.email         = ['arnaud.lachaume@keypup.io']
 
-  spec.summary       = 'Background jobs for Ruby using Google Cloud Tasks (alpha)'
-  spec.description   = 'Background jobs for Ruby using Google Cloud Tasks (alpha)'
+  spec.summary       = 'Background jobs for Ruby using Google Cloud Tasks (beta)'
+  spec.description   = 'Background jobs for Ruby using Google Cloud Tasks (beta)'
   spec.homepage      = 'https://github.com/keypup-io/cloudtasker'
   spec.license       = 'MIT'
 

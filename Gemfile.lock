@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    cloudtasker (0.7.0)
+    cloudtasker (0.8.0)
       activesupport
       fugit
       google-cloud-tasks
@@ -110,7 +110,7 @@ GEM
       googleauth (~> 0.9)
       grpc (~> 1.24)
       rly (~> 0.2.3)
-    google-protobuf (3.10.1-universal-darwin)
+    google-protobuf (3.11.0-universal-darwin)
     googleapis-common-protos (1.3.9)
       google-protobuf (~> 3.0)
       googleapis-common-protos-types (~> 1.0)
