@@ -72,7 +72,7 @@ RSpec.describe Cloudtasker::Batch::BatchProgress do
     subject { batch_progress.percent }
 
     context 'with batch' do
-      it { is_expected.to eq(batch_progress.done.to_f / batch_progress.total) }
+      it { is_expected.to eq((batch_progress.done.to_f / batch_progress.total) * 100) }
     end
 
     context 'with empty elements' do

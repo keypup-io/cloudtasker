@@ -97,7 +97,7 @@ module Cloudtasker
       def percent
         return 0 if total.zero?
 
-        done.to_f / total
+        (done.to_f / total) * 100
       end
 
       #
