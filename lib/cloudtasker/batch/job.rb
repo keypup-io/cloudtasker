@@ -182,7 +182,8 @@ module Cloudtasker
       def add(worker_klass, *args)
         jobs << worker_klass.new(
           job_args: args,
-          job_meta: { key(:parent_id) => batch_id }
+          job_meta: { key(:parent_id) => batch_id },
+          job_queue: worker.job_queue
         )
       end
 

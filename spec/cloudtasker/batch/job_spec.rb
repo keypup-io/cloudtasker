@@ -3,7 +3,8 @@
 require 'cloudtasker/batch/middleware'
 
 RSpec.describe Cloudtasker::Batch::Job do
-  let(:worker) { TestWorker.new(job_args: [1, 2]) }
+  let(:worker_queue) { 'critical' }
+  let(:worker) { TestWorker.new(job_args: [1, 2], job_queue: worker_queue) }
   let(:batch) { described_class.new(worker) }
 
   let(:child_worker) { worker.new_instance.tap { |e| e.job_meta.set(described_class.key(:parent_id), batch.batch_id) } }
@@ -182,7 +183,7 @@ RSpec.describe Cloudtasker::Batch::Job do
 
     before { batch.add(child_worker.class, *child_worker.job_args) }
     it { is_expected.to be_a(child_worker.class) }
-    it { is_expected.to have_attributes(job_args: child_worker.job_args) }
+    it { is_expected.to have_attributes(job_args: child_worker.job_args, job_queue: worker_queue) }
     it { expect(meta_batch_id).to eq(batch.batch_id) }
   end
 
