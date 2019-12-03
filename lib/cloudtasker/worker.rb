@@ -35,7 +35,7 @@ module Cloudtasker
     def self.from_hash(hash)
       # Symbolize metadata keys and stringify job arguments
       payload = JSON.parse(hash.to_json, symbolize_names: true)
-      payload[:job_args] = JSON.parse(hash[:job_args].to_json)
+      payload[:job_args] = JSON.parse(payload[:job_args].to_json)
 
       # Extract worker parameters
       klass_name = payload&.dig(:worker)

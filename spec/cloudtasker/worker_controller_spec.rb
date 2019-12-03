@@ -8,18 +8,15 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
 
     let(:payload) do
       {
-        worker: worker_class_name,
-        job_id: id,
-        job_args: args,
-        job_meta: meta,
-        job_queue: queue,
-        other: :foo
+        'worker' => worker_class_name,
+        'job_id' => id,
+        'job_args' => args,
+        'job_meta' => meta,
+        'job_queue' => queue,
+        'other' => 'foo'
       }
     end
-    let(:expected_payload) do
-      payload.slice(:worker, :job_id, :job_args, :job_meta, :job_queue)
-             .merge(job_retries: retries)
-    end
+    let(:expected_payload) { payload.merge(job_retries: retries) }
     let(:id) { '111' }
     let(:worker_class_name) { 'TestWorker' }
     let(:args) { [1, 2] }

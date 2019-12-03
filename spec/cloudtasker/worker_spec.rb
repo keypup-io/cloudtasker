@@ -34,12 +34,12 @@ RSpec.describe Cloudtasker::Worker do
     let(:worker_class_name) { worker_class.to_s }
     let(:worker_hash) do
       {
-        worker: worker_class_name,
-        job_id: job_id,
-        job_args: job_args,
-        job_meta: job_meta,
-        job_retries: job_retries,
-        job_queue: job_queue
+        'worker' => worker_class_name,
+        'job_id' => job_id,
+        'job_args' => job_args,
+        'job_meta' => job_meta,
+        'job_retries' => job_retries,
+        'job_queue' => job_queue
       }
     end
 
