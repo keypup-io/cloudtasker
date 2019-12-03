@@ -140,14 +140,23 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
   end
 
   describe '.new' do
-    subject { described_class.new(job_payload.merge(id: id)) }
+    subject { described_class.new(args) }
 
     let(:id) { '123' }
+    let(:args) { job_payload.merge(id: id) }
     let(:expected_attrs) do
       job_payload.merge(id: id, schedule_time: Time.at(job_payload[:schedule_time]))
     end
 
-    it { is_expected.to have_attributes(expected_attrs) }
+    context 'with queue specified' do
+      it { is_expected.to have_attributes(expected_attrs) }
+    end
+
+    context 'with no queue specified' do
+      let(:args) { job_payload.merge(id: id, queue: nil) }
+
+      it { is_expected.to have_attributes(expected_attrs.merge(queue: 'default')) }
+    end
   end
 
   describe '#redis' do
@@ -185,18 +194,19 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
     let(:task) { described_class.create(job_payload) }
     let(:retries) { job_payload[:retries] + 1 }
     let(:opts) { {} }
+    let(:expected_attrs) { { queue: task.queue, retries: retries, schedule_time: Time.at(Time.now.to_i + delay) } }
 
     before { Timecop.freeze }
     before { task.retry_later(delay, opts) }
     after { Timecop.return }
 
-    it { is_expected.to have_attributes(retries: retries, schedule_time: Time.at(Time.now.to_i + delay)) }
+    it { is_expected.to have_attributes(expected_attrs) }
 
     context 'with is_error: false' do
       let(:opts) { { is_error: false } }
       let(:retries) { job_payload[:retries] }
 
-      it { is_expected.to have_attributes(retries: retries, schedule_time: Time.at(Time.now.to_i + delay)) }
+      it { is_expected.to have_attributes(expected_attrs) }
     end
   end
 

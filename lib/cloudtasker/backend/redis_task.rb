@@ -121,7 +121,7 @@ module Cloudtasker
         @http_request = http_request
         @schedule_time = Time.at(schedule_time || 0)
         @retries = retries || 0
-        @queue = queue
+        @queue = queue || Cloudtasker::Config::DEFAULT_JOB_QUEUE
       end
 
       #
@@ -163,10 +163,13 @@ module Cloudtasker
       # @param [Integer] interval The delay in seconds before retrying the task
       #
       def retry_later(interval, is_error: true)
-        redis.write(gid,
-                    retries: is_error ? retries + 1 : retries,
-                    http_request: http_request,
-                    schedule_time: (Time.now + interval).to_i)
+        redis.write(
+          gid,
+          retries: is_error ? retries + 1 : retries,
+          http_request: http_request,
+          schedule_time: (Time.now + interval).to_i,
+          queue: queue
+        )
       end
 
       #
