@@ -11,11 +11,12 @@ RSpec.describe Cloudtasker::Config do
   let(:mode) { :production }
   let(:max_retries) { 10 }
 
+  let(:rails_hosts) { [] }
   let(:rails_secret) { 'rails_secret' }
   let(:rails_credentials) { { secret_key_base: rails_secret } }
   let(:rails_config) do
     if Rails.application.config.respond_to?(:hosts)
-      instance_double('Rails::Application::Configuration', hosts: [])
+      instance_double('Rails::Application::Configuration', hosts: rails_hosts)
     else
       instance_double('Rails::Application::Configuration')
     end
@@ -194,11 +195,22 @@ RSpec.describe Cloudtasker::Config do
       context 'with rails hosts' do
         subject { rails_klass.application.config.hosts }
 
+        let(:rails_hosts) { ['.local'] }
         let(:expected_host) { 'localhost' }
 
         before { stub_const('Rails', rails_klass) }
         before { config }
         it { is_expected.to include(expected_host) }
+      end
+
+      context 'with empty rails hosts' do
+        subject { rails_klass.application.config.hosts }
+
+        let(:expected_host) { 'localhost' }
+
+        before { stub_const('Rails', rails_klass) }
+        before { config }
+        it { is_expected.to be_empty }
       end
     end
 
