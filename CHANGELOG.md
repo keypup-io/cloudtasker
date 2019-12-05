@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.8.2](https://github.com/keypup-io/cloudtasker/tree/v0.8.2) (2019-12-05)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.8.1...v0.8.2)
+
+**Fixed bugs:**
+- Config: do not add processor host to `Rails.application.config.hosts` if originally empty.
+
 ## [v0.8.1](https://github.com/keypup-io/cloudtasker/tree/v0.8.1) (2019-12-03)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.8.0...v0.8.1)
