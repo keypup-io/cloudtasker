@@ -69,7 +69,7 @@ GEM
     os (1.0.1)
     public_suffix (4.0.1)
     raabro (1.1.6)
-    rack (2.0.7)
+    rack (2.0.8)
     rack-protection (2.0.7)
       rack
     redis (4.1.3)
