@@ -8,13 +8,17 @@ module Cloudtasker
     # Suffix added to cache keys when locking them
     LOCK_KEY_PREFIX = 'cloudtasker/lock'
 
+    def self.client
+      @client ||= Redis.new(Cloudtasker.config.redis || {})
+    end
+
     #
     # Return the underlying redis client.
     #
     # @return [Redis] The redis client.
     #
     def client
-      @client ||= Redis.new(Cloudtasker.config.redis || {})
+      @client ||= self.class.client
     end
 
     #

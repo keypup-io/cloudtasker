@@ -5,11 +5,17 @@ require 'cloudtasker/redis_client'
 RSpec.describe Cloudtasker::RedisClient do
   let(:redis_client) { described_class.new }
 
-  describe '#client' do
-    subject { redis_client.client }
+  describe '.client' do
+    subject { described_class.client }
 
     it { is_expected.to be_a(Redis) }
     it { is_expected.to have_attributes(id: Cloudtasker.config.redis[:url]) }
+  end
+
+  describe '#client' do
+    subject { redis_client.client }
+
+    it { is_expected.to eq(described_class.client) }
   end
 
   describe '#fetch' do
