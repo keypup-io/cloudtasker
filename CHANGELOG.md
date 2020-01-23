@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.9.0](https://github.com/keypup-io/cloudtasker/tree/v0.8.2) (2020-01-23)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.8.2...v0.9.0)
+
+**Fixed bugs:**
+- Cloud Task: Base64 encode task body to support UTF-8 characters (e.g. emojis).
+- Redis: Restrict to one connection (class level) to avoid too many DNS lookups
+
+**Migration**
+For Sinatra applications please update your Cloudtasker controller according to [this diff](https://github.com/keypup-io/cloudtasker/commit/311fa8f9beec91fbae012164a25b2ee6e261a2e4#diff-c2a0ea6c6e6c31c749d2e1acdc574f0f).
+
 ## [v0.8.2](https://github.com/keypup-io/cloudtasker/tree/v0.8.2) (2019-12-05)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.8.1...v0.8.2)
