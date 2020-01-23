@@ -16,9 +16,6 @@ module Cloudtasker
     # Run a worker from a Cloud Task payload
     #
     def run
-      # Build payload
-      payload = JSON.parse(request.body.read).merge(job_retries: job_retries)
-
       # Process payload
       WorkerHandler.execute_from_payload!(payload)
       head :no_content
@@ -36,6 +33,27 @@ module Cloudtasker
     end
 
     private
+
+    #
+    # Parse the request body and return the actual job
+    # payload.
+    #
+    # @return [Hash] The job payload
+    #
+    def payload
+      @payload ||= begin
+        # Get raw body
+        content = request.body.read
+
+        # Decode content if the body is Base64 encoded
+        if request.headers[Cloudtasker::Config::ENCODING_HEADER].to_s.downcase == 'base64'
+          content = Base64.decode64(content)
+        end
+
+        # Return content parsed as JSON and add job retries count
+        JSON.parse(content).merge(job_retries: job_retries)
+      end
+    end
 
     #
     # Extract the number of times this task failed at runtime.

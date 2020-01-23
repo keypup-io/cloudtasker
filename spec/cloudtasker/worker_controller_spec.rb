@@ -4,7 +4,7 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
   routes { Cloudtasker::Engine.routes }
 
   describe 'POST #run' do
-    subject { post :run, body: payload.to_json, as: :json }
+    subject { post :run, body: request_body, as: :json }
 
     let(:payload) do
       {
@@ -16,6 +16,7 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
         'other' => 'foo'
       }
     end
+    let(:request_body) { payload.to_json }
     let(:expected_payload) { payload.merge(job_retries: retries) }
     let(:id) { '111' }
     let(:worker_class_name) { 'TestWorker' }
@@ -30,6 +31,20 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
     context 'with valid worker' do
       before do
         request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"
+        allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
+          .with(expected_payload)
+          .and_return(true)
+      end
+      after { expect(Cloudtasker::WorkerHandler).to have_received(:execute_from_payload!) }
+      it { is_expected.to be_successful }
+    end
+
+    context 'with base64 encoded body' do
+      let(:request_body) { Base64.encode64(payload.to_json) }
+
+      before do
+        request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"
+        request.env['HTTP_CONTENT_TRANSFER_ENCODING'] = 'BASE64'
         allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
           .with(expected_payload)
           .and_return(true)

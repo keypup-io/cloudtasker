@@ -19,9 +19,12 @@ post '/cloudtasker/run' do
     # Authenticate request
     Cloudtasker::Authenticator.verify!(request.env['HTTP_AUTHORIZATION'].to_s.split(' ').last)
 
-    # Build payload
-    payload = JSON.parse(request.body.read, symbolize_names: true)
-                  .slice(:worker, :job_id, :job_args, :job_meta, :job_queue)
+    # Capture content and decode content
+    content = request.body.read
+    content = Base64.decode64(content) if request.env['HTTP_CONTENT_TRANSFER_ENCODING'].to_s.downcase == 'base64'
+
+    # Format job payload
+    payload = JSON.parse(content)
                   .merge(job_retries: request.env['HTTP_X_CLOUDTASKS_TASKEXECUTIONCOUNT'].to_i)
 
     # Process payload

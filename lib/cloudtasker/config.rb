@@ -12,6 +12,15 @@ module Cloudtasker
     # Retry header in Cloud Task responses
     RETRY_HEADER = 'X-CloudTasks-TaskExecutionCount'
 
+    # Content-Transfer-Encoding header in Cloud Task responses
+    ENCODING_HEADER = 'Content-Transfer-Encoding'
+
+    # Content Type
+    CONTENT_TYPE_HEADER = 'Content-Type'
+
+    # Authorization header
+    AUTHORIZATION_HEADER = 'Authorization'
+
     # Default values
     DEFAULT_LOCATION_ID = 'us-east1'
     DEFAULT_PROCESSOR_PATH = '/cloudtasker/run'

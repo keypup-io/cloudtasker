@@ -42,8 +42,8 @@ module Cloudtasker
           http_method: 'POST',
           url: Cloudtasker.config.processor_url,
           headers: {
-            'Content-Type' => 'application/json',
-            'Authorization' => "Bearer #{Authenticator.verification_token}"
+            Cloudtasker::Config::CONTENT_TYPE_HEADER => 'application/json',
+            Cloudtasker::Config::AUTHORIZATION_HEADER => "Bearer #{Authenticator.verification_token}"
           },
           body: worker_payload.to_json
         },

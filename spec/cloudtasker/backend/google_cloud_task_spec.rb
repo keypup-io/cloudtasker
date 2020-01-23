@@ -141,6 +141,21 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
     end
   end
 
+  describe '.format_task_payload' do
+    subject { described_class.format_task_payload(job_payload) }
+
+    let(:expected_payload) do
+      payload = JSON.parse(job_payload.to_json, symbolize_names: true)
+      payload[:schedule_time] = described_class.format_schedule_time(job_payload[:schedule_time])
+      payload[:http_request][:headers]['Content-Type'] = 'text/json'
+      payload[:http_request][:headers]['Content-Transfer-Encoding'] = 'Base64'
+      payload[:http_request][:body] = Base64.encode64(job_payload[:http_request][:body])
+      payload
+    end
+
+    it { is_expected.to eq(expected_payload) }
+  end
+
   describe '.find' do
     subject { described_class.find(id) }
 
@@ -170,10 +185,13 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
     let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
     let(:task) { instance_double(described_class.to_s) }
     let(:expected_payload) do
-      job_payload.merge(
-        schedule_time: described_class.format_schedule_time(job_payload[:schedule_time]),
-        queue: nil
-      ).compact
+      payload = JSON.parse(job_payload.to_json, symbolize_names: true)
+      payload.delete(:queue)
+      payload[:schedule_time] = described_class.format_schedule_time(job_payload[:schedule_time])
+      payload[:http_request][:headers]['Content-Type'] = 'text/json'
+      payload[:http_request][:headers]['Content-Transfer-Encoding'] = 'Base64'
+      payload[:http_request][:body] = Base64.encode64(job_payload[:http_request][:body])
+      payload
     end
 
     before { allow(described_class).to receive(:queue_path).with(job_payload[:queue]).and_return(queue) }

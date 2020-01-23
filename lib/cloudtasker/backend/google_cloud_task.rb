@@ -83,6 +83,29 @@ module Cloudtasker
       end
 
       #
+      # Format the job payload sent to Cloud Tasks.
+      #
+      # @param [Hash] hash The worker payload.
+      #
+      # @return [Hash] The Cloud Task payloadd.
+      #
+      def self.format_task_payload(payload)
+        payload = JSON.parse(payload.to_json, symbolize_names: true) # deep dup
+
+        # Format schedule time to Google Protobuf timestamp
+        payload[:schedule_time] = format_schedule_time(payload[:schedule_time])
+
+        # Encode job content to support UTF-8. Google Cloud Task
+        # expect content to be ASCII-8BIT compatible (binary)
+        payload[:http_request][:headers] ||= {}
+        payload[:http_request][:headers][Cloudtasker::Config::CONTENT_TYPE_HEADER] = 'text/json'
+        payload[:http_request][:headers][Cloudtasker::Config::ENCODING_HEADER] = 'Base64'
+        payload[:http_request][:body] = Base64.encode64(payload[:http_request][:body])
+
+        payload
+      end
+
+      #
       # Find a task by id.
       #
       # @param [String] id The task id.
@@ -104,10 +127,7 @@ module Cloudtasker
       # @return [Cloudtasker::Backend::GoogleCloudTask, nil] The created task.
       #
       def self.create(payload)
-        # Format payload
-        payload = payload.merge(
-          schedule_time: format_schedule_time(payload[:schedule_time])
-        ).compact
+        payload = format_task_payload(payload)
 
         # Extract relative queue name
         relative_queue = payload.delete(:queue)
