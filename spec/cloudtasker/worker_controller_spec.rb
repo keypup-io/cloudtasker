@@ -4,7 +4,7 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
   routes { Cloudtasker::Engine.routes }
 
   describe 'POST #run' do
-    subject { post :run, body: request_body, as: :json }
+    subject { post :run, body: request_body, as: mime_type }
 
     let(:payload) do
       {
@@ -16,6 +16,7 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
         'other' => 'foo'
       }
     end
+    let(:mime_type) { :json }
     let(:request_body) { payload.to_json }
     let(:expected_payload) { payload.merge(job_retries: retries) }
     let(:id) { '111' }
@@ -40,6 +41,7 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
     end
 
     context 'with base64 encoded body' do
+      let(:mime_type) { :text }
       let(:request_body) { Base64.encode64(payload.to_json) }
 
       before do
