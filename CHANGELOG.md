@@ -1,6 +1,13 @@
 # Changelog
 
-## [v0.9.0](https://github.com/keypup-io/cloudtasker/tree/v0.8.2) (2020-01-23)
+## [v0.9.1](https://github.com/keypup-io/cloudtasker/tree/v0.9.1) (2020-02-11)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.9.0...v0.9.1)
+
+**Fixed bugs:**
+- Cloud Task: raise `Cloudtasker::MaxTaskSizeExceededError` if job payload exceeds 100 KB. This is mainly to have production parity in development when running the local processing server.
+
+## [v0.9.0](https://github.com/keypup-io/cloudtasker/tree/v0.9.0) (2020-01-23)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.8.2...v0.9.0)
 
