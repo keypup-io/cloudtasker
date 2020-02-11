@@ -9,6 +9,9 @@ module Cloudtasker
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
                 :gcp_queue_prefix, :processor_path, :logger, :mode, :max_retries
 
+    # Max Cloud Task size in bytes
+    MAX_TASK_SIZE = 100 * 1024 # 100 KB
+
     # Retry header in Cloud Task responses
     RETRY_HEADER = 'X-CloudTasks-TaskExecutionCount'
 

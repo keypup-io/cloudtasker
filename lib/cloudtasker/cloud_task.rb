@@ -48,6 +48,8 @@ module Cloudtasker
     # @return [Cloudtasker::CloudTask] The created task.
     #
     def self.create(payload)
+      raise MaxTaskSizeExceededError if payload.to_json.bytesize > Config::MAX_TASK_SIZE
+
       resp = backend.create(payload)&.to_h
       resp ? new(resp) : nil
     end

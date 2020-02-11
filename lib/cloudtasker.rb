@@ -8,6 +8,7 @@ require 'cloudtasker/config'
 require 'cloudtasker/authentication_error'
 require 'cloudtasker/dead_worker_error'
 require 'cloudtasker/invalid_worker_error'
+require 'cloudtasker/max_task_size_exceeded_error'
 
 require 'cloudtasker/middleware/chain'
 require 'cloudtasker/authenticator'

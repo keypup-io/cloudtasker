@@ -635,7 +635,9 @@ If you enqueue this worker by omitting the second argument `MyWorker.perform_asy
 - The `time_at` argument will be ignored by the `unique-job` extension, meaning that job uniqueness will be only based on the `user_id` argument.
 
 ### Handling big job payloads
-Keep in mind that jobs are pushed to Google Cloud Tasks via API and then delivered to your application via API as well. Therefore any excessive job payload will slow down the enqueuing of jobs and create additional processing when receiving the job.
+Google Cloud Tasks enforces a limit of 100 KB for job payloads. Taking into accounts Cloudtasker authentication headers and meta information this leave ~85 KB of free space for JSONified job arguments.
+
+Any excessive job payload (> 100 KB) will raise a `Cloudtasker::MaxTaskSizeExceededError`, both in production and development mode.
 
 If you feel that a job payload is going to get big, prefer to store the payload using a datastore (e.g. Redis) and pass a reference to the job to retrieve the payload inside your job `perform` method.
 

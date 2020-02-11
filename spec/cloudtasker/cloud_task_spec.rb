@@ -56,7 +56,7 @@ RSpec.describe Cloudtasker::CloudTask do
   end
 
   describe '.create' do
-    subject { described_class.create(payload) }
+    subject(:create_task) { described_class.create(payload) }
 
     let(:call_resp) { resp }
 
@@ -71,6 +71,12 @@ RSpec.describe Cloudtasker::CloudTask do
       let(:call_resp) { nil }
 
       it { is_expected.to be_nil }
+    end
+
+    context 'with max task size exceeded' do
+      let(:payload) { 'a' * 1024 * 101 }
+
+      it { expect { create_task }.to raise_error(Cloudtasker::MaxTaskSizeExceededError) }
     end
   end
 
