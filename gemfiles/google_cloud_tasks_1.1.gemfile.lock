@@ -223,7 +223,7 @@ GEM
       rainbow (>= 2.2.2, < 4.0)
       ruby-progressbar (~> 1.7)
       unicode-display_width (>= 1.4.0, < 1.7)
-    rubocop-rspec (1.38.1)
+    rubocop-rspec (1.37.0)
       rubocop (>= 0.68.1)
     ruby-progressbar (1.10.1)
     safe_yaml (1.0.5)
@@ -272,7 +272,7 @@ DEPENDENCIES
   rspec (~> 3.0)
   rspec-rails
   rubocop (= 0.76.0)
-  rubocop-rspec
+  rubocop-rspec (= 1.37.0)
   sqlite3
   timecop
   webmock
