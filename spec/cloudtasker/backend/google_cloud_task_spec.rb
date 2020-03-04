@@ -228,6 +228,11 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
       before { allow(client).to receive(:delete_task).with(id).and_raise(Google::Gax::RetryError, 'msg') }
       it { is_expected.to be_nil }
     end
+
+    context 'with non-existing id' do
+      before { allow(client).to receive(:delete_task).with(id).and_raise(GRPC::NotFound, 'msg') }
+      it { is_expected.to be_nil }
+    end
   end
 
   describe '.new' do
