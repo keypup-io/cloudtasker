@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.9.2](https://github.com/keypup-io/cloudtasker/tree/v0.9.2) (2020-03-04)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.9.1...v0.9.2)
+
+**Fixed bugs:**
+- Cloud Task: ignore "not found" errors when trying to delete an already deleted task.
+
 ## [v0.9.1](https://github.com/keypup-io/cloudtasker/tree/v0.9.1) (2020-02-11)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.9.0...v0.9.1)
