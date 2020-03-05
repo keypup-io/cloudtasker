@@ -114,10 +114,10 @@ module Cloudtasker
       #
       # Return all jobs related to this worker class.
       #
-      # @return [Array<Cloudtasker::Worker] The list of workers
+      # @return [Array<Cloudtasker::Backend::MemoryTask>] The list of tasks
       #
       def jobs
-        Backend::MemoryTask.jobs(to_s)
+        Backend::MemoryTask.all(to_s)
       end
 
       #

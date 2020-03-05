@@ -6,12 +6,12 @@ RSpec.describe Cloudtasker::Testing do
   after { described_class.enable! }
 
   describe '.fake!' do
-    subject { Cloudtasker::Backend::MemoryTask.jobs }
+    subject { Cloudtasker::Backend::MemoryTask.all }
 
     context 'with option set' do
       before { described_class.fake! }
       before { TestWorker.perform_async(1, 2) }
-      it { is_expected.to match([be_a(TestWorker)]) }
+      it { is_expected.to match([be_a(Cloudtasker::Backend::MemoryTask)]) }
     end
 
     context 'with block' do
@@ -20,12 +20,12 @@ RSpec.describe Cloudtasker::Testing do
         expect(described_class).to be_enabled
       end
       before { TestWorker.perform_async(1, 2) }
-      it { is_expected.to match([be_a(TestWorker)]) }
+      it { is_expected.to match([be_a(Cloudtasker::Backend::MemoryTask)]) }
     end
   end
 
   describe '.inline!' do
-    subject { Cloudtasker::Backend::MemoryTask.jobs }
+    subject { Cloudtasker::Backend::MemoryTask.all }
 
     context 'with option set' do
       before { described_class.inline! }

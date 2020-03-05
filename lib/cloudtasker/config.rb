@@ -5,7 +5,7 @@ require 'logger'
 module Cloudtasker
   # Holds cloudtasker configuration. See Cloudtasker#configure
   class Config
-    attr_accessor :redis
+    attr_accessor :redis, :store_payloads_in_redis
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
                 :gcp_queue_prefix, :processor_path, :logger, :mode, :max_retries
 
@@ -53,6 +53,21 @@ module Cloudtasker
       Missing cloudtasker secret.
       Please specify a secret in the cloudtasker initializer or add Rails secret_key_base in your credentials
     DOC
+
+    #
+    # Return the threshold above which job arguments must be stored
+    # in Redis instead of being sent to the backend as part of the job
+    # payload.
+    #
+    # Return nil if redis payload storage is disabled.
+    #
+    # @return [Integer, nil] The threshold above which payloads will be stored in Redis.
+    #
+    def redis_payload_storage_threshold
+      return nil unless store_payloads_in_redis
+
+      store_payloads_in_redis.respond_to?(:to_i) ? store_payloads_in_redis.to_i : 0
+    end
 
     #
     # The number of times jobs will be retried. This number of

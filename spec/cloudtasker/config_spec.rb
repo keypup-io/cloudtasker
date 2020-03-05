@@ -10,6 +10,7 @@ RSpec.describe Cloudtasker::Config do
   let(:logger) { Logger.new(nil) }
   let(:mode) { :production }
   let(:max_retries) { 10 }
+  let(:store_payloads_in_redis) { 10 }
 
   let(:rails_hosts) { [] }
   let(:rails_secret) { 'rails_secret' }
@@ -36,9 +37,42 @@ RSpec.describe Cloudtasker::Config do
       c.processor_host = processor_host
       c.processor_path = processor_path
       c.max_retries = max_retries
+      c.store_payloads_in_redis = store_payloads_in_redis
     end
 
     Cloudtasker.config
+  end
+
+  describe 'redis_payload_storage_threshold' do
+    subject { config.redis_payload_storage_threshold }
+
+    context 'with integer value' do
+      it { is_expected.to eq(store_payloads_in_redis) }
+    end
+
+    context 'with string value' do
+      let(:store_payloads_in_redis) { '20' }
+
+      it { is_expected.to eq(store_payloads_in_redis.to_i) }
+    end
+
+    context 'with true value' do
+      let(:store_payloads_in_redis) { true }
+
+      it { is_expected.to eq(0) }
+    end
+
+    context 'with false value' do
+      let(:store_payloads_in_redis) { false }
+
+      it { is_expected.to be_nil }
+    end
+
+    context 'with nil value' do
+      let(:store_payloads_in_redis) { nil }
+
+      it { is_expected.to be_nil }
+    end
   end
 
   describe '#max_retries' do

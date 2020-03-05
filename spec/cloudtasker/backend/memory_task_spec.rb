@@ -53,25 +53,6 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
     it { is_expected.to be_a(Array) }
   end
 
-  describe '.jobs' do
-    subject { described_class.jobs(filter) }
-
-    let(:filter) { nil }
-
-    before { described_class.create(job_payload.merge(id: task_id)) }
-    before { described_class.create(job_payload2.merge(id: task_id2)) }
-
-    context 'without filter' do
-      it { is_expected.to eq([task.worker, task2.worker]) }
-    end
-
-    context 'with filter' do
-      let(:filter) { worker_name }
-
-      it { is_expected.to eq([task.worker]) }
-    end
-  end
-
   describe '.drain' do
     subject { described_class.drain(filter) }
 
@@ -181,22 +162,13 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
     it { is_expected.to eq(expected_hash) }
   end
 
-  describe '#worker' do
-    subject { task.worker }
-
-    let(:resp) { instance_double('Cloudtasker::Worker') }
-
-    before { allow(Cloudtasker::Worker).to receive(:from_hash).with(task.payload).and_return(resp) }
-    it { is_expected.to eq(resp) }
-  end
-
   describe '#execute' do
     subject(:execute) { task.execute }
 
     let(:worker) { TestWorker.new }
     let(:resp) { 'some-response' }
 
-    before { allow(task).to receive(:worker).and_return(worker) }
+    before { allow(Cloudtasker::WorkerHandler).to receive(:with_worker_handling).with(task.payload).and_yield(worker) }
     before { allow(worker).to receive(:execute).and_return(resp) }
     before { allow(described_class).to receive(:delete).with(task_id) }
 
@@ -207,7 +179,7 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
     context 'with error' do
       before { allow(worker).to receive(:execute).and_raise(StandardError) }
       after { expect(described_class).not_to have_received(:delete) }
-      after { expect(task.worker).to have_attributes(job_retries: 1) }
+      after { expect(task).to have_attributes(job_retries: 1) }
       it { expect { execute }.not_to raise_error }
     end
   end

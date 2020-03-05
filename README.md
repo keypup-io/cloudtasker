@@ -224,7 +224,7 @@ Cloudtasker.configure do |config|
   # 
   # config.max_retries = 10
 
-  # 
+  #
   # Specify the redis connection hash.
   #
   # This is ONLY required in development for the Cloudtasker local server and in
@@ -235,6 +235,24 @@ Cloudtasker.configure do |config|
   # Default: redis-rb connects to redis://127.0.0.1:6379/0
   #
   # config.redis = { url: 'redis://localhost:6379/5' }
+
+  #
+  # Set to true to store job arguments in Redis instead of sending arguments as part
+  # of the job payload to Google Cloud Tasks.
+  #
+  # This is useful if you expect to process jobs with payloads exceeding 100KB, which
+  # is the limit enforced by Google Cloud Tasks.
+  #
+  # You can set this configuration parameter to a KB value if you want to store jobs
+  # args in redis only if the JSONified arguments payload exceeds that threshold.
+  #
+  # Default: false
+  #
+  # Store all job payloads in Redis:
+  # config.store_payloads_in_redis = true
+  #
+  # Store all job payloads in Redis exceeding 50 KB:
+  # config.store_payloads_in_redis = 50
 end
 ```
 
@@ -638,6 +656,27 @@ If you enqueue this worker by omitting the second argument `MyWorker.perform_asy
 Google Cloud Tasks enforces a limit of 100 KB for job payloads. Taking into accounts Cloudtasker authentication headers and meta information this leave ~85 KB of free space for JSONified job arguments.
 
 Any excessive job payload (> 100 KB) will raise a `Cloudtasker::MaxTaskSizeExceededError`, both in production and development mode.
+
+#### Option 1: Use Cloudtasker optional support for payload storage in Redis
+Cloudtasker provides optional support for storing argument payloads in Redis instead of sending them to Google Cloud Tasks.
+
+To enable it simply put the following in your Cloudtasker initializer:
+```ruby
+# config/initializers/cloudtasker.rb
+
+Cloudtasker.configure do |config|
+  # Enable Redis support. Specify your redis connection
+  config.redis = { url: 'redis://localhost:6379/5' }
+
+  # Store all job payloads in Redis:
+  config.store_payloads_in_redis = true
+
+  # OR: store all job payloads in Redis exceeding 50 KB:
+  # config.store_payloads_in_redis = 50
+end
+```
+
+#### Option 2: Do it yourself solution
 
 If you feel that a job payload is going to get big, prefer to store the payload using a datastore (e.g. Redis) and pass a reference to the job to retrieve the payload inside your job `perform` method.
 

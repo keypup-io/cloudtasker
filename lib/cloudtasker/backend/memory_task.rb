@@ -7,6 +7,7 @@ module Cloudtasker
     # Manage local tasks pushed to memory.
     # Used for testing.
     class MemoryTask
+      attr_accessor :job_retries
       attr_reader :id, :http_request, :schedule_time, :queue
 
       #
@@ -16,17 +17,6 @@ module Cloudtasker
       #
       def self.queue
         @queue ||= []
-      end
-
-      #
-      # Return the workers currently in the queue.
-      #
-      # @param [String] worker_class_name Filter jobs on worker class name.
-      #
-      # @return [Array<Cloudtasker::Worker] The list of workers
-      #
-      def self.jobs(worker_class_name = nil)
-        all(worker_class_name).map(&:worker)
       end
 
       #
@@ -116,11 +106,12 @@ module Cloudtasker
       # @param [Hash] http_request The HTTP request content.
       # @param [Integer] schedule_time When to run the task (Unix timestamp)
       #
-      def initialize(id:, http_request:, schedule_time: nil, queue: nil)
+      def initialize(id:, http_request:, schedule_time: nil, queue: nil, job_retries: 0)
         @id = id
         @http_request = http_request
         @schedule_time = Time.at(schedule_time || 0)
         @queue = queue
+        @job_retries = job_retries || 0
       end
 
       #
@@ -156,25 +147,19 @@ module Cloudtasker
       end
 
       #
-      # Return the worker attached to this task.
-      #
-      # @return [Cloudtasker::Worker] The task worker.
-      #
-      def worker
-        @worker ||= Worker.from_hash(payload)
-      end
-
-      #
       # Execute the task.
       #
       # @return [Any] The return value of the worker perform method.
       #
       def execute
-        resp = worker.execute
+        # Execute worker
+        resp = WorkerHandler.with_worker_handling(payload, &:execute)
+
+        # Delete task
         self.class.delete(id)
         resp
       rescue StandardError
-        worker.job_retries += 1
+        self.job_retries += 1
       end
 
       #
