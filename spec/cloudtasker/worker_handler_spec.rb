@@ -79,10 +79,12 @@ RSpec.describe Cloudtasker::WorkerHandler do
       }
     end
     let(:extracted_payload) { { job_id: 'some-id', job_args: args_payload } }
+    let(:args_key_ttl) { described_class.redis.ttl(args_payload_key) }
 
     context 'with redis payload and successful yield' do
       before { described_class.redis.write(args_payload_key, args_payload) }
-      after { expect(described_class.redis.get(args_payload_key)).to be_nil }
+      after { expect(args_key_ttl).to be > 0 }
+      after { expect(args_key_ttl).to be <= described_class::ARGS_PAYLOAD_CLEANUP_TTL }
       it { subject_block.to yield_with_args(be_a(Cloudtasker::Worker)) }
       it { subject_block.to yield_with_args(have_attributes(extracted_payload)) }
     end
@@ -91,7 +93,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
       let(:block) { ->(worker) { worker.job_reenqueued = true } }
 
       before { described_class.redis.write(args_payload_key, args_payload) }
-      after { expect(described_class.redis.fetch(args_payload_key)).to eq(args_payload) }
+      after { expect(args_key_ttl).to eq(-1) }
       it { subject_block.not_to raise_error }
     end
 
@@ -100,7 +102,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
       let(:block) { ->(_) { raise(job_error) } }
 
       before { described_class.redis.write(args_payload_key, args_payload) }
-      after { expect(described_class.redis.fetch(args_payload_key)).to eq(args_payload) }
+      after { expect(args_key_ttl).to eq(-1) }
       it { subject_block.to raise_error(job_error) }
     end
 
@@ -109,7 +111,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
       let(:block) { ->(_) { raise(job_error) } }
 
       before { described_class.redis.write(args_payload_key, args_payload) }
-      after { expect(described_class.redis.fetch(args_payload_key)).to eq(args_payload) }
+      after { expect(args_key_ttl).to eq(-1) }
       it { subject_block.to raise_error(job_error) }
     end
 
@@ -118,7 +120,8 @@ RSpec.describe Cloudtasker::WorkerHandler do
       let(:block) { ->(_) { raise(job_error) } }
 
       before { described_class.redis.write(args_payload_key, args_payload) }
-      after { expect(described_class.redis.get(args_payload_key)).to be_nil }
+      after { expect(args_key_ttl).to be > 0 }
+      after { expect(args_key_ttl).to be <= described_class::ARGS_PAYLOAD_CLEANUP_TTL }
       it { subject_block.to raise_error(job_error) }
     end
 

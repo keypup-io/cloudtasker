@@ -14,6 +14,12 @@ module Cloudtasker
     # payloads in Redis
     REDIS_PAYLOAD_NAMESPACE = 'payload'
 
+    # Arg payload cache keys get expired instead of deleted
+    # in case jobs are re-processed due to connection interruption
+    # (job is successful but Cloud Task considers it as failed due
+    # to network interruption)
+    ARGS_PAYLOAD_CLEANUP_TTL = 3600 # 1 hour
+
     #
     # Return a namespaced key
     #
@@ -77,13 +83,16 @@ module Cloudtasker
       # Yied worker
       resp = yield(worker)
 
-      # Delete stored args payload after job has been successfully processed
-      redis.del(args_payload_key) if args_payload_key && !worker.job_reenqueued
+      # Schedule args payload deletion after job has been successfully processed
+      # Note: we expire the key instead of deleting it immediately in case the job
+      # succeeds but is considered as failed by Cloud Task due to network interruption.
+      # In such case the job is likely to be re-processed soon after.
+      redis.expire(args_payload_key, ARGS_PAYLOAD_CLEANUP_TTL) if args_payload_key && !worker.job_reenqueued
 
       resp
     rescue DeadWorkerError => e
       # Delete stored args payload if job is dead
-      redis.del(args_payload_key) if args_payload_key
+      redis.expire(args_payload_key, ARGS_PAYLOAD_CLEANUP_TTL) if args_payload_key
       raise(e)
     end
 
