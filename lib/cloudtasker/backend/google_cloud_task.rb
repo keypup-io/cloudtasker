@@ -146,7 +146,7 @@ module Cloudtasker
       #
       def self.delete(id)
         client.delete_task(id)
-      rescue Google::Gax::RetryError, GRPC::NotFound, Google::Gax::PermissionDeniedError
+      rescue Google::Gax::NotFoundError, Google::Gax::RetryError, GRPC::NotFound, Google::Gax::PermissionDeniedError
         nil
       end
 

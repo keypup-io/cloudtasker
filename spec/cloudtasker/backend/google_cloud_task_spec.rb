@@ -229,8 +229,13 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
       it { is_expected.to be_nil }
     end
 
-    context 'with non-existing id (not found error)' do
+    context 'with non-existing id (grpc error)' do
       before { allow(client).to receive(:delete_task).with(id).and_raise(GRPC::NotFound, 'msg') }
+      it { is_expected.to be_nil }
+    end
+
+    context 'with non-existing id (Gax error)' do
+      before { allow(client).to receive(:delete_task).with(id).and_raise(Google::Gax::NotFoundError, 'msg') }
       it { is_expected.to be_nil }
     end
 
