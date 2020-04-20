@@ -2,7 +2,7 @@ require: rubocop-rspec
 
 AllCops:
   Exclude:
-    - 'gemfiles/vendor/**/*'
+    - 'gemfiles/**/*'
     - 'vendor/**/*'
 
 Metrics/ClassLength:
@@ -35,3 +35,6 @@ Style/Documentation:
   Exclude:
     - 'examples/**/*'
     - 'spec/**/*'
+
+RSpec/RepeatedExampleGroupBody:
+  Enabled: false

@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/keypup-io/cloudtasker.svg?branch=master)](https://travis-ci.org/keypup-io/cloudtasker) [![Gem Version](https://badge.fury.io/rb/cloudtasker.svg)](https://badge.fury.io/rb/cloudtasker)
+![Build Status](https://github.com/keypup-io/cloudtasker/workflows/Test/badge.svg) [![Gem Version](https://badge.fury.io/rb/cloudtasker.svg)](https://badge.fury.io/rb/cloudtasker)
 
 # Cloudtasker
 
