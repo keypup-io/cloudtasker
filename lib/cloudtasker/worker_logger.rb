@@ -59,7 +59,7 @@ module Cloudtasker
     # @return [String] The formatted log message
     #
     def formatted_message(msg)
-      "[Cloudtasker][#{worker.job_id}] #{msg}"
+      "[Cloudtasker][#{worker.class}][#{worker.job_id}] #{msg}"
     end
 
     #

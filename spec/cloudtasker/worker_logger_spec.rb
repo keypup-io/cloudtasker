@@ -85,7 +85,7 @@ RSpec.describe Cloudtasker::WorkerLogger do
 
     let(:msg) { 'some message' }
 
-    it { is_expected.to eq("[Cloudtasker][#{worker.job_id}] #{msg}") }
+    it { is_expected.to eq("[Cloudtasker][#{worker.class}][#{worker.job_id}] #{msg}") }
   end
 
   describe '#info' do
