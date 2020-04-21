@@ -35,6 +35,3 @@ Style/Documentation:
   Exclude:
     - 'examples/**/*'
     - 'spec/**/*'
-
-RSpec/RepeatedExampleGroupBody:
-  Enabled: false

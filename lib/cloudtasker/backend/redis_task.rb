@@ -248,7 +248,7 @@ module Cloudtasker
           req = Net::HTTP::Post.new(uri.path, http_request[:headers])
 
           # Add retries header
-          req['X-CloudTasks-TaskExecutionCount'] = retries
+          req[Cloudtasker::Config::RETRY_HEADER] = retries
 
           # Set job payload
           req.body = http_request[:body]

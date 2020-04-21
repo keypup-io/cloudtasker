@@ -26,8 +26,9 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
     let(:retries) { 3 }
     let(:queue) { 'some-queue' }
     let(:auth_token) { Cloudtasker::Authenticator.verification_token }
+    let(:env_retries_header) { "HTTP_#{Cloudtasker::Config::RETRY_HEADER.tr('-', '_').upcase}" }
 
-    before { request.env['HTTP_X_CLOUDTASKS_TASKEXECUTIONCOUNT'] = retries }
+    before { request.env[env_retries_header] = retries }
 
     context 'with valid worker' do
       before do

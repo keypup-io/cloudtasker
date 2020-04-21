@@ -13,7 +13,17 @@ module Cloudtasker
     MAX_TASK_SIZE = 100 * 1024 # 100 KB
 
     # Retry header in Cloud Task responses
-    RETRY_HEADER = 'X-CloudTasks-TaskExecutionCount'
+    #
+    # TODO: use 'X-CloudTasks-TaskExecutionCount' instead of 'X-CloudTasks-TaskRetryCount'
+    #   'X-CloudTasks-TaskExecutionCount' is currently bugged and remains at 0 even on retries.
+    #
+    # See bug: https://issuetracker.google.com/issues/154532072
+    #
+    # Definitions:
+    #   X-CloudTasks-TaskRetryCount: total number of retries (including 504 "instance unreachable")
+    #   X-CloudTasks-TaskExecutionCount: number of non-503 retries (= actual number of job failures)
+    #
+    RETRY_HEADER = 'X-CloudTasks-TaskRetryCount'
 
     # Content-Transfer-Encoding header in Cloud Task responses
     ENCODING_HEADER = 'Content-Transfer-Encoding'
@@ -33,7 +43,15 @@ module Cloudtasker
     DEFAULT_QUEUE_CONCURRENCY = 10
     DEFAULT_QUEUE_RETRIES = -1 # unlimited
 
-    # The number of times jobs will be attempted before declaring them dead
+    # The number of times jobs will be attempted before declaring them dead.
+    #
+    # With the default retry configuration (maxDoublings = 16 and minBackoff = 0.100s)
+    # it means that jobs will be declared dead after 20h of consecutive failing.
+    #
+    # Note that this configuration parameter is internal to Cloudtasker and does not
+    # affect the Cloud Task queue configuration. The number of retries configured
+    # on the Cloud Task queue should be higher than the number below to also cover
+    # failures due to the instance being unreachable.
     DEFAULT_MAX_RETRY_ATTEMPTS = 25
 
     PROCESSOR_HOST_MISSING = <<~DOC
