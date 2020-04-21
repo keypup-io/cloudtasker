@@ -12,6 +12,9 @@ module Cloudtasker
     # Default number of threads to allocate to process a specific queue
     QUEUE_CONCURRENCY = 1
 
+    # Job Polling. How frequently to poll jobs in redis.
+    JOB_POLLING_FREQUENCY = 0.5 # seconds
+
     #
     # Stop the local server.
     #
@@ -46,7 +49,7 @@ module Cloudtasker
       @start ||= Thread.new do
         until @done
           queues.each { |(n, c)| process_jobs(n, c) }
-          sleep 1
+          sleep JOB_POLLING_FREQUENCY
         end
         Cloudtasker.logger.info('[Cloudtasker/Server] Local server exiting...')
       end
