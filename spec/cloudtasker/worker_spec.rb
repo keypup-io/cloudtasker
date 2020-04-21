@@ -279,6 +279,8 @@ RSpec.describe Cloudtasker::Worker do
     let(:resp) { 'some-result' }
 
     before { allow(worker).to receive(:perform).with(*args).and_return(resp) }
+    before { expect(worker).to have_attributes(perform_started_at: nil, perform_ended_at: nil) }
+    after { expect(worker).to have_attributes(perform_started_at: be_a(Time), perform_ended_at: be_a(Time)) }
 
     it { is_expected.to eq(resp) }
 
@@ -398,6 +400,36 @@ RSpec.describe Cloudtasker::Worker do
       let(:job_retries) { Cloudtasker.config.max_retries - 1 }
 
       it { is_expected.not_to be_job_dead }
+    end
+  end
+
+  describe '#job_duration' do
+    subject { worker.job_duration }
+
+    let(:worker) { worker_class.new }
+    let(:now) { Time.now }
+    let(:perform_started_at) { now - 10.0005 }
+    let(:perform_ended_at) { now }
+
+    before do
+      worker.perform_started_at = perform_started_at
+      worker.perform_ended_at = perform_ended_at
+    end
+
+    context 'with timestamps set' do
+      it { is_expected.to eq((perform_ended_at - perform_started_at).ceil(3)) }
+    end
+
+    context 'with no perform_started_at' do
+      let(:perform_started_at) { nil }
+
+      it { is_expected.to eq(0.0) }
+    end
+
+    context 'with no perform_ended_at' do
+      let(:perform_ended_at) { nil }
+
+      it { is_expected.to eq(0.0) }
     end
   end
 end

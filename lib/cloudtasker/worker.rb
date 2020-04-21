@@ -7,7 +7,8 @@ module Cloudtasker
     def self.included(base)
       base.extend(ClassMethods)
       base.attr_writer :job_queue
-      base.attr_accessor :job_args, :job_id, :job_meta, :job_reenqueued, :job_retries
+      base.attr_accessor :job_args, :job_id, :job_meta, :job_reenqueued, :job_retries,
+                         :perform_started_at, :perform_ended_at
     end
 
     #
@@ -181,21 +182,19 @@ module Cloudtasker
     #
     def execute
       logger.info('Starting job...')
-      resp = Cloudtasker.config.server_middleware.invoke(self) do
-        begin
-          perform(*job_args)
-        rescue StandardError => e
-          try(:on_error, e)
-          return raise(e) unless job_dead?
 
-          # Flag job as dead
-          logger.info('Job dead')
-          try(:on_dead, e)
-          raise(DeadWorkerError, e)
-        end
-      end
-      logger.info('Job done')
+      # Perform job logic
+      resp = execute_middleware_chain
+
+      # Log job completion and return result
+      logger.info("Job done after #{job_duration}s") { { duration: job_duration } }
       resp
+    rescue DeadWorkerError => e
+      logger.info("Job dead after #{job_duration}s and #{job_retries} retries") { { duration: job_duration } }
+      raise(e)
+    rescue StandardError => e
+      logger.info("Job failed after #{job_duration}s") { { duration: job_duration } }
+      raise(e)
     end
 
     #
@@ -285,6 +284,47 @@ module Cloudtasker
     #
     def job_dead?
       job_retries >= Cloudtasker.config.max_retries
+    end
+
+    #
+    # Return the time taken (in seconds) to perform the job. This duration
+    # includes the middlewares and the actual perform method.
+    #
+    # @return [Float] The time taken in seconds as a floating point number.
+    #
+    def job_duration
+      return 0.0 unless perform_ended_at && perform_started_at
+
+      (perform_ended_at - perform_started_at).ceil(3)
+    end
+
+    #=============================
+    # Private
+    #=============================
+    private
+
+    #
+    # Execute the worker perform method through the middleware chain.
+    #
+    # @return [Any] The result of the perform method.
+    #
+    def execute_middleware_chain
+      self.perform_started_at = Time.now
+
+      Cloudtasker.config.server_middleware.invoke(self) do
+        begin
+          perform(*job_args)
+        rescue StandardError => e
+          try(:on_error, e)
+          return raise(e) unless job_dead?
+
+          # Flag job as dead
+          try(:on_dead, e)
+          raise(DeadWorkerError, e)
+        end
+      end
+    ensure
+      self.perform_ended_at = Time.now
     end
   end
 end

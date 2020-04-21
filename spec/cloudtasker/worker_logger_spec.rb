@@ -9,17 +9,26 @@ RSpec.shared_examples 'a log appender' do |level|
   let(:log_block) { logger.log_block }
 
   context 'without block' do
-    before { allow(Cloudtasker.logger).to receive(level).with(log_msg, &log_block).and_return(true) }
-    after { expect(Cloudtasker.logger).to have_received(level).with(log_msg, &log_block) }
+    before do
+      allow(Cloudtasker.logger).to receive(level) do |args, &arg_block|
+        expect(args).to eq(log_msg)
+        expect(arg_block.call).to eq(log_block.call)
+      end
+    end
+    after { expect(Cloudtasker.logger).to have_received(level) }
     it { is_expected.to be_truthy }
   end
 
   context 'with block' do
     let(:block) { proc { { foo: 'bar' } } }
-    let(:log_block) { block }
 
-    before { allow(Cloudtasker.logger).to receive(level).with(log_msg, &log_block).and_return(true) }
-    after { expect(Cloudtasker.logger).to have_received(level).with(log_msg, &log_block) }
+    before do
+      allow(Cloudtasker.logger).to receive(level) do |args, &arg_block|
+        expect(args).to eq(log_msg)
+        expect(arg_block.call).to eq(log_block.call.merge(block.call))
+      end
+    end
+    after { expect(Cloudtasker.logger).to have_received(level) }
     it { is_expected.to be_truthy }
   end
 
@@ -32,6 +41,7 @@ RSpec.shared_examples 'a log appender' do |level|
         expect(block.call).to eq("#{log_msg} -- #{log_block.call}")
       end
     end
+    after { expect(as_logger).to have_received(level) }
     it { is_expected.to be_truthy }
   end
 end
