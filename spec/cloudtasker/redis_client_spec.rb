@@ -53,8 +53,12 @@ RSpec.describe Cloudtasker::RedisClient do
     let(:key) { 'cache-key' }
     let(:lock_key) { 'cloudtasker/lock/cache-key' }
 
-    before { allow(redis_client.client).to receive(:setnx).with(lock_key, true).and_return(true) }
-    after { expect(redis_client.client).to have_received(:setnx) }
+    before do
+      allow(redis_client.client).to receive(:set)
+        .with(lock_key, true, nx: true, ex: described_class::LOCK_DURATION)
+        .and_return(true)
+    end
+    after { expect(redis_client.client).to have_received(:set) }
     it { expect { |b| redis_client.with_lock(key, &b) }.to yield_control }
   end
 

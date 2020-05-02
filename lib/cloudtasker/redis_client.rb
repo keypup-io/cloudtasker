@@ -7,6 +7,8 @@ module Cloudtasker
   class RedisClient
     # Suffix added to cache keys when locking them
     LOCK_KEY_PREFIX = 'cloudtasker/lock'
+    LOCK_DURATION = 2 # seconds
+    LOCK_WAIT_DURATION = 0.03 # seconds
 
     def self.client
       @client ||= Redis.new(Cloudtasker.config.redis || {})
@@ -51,6 +53,9 @@ module Cloudtasker
     #
     # Acquire a lock on a cache entry.
     #
+    # Locks are enforced to be short-lived (2s).
+    # The yielded block should limit its logic to short operations (e.g. redis get/set).
+    #
     # @example
     #   redis = RedisClient.new
     #   redis.with_lock('foo')
@@ -65,7 +70,7 @@ module Cloudtasker
 
       # Wait to acquire lock
       lock_key = [LOCK_KEY_PREFIX, cache_key].join('/')
-      true until client.setnx(lock_key, true)
+      sleep(LOCK_WAIT_DURATION) until client.set(lock_key, true, nx: true, ex: LOCK_DURATION)
 
       # yield content
       yield
