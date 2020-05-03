@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'redis'
+require 'connection_pool'
 
 module Cloudtasker
   # A wrapper with helper methods for redis
@@ -10,8 +11,18 @@ module Cloudtasker
     LOCK_DURATION = 2 # seconds
     LOCK_WAIT_DURATION = 0.03 # seconds
 
+    # Default pool size used for Redis
+    DEFAULT_POOL_SIZE = ENV.fetch('RAILS_MAX_THREADS') { 25 }
+    DEFAULT_POOL_TIMEOUT = 5
+
     def self.client
-      @client ||= Redis.new(Cloudtasker.config.redis || {})
+      @client ||= begin
+        pool_size = Cloudtasker.config.redis&.dig(:pool_size) || DEFAULT_POOL_SIZE
+        pool_timeout = Cloudtasker.config.redis&.dig(:pool_timeout) || DEFAULT_POOL_TIMEOUT
+        ConnectionPool.new(size: pool_size, timeout: pool_timeout) do
+          Redis.new(Cloudtasker.config.redis || {})
+        end
+      end
     end
 
     #
@@ -31,7 +42,7 @@ module Cloudtasker
     # @return [Hash, Array] The content of the cache key, parsed as JSON.
     #
     def fetch(key)
-      return nil unless (val = client.get(key.to_s))
+      return nil unless (val = get(key.to_s))
 
       JSON.parse(val, symbolize_names: true)
     rescue JSON::ParserError
@@ -47,7 +58,7 @@ module Cloudtasker
     # @return [String] Redis response code.
     #
     def write(key, content)
-      client.set(key.to_s, content.to_json)
+      set(key.to_s, content.to_json)
     end
 
     #
@@ -70,12 +81,14 @@ module Cloudtasker
 
       # Wait to acquire lock
       lock_key = [LOCK_KEY_PREFIX, cache_key].join('/')
-      sleep(LOCK_WAIT_DURATION) until client.set(lock_key, true, nx: true, ex: LOCK_DURATION)
+      client.with do |conn|
+        sleep(LOCK_WAIT_DURATION) until conn.set(lock_key, true, nx: true, ex: LOCK_DURATION)
+      end
 
       # yield content
       yield
     ensure
-      client.del(lock_key)
+      del(lock_key)
     end
 
     #
@@ -104,10 +117,12 @@ module Cloudtasker
       list = []
 
       # Scan and capture matching keys
-      while cursor != 0
-        scan = client.scan(cursor || 0, match: pattern)
-        list += scan[1]
-        cursor = scan[0].to_i
+      client.with do |conn|
+        while cursor != 0
+          scan = conn.scan(cursor || 0, match: pattern)
+          list += scan[1]
+          cursor = scan[0].to_i
+        end
       end
 
       list
@@ -123,8 +138,8 @@ module Cloudtasker
     # @return [Any] The method return value
     #
     def method_missing(name, *args, &block)
-      if client.respond_to?(name)
-        client.send(name, *args, &block)
+      if Redis.method_defined?(name)
+        client.with { |c| c.send(name, *args, &block) }
       else
         super
       end
@@ -139,7 +154,7 @@ module Cloudtasker
     # @return [Boolean] Return true if the class respond to this method.
     #
     def respond_to_missing?(name, include_private = false)
-      client.respond_to?(name) || super
+      Redis.method_defined?(name) || super
     end
   end
 end

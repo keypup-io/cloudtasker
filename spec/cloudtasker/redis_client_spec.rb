@@ -6,8 +6,9 @@ RSpec.describe Cloudtasker::RedisClient do
   let(:redis_client) { described_class.new }
 
   describe '.client' do
-    subject { described_class.client }
+    subject { described_class.client.with { |c| c } }
 
+    it { expect(described_class.client).to be_a(ConnectionPool) }
     it { is_expected.to be_a(Redis) }
     it { is_expected.to have_attributes(id: Cloudtasker.config.redis[:url]) }
   end
@@ -52,13 +53,16 @@ RSpec.describe Cloudtasker::RedisClient do
   describe '#with_lock' do
     let(:key) { 'cache-key' }
     let(:lock_key) { 'cloudtasker/lock/cache-key' }
+    let(:redis) { instance_double('Redis') }
 
     before do
-      allow(redis_client.client).to receive(:set)
+      allow(redis_client.client).to receive(:with).and_yield(redis)
+      allow(redis).to receive(:del)
+      allow(redis).to receive(:set)
         .with(lock_key, true, nx: true, ex: described_class::LOCK_DURATION)
         .and_return(true)
     end
-    after { expect(redis_client.client).to have_received(:set) }
+    after { expect(redis).to have_received(:set) }
     it { expect { |b| redis_client.with_lock(key, &b) }.to yield_control }
   end
 
