@@ -5,10 +5,14 @@ module Cloudtasker
     # Wrapper class for Cloudtasker::Worker delegating to lock
     # and conflict strategies
     class Job
-      attr_reader :worker
+      attr_reader :worker, :call_opts
 
       # The default lock strategy to use. Defaults to "no lock".
       DEFAULT_LOCK = UniqueJob::Lock::NoOp
+
+      # The max duration during which the lock is expected to remain
+      # in place after the job time_at.
+      DEFAULT_LOCK_DURATION = 10 * 60 # 10 minutes
 
       # Key Namespace used for object saved under this class
       SUB_NAMESPACE = 'job'
@@ -18,8 +22,9 @@ module Cloudtasker
       #
       # @param [Cloudtasker::Worker] worker The worker at hand
       #
-      def initialize(worker)
+      def initialize(worker, **kwargs)
         @worker = worker
+        @call_opts = kwargs
       end
 
       #
@@ -29,6 +34,43 @@ module Cloudtasker
       #
       def options
         worker.class.cloudtasker_options_hash
+      end
+
+      #
+      # Return the Time To Live (TTL) that should be set in Redis for
+      # the lock key. Having a TTL on lock keys ensures that jobs
+      # do not end up stuck due to a dead lock situation.
+      #
+      # The TTL is calculated using schedule time + expected
+      # max job duration.
+      #
+      # The expected max job duration is set to 10 minutes by default.
+      # This value was chosen because it's twice the default request timeout
+      # value in Cloud Run. This leaves enough room for queue lag (5 minutes)
+      # + job processing (5 minutes).
+      #
+      # Queue lag is certainly the most unpredictable factor here.
+      # Job processing time is less of a factor. Jobs running for more than 5 minutes
+      # should be split into sub-jobs to limit invocation time over HTTP. Cloudtasker batch
+      # jobs can help achieve that if you need to make one big job split into sub-jobs "atomic".
+      #
+      # The default lock key expiration of "time_at + 10 minutes" may look aggressive but it
+      # is still a better choice than potentially having real-time jobs stuck for X hours.
+      #
+      # The expected max job duration can be configured via the `lock_ttl`
+      # option on the job itself.
+      #
+      # @return [Integer] The TTL in seconds
+      #
+      def lock_ttl
+        now = Time.now.to_i
+
+        # Get scheduled at and lock duration
+        scheduled_at = [call_opts[:time_at].to_i, now].compact.max
+        lock_duration = (options[:lock_ttl] || DEFAULT_LOCK_DURATION).to_i
+
+        # Return TTL
+        scheduled_at + lock_duration - now
       end
 
       #
@@ -121,7 +163,7 @@ module Cloudtasker
           raise(LockError, locked_id) if locked_id && locked_id != id
 
           # Take job lock if the lock is currently free
-          redis.set(unique_gid, id) unless locked_id
+          redis.set(unique_gid, id, ex: lock_ttl) unless locked_id
         end
       end
 

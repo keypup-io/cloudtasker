@@ -81,6 +81,49 @@ Below is the list of available conflict strategies can be specified through the 
 | `raise` | All locks | A `Cloudtasker::UniqueJob::LockError` will be raised when a conflict occurs |
 | `reschedule` | `while_executing` | The job will be rescheduled 5 seconds later when a conflict occurs |
 
+## Lock Time To Live (TTL) & deadlocks
+**Note**: Lock TTL has been introduced in `v0.10.rc6`
+
+To make jobs unique Cloudtasker sets a lock key - a hash of class name + job arguments - in Redis. Unique crash situations may lead to lock keys not being cleaned up when jobs complete - e.g. Redis crash with rollback from last known state on disk. Situations like these may lead to having a unique job deadlock: jobs with the same class and arguments would stop being processed because they're unable to acquire a lock that will never be cleaned up.
+
+In order to prevent deadlocks Cloudtasker configures lock keys to automatically expire in Redis after `job schedule time + lock_ttl (default: 10 minutes)`. This forced expiration ensures that deadlocks eventually get cleaned up shortly after the expected run time of a job.
+
+The `lock_ttl (default: 10 minutes)` duration represent the expected max duration of the job. The default 10 minutes value was chosen because it's twice the default request timeout value in Cloud Run. This usually leaves enough room for queue lag (5 minutes) + job processing (5 minutes).
+
+Queue lag is certainly the most unpredictable factor here. Job processing time is less of a factor. Jobs running for more than 5 minutes should be split into sub-jobs to limit invocation time over HTTP anyway. Cloudtasker [batch jobs]((BATCH_JOBS.md)) can help split big jobs into sub-jobs in an atomic way.
+
+The default lock key expiration of `job schedule time + 10 minutes` may look aggressive but it is a better choice than having real-time jobs stuck for X hours after a crash recovery.
+
+We **strongly recommend** adapting the `lock_ttl` option for each worker based on expected queue lag and expected duration:
+
+Example 1:
+```ruby
+class RealtimeWorkerOnFastQueue
+  include Cloudtasker::Worker
+
+  # Ensure lock is removed 30 seconds after schedule time
+  cloudtasker_options lock: :until_executing, lock_ttl: 30
+
+  def perform(arg1, arg2)
+    # ...
+  end
+end
+```
+
+Example 2:
+```ruby
+class NonCriticalWorkerOnSlowQueue
+  include Cloudtasker::Worker
+
+  # Ensure lock is removed 24 hours after schedule time
+  cloudtasker_options lock: :until_executing, lock_ttl: 3600 * 24
+
+  def perform(arg1, arg2)
+    # ...
+  end
+end
+```
+
 ## Configuring unique arguments
 
 By default Cloudtasker considers all job arguments to evaluate the uniqueness of a job. This behaviour is configurable per worker by defining a `unique_args` method on the worker itself returning the list of args defining uniqueness.

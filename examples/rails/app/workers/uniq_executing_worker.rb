@@ -3,7 +3,7 @@
 class UniqExecutingWorker
   include Cloudtasker::Worker
 
-  cloudtasker_options lock: :while_executing, on_conflict: :reschedule
+  cloudtasker_options lock: :while_executing, on_conflict: :reschedule, lock_ttl: 90
 
   def unique_args(args)
     [args[0], args[1]]

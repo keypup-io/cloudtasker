@@ -4,18 +4,55 @@ require 'cloudtasker/unique_job/middleware'
 
 RSpec.describe Cloudtasker::UniqueJob::Job do
   let(:worker) { TestWorker.new(job_args: [1, 2]) }
-  let(:job) { described_class.new(worker) }
+  let(:call_opts) { { time_at: Time.now + 3600 } }
+  let(:job) { described_class.new(worker, call_opts) }
 
   describe '.new' do
     subject { job }
 
-    it { is_expected.to have_attributes(worker: worker) }
+    it { is_expected.to have_attributes(worker: worker, call_opts: call_opts) }
   end
 
   describe '#options' do
     subject { job.options }
 
     it { is_expected.to eq(worker.class.cloudtasker_options_hash) }
+  end
+
+  describe '#lock_ttl' do
+    subject { job.lock_ttl }
+
+    let(:job_opts) { {} }
+    let(:call_opts) { {} }
+    let(:default_ttl) { described_class::DEFAULT_LOCK_DURATION }
+    let(:now) { Time.now.to_i }
+
+    around { |e| Timecop.freeze { e.run } }
+    before { allow(job).to receive(:options).and_return(job_opts) }
+    before { allow(job).to receive(:call_opts).and_return(call_opts) }
+
+    context 'with no opts' do
+      it { is_expected.to eq(default_ttl) }
+    end
+
+    context 'with call_opts[:time_at]' do
+      let(:call_opts) { { time_at: now + 3600 } }
+
+      it { is_expected.to eq(call_opts[:time_at] + default_ttl - now) }
+    end
+
+    context 'with options[:lock_ttl]' do
+      let(:job_opts) { { lock_ttl: 60 } }
+
+      it { is_expected.to eq(job_opts[:lock_ttl]) }
+    end
+
+    context 'with call_opts[:time_at] and options[:lock_ttl]' do
+      let(:call_opts) { { time_at: now + 3600 } }
+      let(:job_opts) { { lock_ttl: 60 } }
+
+      it { is_expected.to eq(call_opts[:time_at] + job_opts[:lock_ttl] - now) }
+    end
   end
 
   describe '#lock_instance' do
@@ -108,6 +145,7 @@ RSpec.describe Cloudtasker::UniqueJob::Job do
 
     context 'with lock available' do
       after { expect(job.redis.get(job.unique_gid)).to eq(job.id) }
+      after { expect(job.redis.ttl(job.unique_gid)).to be_between(0, job.lock_ttl) }
       it { expect { lock! }.not_to raise_error }
     end
   end
