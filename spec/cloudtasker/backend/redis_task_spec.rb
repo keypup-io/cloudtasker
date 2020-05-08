@@ -227,6 +227,7 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
       stub_request(:post, job_payload.dig(:http_request, :url))
         .with(
           headers: {
+            Cloudtasker::Config::TASK_ID_HEADER => task_id,
             Cloudtasker::Config::RETRY_HEADER => job_payload[:retries]
           },
           body: job_payload.dig(:http_request, :body)

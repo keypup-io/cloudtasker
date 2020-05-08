@@ -38,3 +38,6 @@ Style/Documentation:
   Exclude:
     - 'examples/**/*'
     - 'spec/**/*'
+
+Metrics/ParameterLists:
+  CountKeywordArgs: false

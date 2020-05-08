@@ -11,7 +11,7 @@ module Cloudtasker
     end
 
     # Only log the job meta information by default (exclude arguments)
-    DEFAULT_CONTEXT_PROCESSOR = ->(worker) { worker.to_h.slice(:worker, :job_id, :job_meta, :job_queue) }
+    DEFAULT_CONTEXT_PROCESSOR = ->(worker) { worker.to_h.slice(:worker, :job_id, :job_meta, :job_queue, :task_id) }
 
     #
     # Build a new instance of the class.

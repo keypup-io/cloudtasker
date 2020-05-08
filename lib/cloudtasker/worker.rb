@@ -8,7 +8,7 @@ module Cloudtasker
       base.extend(ClassMethods)
       base.attr_writer :job_queue
       base.attr_accessor :job_args, :job_id, :job_meta, :job_reenqueued, :job_retries,
-                         :perform_started_at, :perform_ended_at
+                         :perform_started_at, :perform_ended_at, :task_id
     end
 
     #
@@ -47,7 +47,7 @@ module Cloudtasker
       return nil unless worker_klass.include?(self)
 
       # Return instantiated worker
-      worker_klass.new(payload.slice(:job_queue, :job_args, :job_id, :job_meta, :job_retries))
+      worker_klass.new(payload.slice(:job_queue, :job_args, :job_id, :job_meta, :job_retries, :task_id))
     rescue NameError
       nil
     end
@@ -140,12 +140,13 @@ module Cloudtasker
     # @param [Array<any>] job_args The list of perform args.
     # @param [String] job_id A unique ID identifying this job.
     #
-    def initialize(job_queue: nil, job_args: nil, job_id: nil, job_meta: {}, job_retries: 0)
+    def initialize(job_queue: nil, job_args: nil, job_id: nil, job_meta: {}, job_retries: 0, task_id: nil)
       @job_args = job_args || []
       @job_id = job_id || SecureRandom.uuid
       @job_meta = MetaStore.new(job_meta)
       @job_retries = job_retries || 0
       @job_queue = job_queue
+      @task_id = task_id
     end
 
     #
@@ -250,7 +251,8 @@ module Cloudtasker
         job_args: job_args,
         job_meta: job_meta.to_h,
         job_retries: job_retries,
-        job_queue: job_queue
+        job_queue: job_queue,
+        task_id: task_id
       }
     end
 

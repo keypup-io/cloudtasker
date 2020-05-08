@@ -26,6 +26,7 @@ RSpec.describe Cloudtasker::Worker do
   describe '.from_hash' do
     subject { described_class.from_hash(worker_hash) }
 
+    let(:task_id) { '456' }
     let(:job_id) { '123' }
     let(:job_args) { [1, { 'foo' => 'bar' }] }
     let(:job_meta) { { foo: 'bar' } }
@@ -39,7 +40,8 @@ RSpec.describe Cloudtasker::Worker do
         'job_args' => job_args,
         'job_meta' => job_meta,
         'job_retries' => job_retries,
-        'job_queue' => job_queue
+        'job_queue' => job_queue,
+        'task_id' => task_id
       }
     end
 
@@ -50,7 +52,8 @@ RSpec.describe Cloudtasker::Worker do
           job_id: job_id,
           job_args: job_args,
           job_meta: eq(job_meta),
-          job_retries: job_retries
+          job_retries: job_retries,
+          task_id: task_id
         }
       end
 
@@ -177,6 +180,7 @@ RSpec.describe Cloudtasker::Worker do
   describe '.new' do
     subject { worker_class.new(worker_args) }
 
+    let(:task_id) { SecureRandom.uuid }
     let(:id) { SecureRandom.uuid }
     let(:args) { [1, 2] }
     let(:meta) { { foo: 'bar' } }
@@ -185,19 +189,38 @@ RSpec.describe Cloudtasker::Worker do
 
     context 'without args' do
       let(:worker_args) { {} }
+      let(:expected_attrs) do
+        {
+          job_queue: 'default',
+          job_args: [],
+          job_id: be_present,
+          job_retries: 0,
+          task_id: nil
+        }
+      end
 
-      it { is_expected.to have_attributes(job_queue: 'default', job_args: [], job_id: be_present, job_retries: 0) }
+      it { is_expected.to have_attributes(expected_attrs) }
     end
 
     context 'with args' do
-      let(:worker_args) { { job_queue: queue, job_args: args, job_id: id, job_meta: meta, job_retries: retries } }
+      let(:worker_args) do
+        {
+          job_queue: queue,
+          job_args: args,
+          job_id: id,
+          job_meta: meta,
+          job_retries: retries,
+          task_id: task_id
+        }
+      end
       let(:expected_args) do
         {
           job_queue: queue,
           job_args: args,
           job_id: id,
           job_meta: eq(meta),
-          job_retries: retries
+          job_retries: retries,
+          task_id: task_id
         }
       end
 
@@ -341,10 +364,18 @@ RSpec.describe Cloudtasker::Worker do
   describe '#to_h' do
     subject { worker.to_h }
 
+    let(:task_id) { SecureRandom.uuid }
     let(:job_args) { [1, 2] }
     let(:job_meta) { { foo: 'bar' } }
     let(:job_retries) { 3 }
-    let(:worker) { worker_class.new(job_args: job_args, job_meta: job_meta, job_retries: job_retries) }
+    let(:worker) do
+      worker_class.new(
+        job_args: job_args,
+        job_meta: job_meta,
+        job_retries: job_retries,
+        task_id: task_id
+      )
+    end
     let(:expected_hash) do
       {
         worker: worker.class.to_s,
@@ -352,7 +383,8 @@ RSpec.describe Cloudtasker::Worker do
         job_args: worker.job_args,
         job_meta: worker.job_meta.to_h,
         job_retries: worker.job_retries,
-        job_queue: worker.job_queue
+        job_queue: worker.job_queue,
+        task_id: task_id
       }
     end
 

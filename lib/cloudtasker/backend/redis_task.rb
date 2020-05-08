@@ -247,7 +247,8 @@ module Cloudtasker
           uri = URI(http_request[:url])
           req = Net::HTTP::Post.new(uri.path, http_request[:headers])
 
-          # Add retries header
+          # Add task headers
+          req[Cloudtasker::Config::TASK_ID_HEADER] = id
           req[Cloudtasker::Config::RETRY_HEADER] = retries
 
           # Set job payload

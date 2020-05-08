@@ -18,7 +18,8 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
     end
     let(:mime_type) { :json }
     let(:request_body) { payload.to_json }
-    let(:expected_payload) { payload.merge(job_retries: retries) }
+    let(:expected_payload) { payload.merge(job_retries: retries, task_id: task_id) }
+    let(:task_id) { 'ab2341f' }
     let(:id) { '111' }
     let(:worker_class_name) { 'TestWorker' }
     let(:args) { [1, 2] }
@@ -27,8 +28,10 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
     let(:queue) { 'some-queue' }
     let(:auth_token) { Cloudtasker::Authenticator.verification_token }
     let(:env_retries_header) { "HTTP_#{Cloudtasker::Config::RETRY_HEADER.tr('-', '_').upcase}" }
+    let(:env_task_id_header) { "HTTP_#{Cloudtasker::Config::TASK_ID_HEADER.tr('-', '_').upcase}" }
 
     before { request.env[env_retries_header] = retries }
+    before { request.env[env_task_id_header] = task_id }
 
     context 'with valid worker' do
       before do

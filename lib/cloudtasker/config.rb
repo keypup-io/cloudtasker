@@ -25,6 +25,9 @@ module Cloudtasker
     #
     RETRY_HEADER = 'X-CloudTasks-TaskRetryCount'
 
+    # Cloud Task ID header
+    TASK_ID_HEADER = 'X-CloudTasks-TaskName'
+
     # Content-Transfer-Encoding header in Cloud Task responses
     ENCODING_HEADER = 'Content-Transfer-Encoding'
 

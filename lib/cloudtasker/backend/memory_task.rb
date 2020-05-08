@@ -151,7 +151,8 @@ module Cloudtasker
       #
       def execute
         # Execute worker
-        resp = WorkerHandler.with_worker_handling(payload, &:execute)
+        worker_payload = payload.merge(job_retries: job_retries, task_id: id)
+        resp = WorkerHandler.with_worker_handling(worker_payload, &:execute)
 
         # Delete task
         self.class.delete(id)

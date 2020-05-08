@@ -167,10 +167,13 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
 
     let(:worker) { TestWorker.new }
     let(:resp) { 'some-response' }
+    let(:worker_payload) { task.payload.merge(job_retries: task.job_retries, task_id: task.id) }
 
-    before { allow(Cloudtasker::WorkerHandler).to receive(:with_worker_handling).with(task.payload).and_yield(worker) }
-    before { allow(worker).to receive(:execute).and_return(resp) }
-    before { allow(described_class).to receive(:delete).with(task_id) }
+    before do
+      allow(Cloudtasker::WorkerHandler).to receive(:with_worker_handling).with(worker_payload).and_yield(worker)
+      allow(worker).to receive(:execute).and_return(resp)
+      allow(described_class).to receive(:delete).with(task_id)
+    end
 
     context 'with success' do
       it { is_expected.to eq(resp) }

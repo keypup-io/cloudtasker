@@ -51,17 +51,26 @@ module Cloudtasker
         end
 
         # Return content parsed as JSON and add job retries count
-        JSON.parse(content).merge(job_retries: job_retries)
+        JSON.parse(content).merge(job_retries: job_retries, task_id: task_id)
       end
     end
 
     #
     # Extract the number of times this task failed at runtime.
     #
-    # @return [Integer] The number of failures
+    # @return [Integer] The number of failures.
     #
     def job_retries
       request.headers[Cloudtasker::Config::RETRY_HEADER].to_i
+    end
+
+    #
+    # Return the Google Cloud Task ID from headers.
+    #
+    # @return [String] The task ID.
+    #
+    def task_id
+      request.headers[Cloudtasker::Config::TASK_ID_HEADER]
     end
 
     #

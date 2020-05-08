@@ -25,7 +25,10 @@ post '/cloudtasker/run' do
 
     # Format job payload
     payload = JSON.parse(content)
-                  .merge(job_retries: request.env['HTTP_X_CLOUDTASKS_TASKEXECUTIONCOUNT'].to_i)
+                  .merge(
+                    job_retries: request.env[Cloudtasker::Config::RETRY_HEADER].to_i,
+                    task_id: request.env[Cloudtasker::Config::TASK_ID_HEADER]
+                  )
 
     # Process payload
     Cloudtasker::WorkerHandler.execute_from_payload!(payload)
