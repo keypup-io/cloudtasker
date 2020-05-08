@@ -1,13 +1,14 @@
 PATH
   remote: ..
   specs:
-    cloudtasker (0.10.rc5)
+    cloudtasker (0.10.rc6)
       activesupport
       connection_pool
       fugit
       google-cloud-tasks
       jwt
       redis
+      retriable
 
 GEM
   remote: https://rubygems.org/
