@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'cloudtasker/redis_client'
-
 module Cloudtasker
   module Backend
     # Manage local tasks pushed to memory.

@@ -171,6 +171,19 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
       it { is_expected.to eq(task) }
     end
 
+    context 'with API temporarily unavailable' do
+      before do
+        call_count = 0
+        allow(client).to receive(:get_task).with(id) do
+          call_count += 1
+          call_count > 1 ? resp : raise(Google::Gax::UnavailableError, 'msg')
+        end
+        allow(described_class).to receive(:new).with(resp).and_return(task)
+      end
+
+      it { is_expected.to eq(task) }
+    end
+
     context 'with invalid id' do
       before { allow(client).to receive(:get_task).with(id).and_raise(Google::Gax::RetryError, 'msg') }
       it { is_expected.to be_nil }
@@ -178,7 +191,7 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
   end
 
   describe '.create' do
-    subject { described_class.create(job_payload) }
+    subject(:api_create) { described_class.create(job_payload) }
 
     let(:id) { '123' }
     let(:queue) { 'some-queue' }
@@ -203,11 +216,26 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
       it { is_expected.to eq(task) }
     end
 
-    context 'with error' do
+    context 'with API temporarily unavailable' do
       before do
-        allow(client).to receive(:create_task).with(queue, expected_payload).and_raise(Google::Gax::RetryError, 'msg')
+        call_count = 0
+        allow(client).to receive(:create_task).with(queue, expected_payload) do
+          call_count += 1
+          call_count > 1 ? resp : raise(Google::Gax::UnavailableError, 'msg')
+        end
+        allow(described_class).to receive(:new).with(resp).and_return(task)
       end
-      it { is_expected.to be_nil }
+
+      it { is_expected.to eq(task) }
+    end
+
+    context 'with invalid task parameters' do
+      before do
+        allow(client).to receive(:create_task)
+          .with(queue, expected_payload)
+          .and_raise(Google::Gax::RetryError, 'msg')
+      end
+      it { expect { api_create }.to raise_error(Google::Gax::RetryError) }
     end
   end
 
@@ -221,6 +249,18 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
 
     context 'with record' do
       before { allow(client).to receive(:delete_task).with(id).and_return(resp) }
+      it { is_expected.to eq(resp) }
+    end
+
+    context 'with API temporarily unavailable' do
+      before do
+        call_count = 0
+        allow(client).to receive(:delete_task).with(id) do
+          call_count += 1
+          call_count > 1 ? resp : raise(Google::Gax::UnavailableError, 'msg')
+        end
+      end
+
       it { is_expected.to eq(resp) }
     end
 

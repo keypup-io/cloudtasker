@@ -36,6 +36,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'google-cloud-tasks'
   spec.add_dependency 'jwt'
   spec.add_dependency 'redis'
+  spec.add_dependency 'retriable'
 
   spec.add_development_dependency 'appraisal'
   spec.add_development_dependency 'bundler', '~> 2.0'

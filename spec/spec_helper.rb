@@ -39,6 +39,20 @@ RSpec.configure do |config|
     # Flush redis keys
     Cloudtasker::RedisClient.new.clear
   end
+
+  # Note: Retriable is configured in a conditional before
+  # block to avoid requiring the gem in the spec helper. This
+  # ensures that classes have defined the proper requires.
+  config.before(:all) do
+    break unless defined?(Retriable)
+
+    # Do not wait between retries
+    Retriable.configure do |c|
+      c.multiplier    = 1.0
+      c.rand_factor   = 0.0
+      c.base_interval = 0
+    end
+  end
 end
 
 # Configure for tests

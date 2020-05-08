@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'google/cloud/tasks'
+require 'retriable'
+
 module Cloudtasker
   module Backend
     # Manage tasks pushed to GCP Cloud Task
@@ -113,9 +116,10 @@ module Cloudtasker
       # @return [Cloudtasker::Backend::GoogleCloudTask, nil] The retrieved task.
       #
       def self.find(id)
-        resp = client.get_task(id)
+        resp = with_gax_retries { client.get_task(id) }
         resp ? new(resp) : nil
-      rescue Google::Gax::RetryError
+      rescue Google::Gax::RetryError, Google::Gax::NotFoundError, GRPC::NotFound
+        # The ID does not exist
         nil
       end
 
@@ -133,10 +137,8 @@ module Cloudtasker
         relative_queue = payload.delete(:queue)
 
         # Create task
-        resp = client.create_task(queue_path(relative_queue), payload)
+        resp = with_gax_retries { client.create_task(queue_path(relative_queue), payload) }
         resp ? new(resp) : nil
-      rescue Google::Gax::RetryError
-        nil
       end
 
       #
@@ -145,9 +147,19 @@ module Cloudtasker
       # @param [String] id The id of the task.
       #
       def self.delete(id)
-        client.delete_task(id)
-      rescue Google::Gax::NotFoundError, Google::Gax::RetryError, GRPC::NotFound, Google::Gax::PermissionDeniedError
+        with_gax_retries { client.delete_task(id) }
+      rescue Google::Gax::RetryError, Google::Gax::NotFoundError, GRPC::NotFound, Google::Gax::PermissionDeniedError
+        # The ID does not exist
         nil
+      end
+
+      #
+      # Helper method encapsulating the retry strategy for GAX calls
+      #
+      def self.with_gax_retries
+        Retriable.retriable(on: [Google::Gax::UnavailableError], tries: 3) do
+          yield
+        end
       end
 
       #
