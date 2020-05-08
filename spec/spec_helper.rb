@@ -44,13 +44,13 @@ RSpec.configure do |config|
   # block to avoid requiring the gem in the spec helper. This
   # ensures that classes have defined the proper requires.
   config.before(:all) do
-    break unless defined?(Retriable)
-
-    # Do not wait between retries
-    Retriable.configure do |c|
-      c.multiplier    = 1.0
-      c.rand_factor   = 0.0
-      c.base_interval = 0
+    if defined?(Retriable)
+      # Do not wait between retries
+      Retriable.configure do |c|
+        c.multiplier    = 1.0
+        c.rand_factor   = 0.0
+        c.base_interval = 0
+      end
     end
   end
 end
