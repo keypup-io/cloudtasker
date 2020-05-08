@@ -94,10 +94,27 @@ Queue lag is certainly the most unpredictable factor here. Job processing time i
 
 The default lock key expiration of `job schedule time + 10 minutes` may look aggressive but it is a better choice than having real-time jobs stuck for X hours after a crash recovery.
 
-We **strongly recommend** adapting the `lock_ttl` option for each worker based on expected queue lag and expected duration:
+We **strongly recommend** adapting the `lock_ttl` option either globally or for each worker based on expected queue lag and job duration.
 
-Example 1:
+**Example 1**: Global configuration
 ```ruby
+# config/initializers/cloudtasker.rb
+
+# General Cloudtasker configuration
+Cloudtasker.configure do |config|
+  # ...
+end
+
+# Unique job extension configuration
+Cloudtasker::UniqueJob.configure do |config|
+  config.lock_ttl = 3 * 60 # 3 minutes
+end
+```
+
+**Example 2**: Worker-level - fast
+```ruby
+# app/workers/realtime_worker_on_fast_queue.rb
+
 class RealtimeWorkerOnFastQueue
   include Cloudtasker::Worker
 
@@ -110,8 +127,10 @@ class RealtimeWorkerOnFastQueue
 end
 ```
 
-Example 2:
+**Example 3**: Worker-level - slow
 ```ruby
+# app/workers/non_critical_worker_on_slow_queue.rb
+
 class NonCriticalWorkerOnSlowQueue
   include Cloudtasker::Worker
 

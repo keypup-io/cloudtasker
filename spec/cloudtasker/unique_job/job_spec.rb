@@ -24,7 +24,7 @@ RSpec.describe Cloudtasker::UniqueJob::Job do
 
     let(:job_opts) { {} }
     let(:call_opts) { {} }
-    let(:default_ttl) { described_class::DEFAULT_LOCK_DURATION }
+    let(:default_ttl) { Cloudtasker::UniqueJob::DEFAULT_LOCK_TTL }
     let(:now) { Time.now.to_i }
 
     around { |e| Timecop.freeze { e.run } }
@@ -33,6 +33,14 @@ RSpec.describe Cloudtasker::UniqueJob::Job do
 
     context 'with no opts' do
       it { is_expected.to eq(default_ttl) }
+    end
+
+    context 'with global lock_ttl' do
+      let(:global_ttl) { 30 }
+
+      before { Cloudtasker::UniqueJob.configure { |c| c.lock_ttl = global_ttl } }
+      after { Cloudtasker::UniqueJob.configure { |c| c.lock_ttl = nil } }
+      it { is_expected.to eq(global_ttl) }
     end
 
     context 'with call_opts[:time_at]' do

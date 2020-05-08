@@ -10,10 +10,6 @@ module Cloudtasker
       # The default lock strategy to use. Defaults to "no lock".
       DEFAULT_LOCK = UniqueJob::Lock::NoOp
 
-      # The max duration during which the lock is expected to remain
-      # in place after the job time_at.
-      DEFAULT_LOCK_DURATION = 10 * 60 # 10 minutes
-
       # Key Namespace used for object saved under this class
       SUB_NAMESPACE = 'job'
 
@@ -67,7 +63,7 @@ module Cloudtasker
 
         # Get scheduled at and lock duration
         scheduled_at = [call_opts[:time_at].to_i, now].compact.max
-        lock_duration = (options[:lock_ttl] || DEFAULT_LOCK_DURATION).to_i
+        lock_duration = (options[:lock_ttl] || Cloudtasker::UniqueJob.lock_ttl).to_i
 
         # Return TTL
         scheduled_at + lock_duration - now
