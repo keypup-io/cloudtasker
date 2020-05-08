@@ -90,7 +90,7 @@ In order to prevent deadlocks Cloudtasker configures lock keys to automatically 
 
 The `lock_ttl (default: 10 minutes)` duration represent the expected max duration of the job. The default 10 minutes value was chosen because it's twice the default request timeout value in Cloud Run. This usually leaves enough room for queue lag (5 minutes) + job processing (5 minutes).
 
-Queue lag is certainly the most unpredictable factor here. Job processing time is less of a factor. Jobs running for more than 5 minutes should be split into sub-jobs to limit invocation time over HTTP anyway. Cloudtasker [batch jobs]((BATCH_JOBS.md)) can help split big jobs into sub-jobs in an atomic way.
+Queue lag is certainly the most unpredictable factor here. Job processing time is less of a factor. Jobs running for more than 5 minutes should be split into sub-jobs to limit invocation time over HTTP anyway. Cloudtasker [batch jobs](BATCH_JOBS.md) can help split big jobs into sub-jobs in an atomic way.
 
 The default lock key expiration of `job schedule time + 10 minutes` may look aggressive but it is a better choice than having real-time jobs stuck for X hours after a crash recovery.
 
