@@ -9,9 +9,6 @@ module Cloudtasker
     class Schedule
       attr_accessor :id, :cron, :worker, :task_id, :job_id, :queue, :args
 
-      # Key Namespace used for object saved under this class
-      SUB_NAMESPACE = 'schedule'
-
       #
       # Return the redis client.
       #

@@ -56,11 +56,6 @@ module Cloudtasker
       with_worker_handling(input_payload, &:execute)
     end
 
-    # TODO: do not delete redis payload if job has been re-enqueued
-    # worker.job_reenqueued
-    #
-    # Idea: change with_worker_handling to with_worker_handling and build the worker
-    # inside the with_worker_handling block.
     #
     # Local middleware used to retrieve the job arg payload from cache
     # if a arg payload reference is present.

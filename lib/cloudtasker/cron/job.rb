@@ -4,14 +4,9 @@ require 'fugit'
 
 module Cloudtasker
   module Cron
-    # TODO: handle deletion of cron jobs
-    #
     # Manage cron jobs
     class Job
       attr_reader :worker
-
-      # Key Namespace used for object saved under this class
-      SUB_NAMESPACE = 'job'
 
       #
       # Build a new instance of the class
