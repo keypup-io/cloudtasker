@@ -199,17 +199,35 @@ module Cloudtasker
     end
 
     #
+    # Return a unix timestamp specifying when to run the task.
+    #
+    # @param [Integer, nil] interval The time to wait.
+    # @param [Integer, nil] time_at The time at which the job should run.
+    #
+    # @return [Integer, nil] The Unix timestamp.
+    #
+    def schedule_time(interval: nil, time_at: nil)
+      return nil unless interval || time_at
+
+      # Generate the complete Unix timestamp
+      (time_at || Time.now).to_i + interval.to_i
+    end
+
+    #
     # Enqueue a worker, with or without delay.
     #
     # @param [Integer] interval The delay in seconds.
-    #
     # @param [Time, Integer] interval The time at which the job should run
     #
     # @return [Cloudtasker::CloudTask] The Google Task response
     #
-    def schedule(interval: nil, time_at: nil)
-      Cloudtasker.config.client_middleware.invoke(self) do
-        WorkerHandler.new(self).schedule(interval: interval, time_at: time_at)
+    def schedule(**args)
+      # Evaluate when to schedule the job
+      time_at = schedule_time(args)
+
+      # Schedule job through client middlewares
+      Cloudtasker.config.client_middleware.invoke(self, time_at: time_at) do
+        WorkerHandler.new(self).schedule(time_at: time_at)
       end
     end
 

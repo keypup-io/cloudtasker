@@ -211,34 +211,16 @@ module Cloudtasker
     end
 
     #
-    # Return a protobuf timestamp specifying how to wait
-    # before running a task.
-    #
-    # @param [Integer, nil] interval The time to wait.
-    # @param [Integer, nil] time_at The time at which the job should run.
-    #
-    # @return [Integer, nil] The Unix timestamp.
-    #
-    def schedule_time(interval: nil, time_at: nil)
-      return nil unless interval || time_at
-
-      # Generate the complete Unix timestamp
-      (time_at || Time.now).to_i + interval.to_i
-    end
-
-    #
     # Schedule the task on GCP Cloud Task.
     #
-    # @param [Integer, nil] interval How to wait before running the task.
+    # @param [Integer, nil] time_at A unix timestamp specifying when to run the job.
     #   Leave to `nil` to run now.
     #
     # @return [Cloudtasker::CloudTask] The Google Task response
     #
-    def schedule(interval: nil, time_at: nil)
+    def schedule(time_at: nil)
       # Generate task payload
-      task = task_payload.merge(
-        schedule_time: schedule_time(interval: interval, time_at: time_at)
-      ).compact
+      task = task_payload.merge(schedule_time: time_at).compact
 
       # Create and return remote task
       CloudTask.create(task)

@@ -269,6 +269,40 @@ RSpec.describe Cloudtasker::Worker do
     it { is_expected.to have_attributes(worker: worker) }
   end
 
+  describe '#schedule_time' do
+    subject { worker.schedule_time(interval: interval, time_at: time_at) }
+
+    let(:worker) { worker_class.new }
+    let(:interval) { nil }
+    let(:time_at) { nil }
+
+    context 'with no args' do
+      it { is_expected.to be_nil }
+    end
+
+    context 'with interval' do
+      let(:interval) { 10 }
+      let(:expected_time) { Time.now.to_i + interval }
+
+      around { |e| Timecop.freeze { e.run } }
+      it { is_expected.to eq(expected_time) }
+    end
+
+    context 'with time_at' do
+      let(:time_at) { Time.now }
+
+      it { is_expected.to eq(time_at.to_i) }
+    end
+
+    context 'with time_at and interval' do
+      let(:time_at) { Time.now }
+      let(:interval) { 50 }
+      let(:expected_time) { time_at.to_i + interval }
+
+      it { is_expected.to eq(expected_time) }
+    end
+  end
+
   describe '#schedule' do
     subject { worker.schedule(interval: delay, time_at: time_at) }
 
@@ -279,10 +313,12 @@ RSpec.describe Cloudtasker::Worker do
     let(:task) { instance_double('Cloudtasker::WorkerHandler') }
     let(:resp) { instance_double('Cloudtasker::CloudTask') }
     let(:worker) { worker_class.new(job_args: [1, 2]) }
+    let(:cal_time_at) { Time.now + 3600 }
 
     before do
+      allow(worker).to receive(:schedule_time).with(interval: delay, time_at: time_at).and_return(cal_time_at)
       allow(Cloudtasker::WorkerHandler).to receive(:new).with(worker).and_return(task)
-      allow(task).to receive(:schedule).with(interval: delay, time_at: time_at).and_return(resp)
+      allow(task).to receive(:schedule).with(time_at: cal_time_at).and_return(resp)
     end
 
     it { is_expected.to eq(resp) }
@@ -290,6 +326,7 @@ RSpec.describe Cloudtasker::Worker do
     context 'with client middleware chain' do
       before { Cloudtasker.config.client_middleware.add(TestMiddleware) }
       after { expect(worker.middleware_called).to be_truthy }
+      after { expect(worker.middleware_opts).to eq(time_at: cal_time_at) }
       it { is_expected.to eq(resp) }
     end
   end

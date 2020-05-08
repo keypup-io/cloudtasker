@@ -242,39 +242,6 @@ RSpec.describe Cloudtasker::WorkerHandler do
     it { is_expected.to eq(expected_payload) }
   end
 
-  describe '#schedule_time' do
-    subject { task.schedule_time(interval: interval, time_at: time_at) }
-
-    let(:interval) { nil }
-    let(:time_at) { nil }
-
-    context 'with no args' do
-      it { is_expected.to be_nil }
-    end
-
-    context 'with interval' do
-      let(:interval) { 10 }
-      let(:expected_time) { Time.now.to_i + interval }
-
-      around { |e| Timecop.freeze { e.run } }
-      it { is_expected.to eq(expected_time) }
-    end
-
-    context 'with time_at' do
-      let(:time_at) { Time.now }
-
-      it { is_expected.to eq(time_at.to_i) }
-    end
-
-    context 'with time_at and interval' do
-      let(:time_at) { Time.now }
-      let(:interval) { 50 }
-      let(:expected_time) { time_at.to_i + interval }
-
-      it { is_expected.to eq(expected_time) }
-    end
-  end
-
   describe '#schedule' do
     subject { task.schedule(**attrs) }
 
@@ -290,8 +257,8 @@ RSpec.describe Cloudtasker::WorkerHandler do
     end
 
     context 'with scheduled time' do
-      let(:attrs) { { interval: 10, time_at: Time.now } }
-      let(:expected_payload) { task.task_payload.merge(schedule_time: task.schedule_time(attrs)) }
+      let(:attrs) { { time_at: Time.now } }
+      let(:expected_payload) { task.task_payload.merge(schedule_time: attrs[:time_at]) }
 
       it { is_expected.to eq(resp) }
     end

@@ -3,7 +3,7 @@
 class TestWorker
   include Cloudtasker::Worker
 
-  attr_accessor :middleware_called, :has_run
+  attr_accessor :middleware_called, :middleware_opts, :has_run
 
   class << self
     attr_accessor :has_run

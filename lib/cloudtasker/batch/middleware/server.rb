@@ -5,7 +5,7 @@ module Cloudtasker
     module Middleware
       # Server middleware, invoked when jobs are executed
       class Server
-        def call(worker)
+        def call(worker, **_kwargs)
           Job.for(worker).execute { yield }
         end
       end

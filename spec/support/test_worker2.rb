@@ -3,7 +3,7 @@
 class TestWorker2
   include Cloudtasker::Worker
 
-  attr_accessor :middleware_called
+  attr_accessor :middleware_called, :middleware_opts
 
   cloudtasker_options foo: 'bar'
 

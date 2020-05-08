@@ -7,9 +7,10 @@ class TestMiddleware
     @arg = arg
   end
 
-  def call(worker)
+  def call(worker, **kwargs)
     @called = true
     worker.middleware_called = true if worker.respond_to?(:middleware_called)
+    worker.middleware_opts = kwargs if worker.respond_to?(:middleware_opts)
     yield
   end
 end

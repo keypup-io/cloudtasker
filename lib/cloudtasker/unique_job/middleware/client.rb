@@ -5,7 +5,7 @@ module Cloudtasker
     module Middleware
       # Client middleware, invoked when jobs are scheduled
       class Client
-        def call(worker)
+        def call(worker, **_kwargs)
           Job.new(worker).lock_instance.schedule { yield }
         end
       end
