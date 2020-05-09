@@ -601,6 +601,82 @@ class SomeErrorWorker
 end
 ```
 
+## Testing
+Cloudtasker provides several options to test your workers.
+
+### Setup
+Require `cloudtasker/testing` in your `rails_helper.rb` (Rspec Rails) or `spec_helper.rb` (Rspec) or test unit helper file then enable one of the three modes:
+
+```ruby
+require 'cloudtasker/testing'
+
+# Mode 1 (default): Push jobs to Google Cloud Tasks (env != development) or Redis (env == development)
+Cloudtasker::Testing.enable!
+
+# Mode 2: Push jobs to an in-memory queue. Jobs will not be processed until you call 
+# Cloudtasker::Worker.drain_all (process all jobs) or MyWorker.drain (process jobs for specific worker)
+Cloudtasker::Testing.fake!
+
+# Mode 3: Push jobs to an in-memory queue. Jobs will be processed immediately.
+Cloudtasker::Testing.inline!
+```
+
+You can query the current testing mode with:
+```ruby
+Cloudtasker::Testing.enabled?
+Cloudtasker::Testing.fake?
+Cloudtasker::Testing.inline?
+```
+
+Each testing mode accepts a block argument to temporarily switch to it:
+```ruby
+# Enable fake mode for all tests
+Cloudtasker::Testing.fake!
+
+# Enable inline! mode temporarily for a given test
+Cloudtasker.inline! do
+   MyWorker.perform_async(1,2)
+end
+```
+
+### In-memory queues
+The `fake!` or `inline!` modes use in-memory queues, which can be queried and controlled using the following methods:
+
+```ruby
+# Perform all jobs in queue
+Cloudtasker::Worker.drain_all
+
+# Remove all jobs in queue
+Cloudtasker::Worker.clear_all
+
+# Perform all jobs in queue for a specific worker type
+MyWorker.drain
+
+# Return the list of jobs in queue for a specific worker type
+MyWorker.jobs
+```
+
+### Unit tests
+Below are examples of rspec tests. It is assumed that `Cloudtasker::Testing.fake!` has been set in the test helper.
+
+**Example 1**: Testing that a job is scheduled
+```ruby
+describe 'worker scheduling'
+  subject(:enqueue_job) { MyWorker.perform_async(1,2) } 
+  
+  it { expect { enqueue_job }.to change(MyWorker.jobs, :size).by(1) } 
+end
+```
+
+**Example 2**: Testing job execution logic
+```ruby
+describe 'worker calls api'
+  subject { Cloudtasker::Testing.inline! { MyApiWorker.perform_async(1,2) } }
+  
+  before { expect(MyApi).to receive(:fetch).and_return([]) }
+  it { is_expected.to be_truthy }
+end
+```
 
 ## Best practices building workers
 
