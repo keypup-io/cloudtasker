@@ -6,11 +6,11 @@ Background jobs for Ruby using Google Cloud Tasks.
 
 Cloudtasker provides an easy to manage interface to Google Cloud Tasks for background job processing. Workers can be defined programmatically using the Cloudtasker DSL and enqueued for processing using a simple to use API.
 
-Cloudtasker is particularly suited for serverless applications only responding to HTTP requests and where running a dedicated job processing is not an option (e.g. deploy via [Cloud Run](https://cloud.google.com/run)). All jobs enqueued in Cloud Tasks via Cloudtasker eventually get processed by your application via HTTP requests.
+Cloudtasker is particularly suited for serverless applications only responding to HTTP requests and where running a dedicated job processing server is not an option (e.g. deploy via [Cloud Run](https://cloud.google.com/run)). All jobs enqueued in Cloud Tasks via Cloudtasker eventually get processed by your application via HTTP requests.
 
 Cloudtasker also provides optional modules for running [cron jobs](docs/CRON_JOBS.md), [batch jobs](docs/BATCH_JOBS.md) and [unique jobs](docs/UNIQUE_JOBS.md).
 
-A local processing server is also available in development. This local server processes jobs in lieu of Cloud Tasks and allows you to work offline.
+A local processing server is also available for development. This local server processes jobs in lieu of Cloud Tasks and allows you to work offline.
 
 ## Summary
 
@@ -52,7 +52,7 @@ And then execute:
 
     $ bundle
 
-Or install it yourself as:
+Or install it yourself with:
 
     $ gem install cloudtasker
 
@@ -222,7 +222,7 @@ Cloudtasker.configure do |config|
 
   # 
   # Specify how many retries are allowed on jobs. This number of retries excludes any
-  # connectivity error that would be due to the application being down or unreachable.
+  # connectivity error due to the application being down or unreachable.
   # 
   # Default: 25
   # 
@@ -293,7 +293,7 @@ MyWorker.schedule(args: [arg1, arg2], time_at: Time.parse('2025-01-01 00:50:00Z'
 MyWorker.schedule(args: [arg1, arg2], time_in: 5 * 60, queue: 'critical')
 ```
 
-Cloudtasker also provides a helper for re-enqueuing jobs. Re-enqueued jobs keep the same worker id. Some middlewares may rely on this to track the fact that that a job didn't actually complete (e.g. Cloustasker batch). This is optional and you can always fallback to using exception management (raise an error) to retry/re-enqueue jobs.
+Cloudtasker also provides a helper for re-enqueuing jobs. Re-enqueued jobs keep the same job id. Some middlewares may rely on this to track the fact that that a job didn't actually complete (e.g. Cloustasker batch). This is optional and you can always fallback to using exception management (raise an error) to retry/re-enqueue jobs.
 
 E.g.
 ```ruby
@@ -478,7 +478,7 @@ The way contextual information is displayed depends on the logger itself. For ex
 
 Contextual information can be customised globally and locally using a log context_processor. By default the `Cloudtasker::WorkerLogger` is configured the following way:
 ```ruby
-Cloudtasker::WorkerLogger.log_context_processor = ->(worker) { worker.to_h.slice(:worker, :job_id, :job_meta) }
+Cloudtasker::WorkerLogger.log_context_processor = ->(worker) { worker.to_h.slice(:worker, :job_id, :job_meta, :job_queue, :task_id) }
 ```
 
 You can decide to add a global identifier for your worker logs using the following:
@@ -486,7 +486,7 @@ You can decide to add a global identifier for your worker logs using the followi
 # config/initializers/cloudtasker.rb
 
 Cloudtasker::WorkerLogger.log_context_processor = lambda { |worker|
-  worker.to_h.slice(:worker, :job_id, :job_meta).merge(app: 'my-app')
+  worker.to_h.slice(:worker, :job_id, :job_meta, :job_queue, :task_id).merge(app: 'my-app')
 }
 ```
 
@@ -524,7 +524,7 @@ The Google Cloud Task UI (GCP console) lists all the tasks pending/retrying and 
 
 ## Error Handling
 
-Jobs failing will automatically return an HTTP error to Cloud Task and trigger a retry at a later time. The number of Cloud Task retries Cloud Task will depend on the configuration of your queue in Cloud Tasks.
+Jobs failures will return an HTTP error to Cloud Task and trigger a retry at a later time. The number of Cloud Task retries depends on the configuration of your queue in Cloud Tasks.
 
 ### HTTP Error codes
 
@@ -532,6 +532,7 @@ Jobs failing will automatically return the following HTTP error code to Cloud Ta
 
 | Code | Description |
 |------|-------------|
+| 204 | The job was processed successfully |
 | 205 | The job is dead and has been removed from the queue |
 | 404 | The job has specified an incorrect worker class.  |
 | 422 | An error happened during the execution of the worker (`perform` method) |
@@ -570,7 +571,7 @@ By default jobs are retried 25 times - using an exponential backoff - before bei
 
 Note that the number of retries set on your Cloud Task queue should be many times higher than the number of retries configured in Cloudtasker because Cloud Task also includes failures to connect to your application. Ideally set the number of retries to `unlimited` in Cloud Tasks.
 
-**Note**: The `X-CloudTasks-TaskExecutionCount` header sent by Google Cloud Tasks and providing the number of retries outside of `HTTP 503` (instance not reachable) is currently bugged and remains at `0` all the time. Starting with `0.10.rc3` Cloudtasker uses the `X-CloudTasks-TaskRetryCount` header to detect the number of retries. This header includes `HTTP 503` errors which means that if your application is down at some point, jobs will fail and these failures will be counted toward the maximum number of retries. A [bug report](https://issuetracker.google.com/issues/154532072) has been raised with GCP to address this issue. Once fixed we will revert to using `X-CloudTasks-TaskExecutionCount` to avoid counting `HTTP 503` as job failures.
+**Note**: The `X-CloudTasks-TaskExecutionCount` header sent by Google Cloud Tasks and providing the number of retries outside of `HTTP 503` (instance not reachable) is currently bugged and remains at `0` all the time. Starting with `v0.10.rc3` Cloudtasker uses the `X-CloudTasks-TaskRetryCount` header to detect the number of retries. This header includes `HTTP 503` errors which means that if your application is down at some point, jobs will fail and these failures will be counted toward the maximum number of retries. A [bug report](https://issuetracker.google.com/issues/154532072) has been raised with GCP to address this issue. Once fixed we will revert to using `X-CloudTasks-TaskExecutionCount` to avoid counting `HTTP 503` as job failures.
 
 E.g. Set max number of retries globally via the cloudtasker initializer.
 ```ruby
