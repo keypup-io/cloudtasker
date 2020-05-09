@@ -643,6 +643,21 @@ Cloudtasker.inline! do
 end
 ```
 
+Note that extension middlewares - e.g. unique job, batch job etc. - run in test mode. You can disable middlewares in your tests by adding the following to your test helper:
+```ruby
+# Remove all middlewares
+Cloudtasker.configure do |c|
+  c.client_middleware.clear
+  c.server_middleware.clear
+end
+
+# Remove all unique job middlewares
+Cloudtasker.configure do |c|
+  c.client_middleware.remove(Cloudtasker::UniqueJob::Middleware::Client)
+  c.server_middleware.remove(Cloudtasker::UniqueJob::Middleware::Server)
+end
+```
+
 ### In-memory queues
 The `fake!` or `inline!` modes use in-memory queues, which can be queried and controlled using the following methods:
 
