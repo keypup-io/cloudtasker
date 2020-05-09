@@ -34,7 +34,11 @@ A local processing server is also available in development. This local server pr
     1. [HTTP Error codes](#http-error-codes)
     2. [Error callbacks](#error-callbacks)
     3. [Max retries](#max-retries)
-10. [Best practices building workers](#best-practices-building-workers)
+10. [Testing](#testing)
+    1. [Test helper setup](#test-helper-setup)
+    2. [In-memory queues](#in-memory-queues)
+    3. [Unit tests](#unit-tests)
+11. [Best practices building workers](#best-practices-building-workers)
 
 ## Installation
 
@@ -604,7 +608,7 @@ end
 ## Testing
 Cloudtasker provides several options to test your workers.
 
-### Setup
+### Test helper setup
 Require `cloudtasker/testing` in your `rails_helper.rb` (Rspec Rails) or `spec_helper.rb` (Rspec) or test unit helper file then enable one of the three modes:
 
 ```ruby
