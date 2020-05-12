@@ -9,6 +9,15 @@ module Cloudtasker
       attr_reader :id, :http_request, :schedule_time, :queue
 
       #
+      # Return true if we are in test inline execution mode.
+      #
+      # @return [Boolean] True if inline mode enabled.
+      #
+      def self.inline_mode?
+        defined?(Cloudtasker::Testing) && Cloudtasker::Testing.inline?
+      end
+
+      #
       # Return the task queue. A worker class name
       #
       # @return [Array<Hash>] <description>
@@ -57,7 +66,7 @@ module Cloudtasker
         queue << task
 
         # Execute task immediately if in testing and inline mode enabled
-        task.execute if defined?(Cloudtasker::Testing) && Cloudtasker::Testing.inline?
+        task.execute if inline_mode?
 
         task
       end
@@ -157,8 +166,9 @@ module Cloudtasker
         # Delete task
         self.class.delete(id)
         resp
-      rescue StandardError
+      rescue StandardError => e
         self.job_retries += 1
+        raise(e) if self.class.inline_mode?
       end
 
       #

@@ -47,6 +47,24 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
 
   before { described_class.clear }
 
+  describe '.inline_mode?' do
+    subject { described_class }
+
+    before { allow(Cloudtasker::Testing).to receive(:inline?).and_return(enabled) }
+
+    context 'with testing inline! mode enabled' do
+      let(:enabled) { true }
+
+      it { is_expected.to be_inline_mode }
+    end
+
+    context 'with testing inline! mode disabled' do
+      let(:enabled) { false }
+
+      it { is_expected.not_to be_inline_mode }
+    end
+  end
+
   describe '.queue' do
     subject { described_class.queue }
 
@@ -86,12 +104,29 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
   describe '.create' do
     subject { described_class.queue.first }
 
-    let(:expected_attrs) do
-      job_payload.merge(schedule_time: Time.at(job_payload[:schedule_time]))
+    let(:create_task) { described_class.create(job_payload.merge(id: task_id)) }
+
+    context 'without inline_mode' do
+      let(:expected_attrs) do
+        job_payload.merge(id: task_id, schedule_time: Time.at(job_payload[:schedule_time]))
+      end
+
+      before { create_task }
+      it { is_expected.to have_attributes(expected_attrs) }
     end
 
-    before { described_class.create(job_payload.merge(id: task_id)) }
-    it { is_expected.to have_attributes(expected_attrs) }
+    context 'with inline_mode' do
+      let(:task) { instance_double(described_class, id: task_id) }
+      let(:expected_attrs) { job_payload.merge(id: task_id) }
+
+      before do
+        allow(described_class).to receive(:inline_mode?).and_return(true)
+        allow(described_class).to receive(:new).with(expected_attrs).and_return(task)
+        expect(task).to receive(:execute)
+        create_task
+      end
+      it { is_expected.to eq(task) }
+    end
   end
 
   describe '.find' do
@@ -179,7 +214,16 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
       it { is_expected.to eq(resp) }
     end
 
-    context 'with error' do
+    context 'with error and inline_mode' do
+      before { allow(described_class).to receive(:inline_mode?).and_return(true) }
+      before { allow(worker).to receive(:execute).and_raise(StandardError) }
+      after { expect(described_class).not_to have_received(:delete) }
+      after { expect(task).to have_attributes(job_retries: 1) }
+      it { expect { execute }.to raise_error(StandardError) }
+    end
+
+    context 'with error and no inline_mode' do
+      before { allow(described_class).to receive(:inline_mode?).and_return(false) }
       before { allow(worker).to receive(:execute).and_raise(StandardError) }
       after { expect(described_class).not_to have_received(:delete) }
       after { expect(task).to have_attributes(job_retries: 1) }
