@@ -41,3 +41,6 @@ Style/Documentation:
 
 Metrics/ParameterLists:
   CountKeywordArgs: false
+
+RSpec/MessageSpies:
+  Enabled: false
