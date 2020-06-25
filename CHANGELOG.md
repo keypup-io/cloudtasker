@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.9.3](https://github.com/keypup-io/cloudtasker/tree/v0.9.3) (2020-06-25)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.9.2...v0.9.3)
+
+**Fixed bugs:**
+- Google Cloud Tasks: lock version to `~> 1.0` (Google recently released a v2 which changes its bindings completely). An [issue](https://github.com/keypup-io/cloudtasker/issues/11) has been raised to upgrade Cloudtasker to `google-cloud-tasks` `v2`.
+
 ## [v0.9.2](https://github.com/keypup-io/cloudtasker/tree/v0.9.2) (2020-03-04)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.9.1...v0.9.2)

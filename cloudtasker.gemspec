@@ -32,7 +32,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'activesupport'
   spec.add_dependency 'fugit'
-  spec.add_dependency 'google-cloud-tasks'
+  spec.add_dependency 'google-cloud-tasks', '~> 1.0'
   spec.add_dependency 'jwt'
   spec.add_dependency 'redis'
 
