@@ -1,5 +1,23 @@
 # Changelog
 
+## [v0.10.0](https://github.com/keypup-io/cloudtasker/tree/v0.10.0) (2020-09-02)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.9.3...v0.10.0)
+
+**Improvements:**
+- Logging: Add worker name in log messages
+- Logging: Add job duration in log messages
+- Logging: Add Cloud Cloud Task ID in log messages
+- Unique Job: Support TTL for lock keys. This feature prevents queues from being dead-locked when a critical crash occurs while processing a unique job.
+- Worker: support payload storage in Redis instead of sending the payload to Google Cloud Tasks. This is useful when job arguments are expected to exceed 100kb, which is the limit set by Google Cloud Tasks
+
+**Fixed bugs:**
+- Local processing error: improve error handling and retries around network interruptions
+- Redis client: prevent deadlocks in high concurrency scenario by slowing down poll time and enforcing lock expiration
+- Redis client: use connecion pool with Redis to prevent race conditions
+- Google API: improve error handling on job creation
+- Google API: use the `X-CloudTasks-TaskRetryCount` instead of `X-CloudTasks-TaskExecutionCount` to detect how many retries Google Cloud Tasks has performed. Using `X-CloudTasks-TaskRetryCount` is theoretically less accurate than using `X-CloudTasks-TaskExecutionCount` because it includes the number of "app unreachable" retries but `X-CloudTasks-TaskExecutionCount` is currently bugged and remains at zero all the time. See [this issue](https://github.com/keypup-io/cloudtasker/issues/6)
+
 ## [v0.9.3](https://github.com/keypup-io/cloudtasker/tree/v0.9.3) (2020-06-25)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.9.2...v0.9.3)

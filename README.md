@@ -250,7 +250,7 @@ Cloudtasker.configure do |config|
   # You can set this configuration parameter to a KB value if you want to store jobs
   # args in redis only if the JSONified arguments payload exceeds that threshold.
   #
-  # Supported since: v0.10.rc1
+  # Supported since: v0.10.0
   #
   # Default: false
   #
@@ -508,7 +508,7 @@ end
 See the [Cloudtasker::Worker class](lib/cloudtasker/worker.rb) for more information on attributes available to be logged in your `log_context_processor` proc.
 
 ### Searching logs: Job ID vs Task ID
-**Note**: `task_id` field is available in logs starting with `0.10.rc6`
+**Note**: `task_id` field is available in logs starting with `0.10.0`
 
 Job instances are assigned two different different IDs for tracking and logging purpose: `job_id` and `task_id`. These IDs are found in each log entry to facilitate search.
 
@@ -571,7 +571,7 @@ By default jobs are retried 25 times - using an exponential backoff - before bei
 
 Note that the number of retries set on your Cloud Task queue should be many times higher than the number of retries configured in Cloudtasker because Cloud Task also includes failures to connect to your application. Ideally set the number of retries to `unlimited` in Cloud Tasks.
 
-**Note**: The `X-CloudTasks-TaskExecutionCount` header sent by Google Cloud Tasks and providing the number of retries outside of `HTTP 503` (instance not reachable) is currently bugged and remains at `0` all the time. Starting with `v0.10.rc3` Cloudtasker uses the `X-CloudTasks-TaskRetryCount` header to detect the number of retries. This header includes `HTTP 503` errors which means that if your application is down at some point, jobs will fail and these failures will be counted toward the maximum number of retries. A [bug report](https://issuetracker.google.com/issues/154532072) has been raised with GCP to address this issue. Once fixed we will revert to using `X-CloudTasks-TaskExecutionCount` to avoid counting `HTTP 503` as job failures.
+**Note**: The `X-CloudTasks-TaskExecutionCount` header sent by Google Cloud Tasks and providing the number of retries outside of `HTTP 503` (instance not reachable) is currently bugged and remains at `0` all the time. Starting with `v0.10.0` Cloudtasker uses the `X-CloudTasks-TaskRetryCount` header to detect the number of retries. This header includes `HTTP 503` errors which means that if your application is down at some point, jobs will fail and these failures will be counted toward the maximum number of retries. A [bug report](https://issuetracker.google.com/issues/154532072) has been raised with GCP to address this issue. Once fixed we will revert to using `X-CloudTasks-TaskExecutionCount` to avoid counting `HTTP 503` as job failures.
 
 E.g. Set max number of retries globally via the cloudtasker initializer.
 ```ruby
@@ -772,7 +772,7 @@ Google Cloud Tasks enforces a limit of 100 KB for job payloads. Taking into acco
 Any excessive job payload (> 100 KB) will raise a `Cloudtasker::MaxTaskSizeExceededError`, both in production and development mode.
 
 #### Option 1: Use Cloudtasker optional support for payload storage in Redis
-**Supported since**: `0.10.rc1`
+**Supported since**: `0.10.0`
 
 Cloudtasker provides optional support for storing argument payloads in Redis instead of sending them to Google Cloud Tasks.
 

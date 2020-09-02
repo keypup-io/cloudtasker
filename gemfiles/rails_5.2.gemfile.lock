@@ -1,11 +1,11 @@
 PATH
   remote: ..
   specs:
-    cloudtasker (0.10.rc7)
+    cloudtasker (0.10.0)
       activesupport
       connection_pool
       fugit
-      google-cloud-tasks
+      google-cloud-tasks (~> 1.0)
       jwt
       redis
       retriable
@@ -64,7 +64,7 @@ GEM
     ast (2.4.0)
     builder (3.2.4)
     concurrent-ruby (1.1.6)
-    connection_pool (2.2.2)
+    connection_pool (2.2.3)
     crack (0.4.3)
       safe_yaml (~> 1.0.0)
     crass (1.0.6)
@@ -76,9 +76,9 @@ GEM
       multipart-post (>= 1.2, < 3)
     faraday-http-cache (2.2.0)
       faraday (>= 0.8)
-    fugit (1.3.5)
+    fugit (1.3.6)
       et-orbi (~> 1.1, >= 1.1.8)
-      raabro (~> 1.1)
+      raabro (~> 1.3)
     github_changelog_generator (1.15.2)
       activesupport
       faraday-http-cache
@@ -100,14 +100,14 @@ GEM
       googleauth (~> 0.9)
       grpc (~> 1.24)
       rly (~> 0.2.3)
-    google-protobuf (3.11.4-universal-darwin)
+    google-protobuf (3.12.2-universal-darwin)
     googleapis-common-protos (1.3.10)
       google-protobuf (~> 3.11)
       googleapis-common-protos-types (>= 1.0.5, < 2.0)
       grpc (~> 1.27)
     googleapis-common-protos-types (1.0.5)
       google-protobuf (~> 3.11)
-    googleauth (0.12.0)
+    googleauth (0.13.0)
       faraday (>= 0.17.3, < 2.0)
       jwt (>= 1.4, < 3.0)
       memoist (~> 0.16)
@@ -152,7 +152,7 @@ GEM
     parser (2.7.1.1)
       ast (~> 2.4.0)
     public_suffix (4.0.4)
-    raabro (1.1.6)
+    raabro (1.3.1)
     rack (2.2.2)
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
@@ -182,7 +182,7 @@ GEM
       thor (>= 0.18.1, < 2.0)
     rainbow (3.0.0)
     rake (13.0.1)
-    redis (4.1.4)
+    redis (4.2.1)
     retriable (3.1.2)
     rly (0.2.3)
     rspec (3.9.0)
