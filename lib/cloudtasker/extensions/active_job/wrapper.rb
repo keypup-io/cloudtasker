@@ -7,7 +7,7 @@ module ActiveJob
       class JobWrapper #:nodoc:
         include Cloudtasker::Worker
 
-        def perform(job_serialization, *opts)
+        def perform(job_serialization, *_extra_options)
           Base.execute job_serialization
         end
       end
