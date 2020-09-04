@@ -11,6 +11,14 @@ module Cloudtasker
       end
     end
 
+    config.before_configuration do
+      require 'cloudtasker/extensions/active_job/adapter'
+    end
+
+    config.after_initialize do
+      require 'cloudtasker/extensions/active_job/wrapper'
+    end
+
     config.generators do |g|
       g.test_framework :rspec, fixture: false
       g.assets false
