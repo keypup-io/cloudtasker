@@ -23,7 +23,7 @@ module ActiveJob
 
       def build_worker(job)
         job_serialization = job.serialize
-        
+
         JobWrapper.new job_queue: job_serialization['queue_name'],
                        job_args: [job_serialization],
                        job_id: job_serialization['job_id']
