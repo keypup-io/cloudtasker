@@ -4,6 +4,7 @@ require_relative 'boot'
 
 require 'rails'
 require 'action_controller/railtie'
+require 'active_job/railtie'
 
 Bundler.require(*Rails.groups)
 require 'cloudtasker'
