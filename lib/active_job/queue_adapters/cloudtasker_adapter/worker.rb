@@ -6,7 +6,7 @@
 module ActiveJob
   module QueueAdapters
     class CloudtaskerAdapter #:nodoc:
-      class JobWrapper #:nodoc:
+      class Worker #:nodoc:
         include Cloudtasker::Worker
 
         def perform(job_serialization, *_extra_options)
