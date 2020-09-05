@@ -12,11 +12,11 @@ module Cloudtasker
     end
 
     config.before_configuration do
-      require 'cloudtasker/extensions/active_job/adapter'
+      require 'active_job/queue_adapters/cloudtasker_adapter'
     end
 
     config.after_initialize do
-      require 'cloudtasker/extensions/active_job/wrapper'
+      require 'active_job/queue_adapters/cloudtasker_adapter/worker'
     end
 
     config.generators do |g|
