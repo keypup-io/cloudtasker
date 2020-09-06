@@ -6,11 +6,9 @@ require_relative '../../../shared/active_job/instantiation_context'
 RSpec.describe ActiveJob::QueueAdapters::CloudtaskerAdapter::Worker do
   include_context 'of Cloudtasker ActiveJob instantiation'
 
-  # ============================================================================
-
-  let(:example_unreconstructed_job_serialization) { example_job.serialize }
-
   subject(:worker) { described_class.new example_worker_args }
+
+  let(:example_unreconstructed_job_serialization) { example_job.serialize }  
 
   describe '#perform' do
     it "calls 'ActiveJob::Base.execute' with the job serialization" do
