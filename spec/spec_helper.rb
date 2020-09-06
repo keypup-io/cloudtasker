@@ -9,6 +9,7 @@ require 'semantic_logger'
 ENV['RAILS_ENV'] ||= 'test'
 require File.expand_path('dummy/config/environment.rb', __dir__)
 require 'rspec/rails'
+require 'rspec/json_expectations'
 
 # Require main library (after Rails has done so)
 require 'cloudtasker'
