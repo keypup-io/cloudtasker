@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable RSpec/ContextWording
 RSpec.shared_context 'of Cloudtasker ActiveJob instantiation' do
   let :example_job_class do
     Class.new(ActiveJob::Base) do
@@ -22,3 +23,4 @@ RSpec.shared_context 'of Cloudtasker ActiveJob instantiation' do
     }
   end
 end
+# rubocop:enable RSpec/ContextWording
