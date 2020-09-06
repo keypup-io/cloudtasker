@@ -19,5 +19,8 @@ module Dummy
     # -- all .rb files in that directory are automatically loaded after loading
     # the framework and any gems in your application.
     config.eager_load = false
+
+    # Use cloudtasker as the ActiveJob backend:
+    config.active_job.queue_adapter = :cloudtasker
   end
 end
