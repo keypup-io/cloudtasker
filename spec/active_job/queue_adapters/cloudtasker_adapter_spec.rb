@@ -13,6 +13,8 @@ RSpec.describe ActiveJob::QueueAdapters::CloudtaskerAdapter do
     ).tap { |double| allow(double).to receive(:schedule) }
   end
 
+  subject(:adapter) { described_class.new }
+
   before do
     allow(described_class::Worker).to receive(:new)
       .and_return example_worker_double
@@ -22,7 +24,7 @@ RSpec.describe ActiveJob::QueueAdapters::CloudtaskerAdapter do
     it 'instantiates a new CloudtaskerAdapter Worker for the given job' do
       expect(described_class::Worker).to receive(:new).with example_worker_args
 
-      subject.enqueue(example_job)
+      adapter.enqueue(example_job)
     end
   end
 
@@ -32,20 +34,21 @@ RSpec.describe ActiveJob::QueueAdapters::CloudtaskerAdapter do
     it 'enqueues the new CloudtaskerAdapter Worker to execute' do
       expect(example_worker_double).to receive :schedule
 
-      subject.enqueue(example_job)
+      adapter.enqueue(example_job)
     end
   end
 
   describe '#enqueue_at' do
-    include_examples 'of instantiating a Cloudtasker Worker from ActiveJob'
     let(:example_execution_timestamp) { 1.week.from_now.to_f }
     let(:expected_execution_time) { Time.at example_execution_timestamp }
+
+    include_examples 'of instantiating a Cloudtasker Worker from ActiveJob'
 
     it 'enqueues the new CloudtaskerAdapter Worker to execute at the given time' do
       expect(example_worker_double).to receive(:schedule)
         .with time_at: expected_execution_time
 
-      subject.enqueue_at(example_job, example_execution_timestamp)
+      adapter.enqueue_at(example_job, example_execution_timestamp)
     end
   end
 end

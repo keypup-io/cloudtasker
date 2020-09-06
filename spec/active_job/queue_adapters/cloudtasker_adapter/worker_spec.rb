@@ -10,14 +10,14 @@ RSpec.describe ActiveJob::QueueAdapters::CloudtaskerAdapter::Worker do
 
   let(:example_unreconstructed_job_serialization) { example_job.serialize }
 
-  subject { described_class.new example_worker_args }
+  subject(:worker) { described_class.new example_worker_args }
 
   describe '#perform' do
     it "calls 'ActiveJob::Base.execute' with the job serialization" do
       expect(ActiveJob::Base).to receive(:execute)
         .with example_job_serialization
 
-      subject.perform(example_unreconstructed_job_serialization)
+      worker.perform(example_unreconstructed_job_serialization)
     end
   end
 end
