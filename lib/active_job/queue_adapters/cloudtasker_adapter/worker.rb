@@ -10,6 +10,14 @@ module ActiveJob
         include Cloudtasker::Worker
 
         def perform(job_serialization, *_extra_options)
+          job_executions = job_retries < 1 ? 0 : (job_retries + 1)
+
+          job_serialization.merge! 'job_id' => job_id,
+                                   'queue_name' => job_queue,
+                                   'provider_job_id' => task_id,
+                                   'executions' => job_executions,
+                                   'priority' => nil # What is job priority?
+
           Base.execute job_serialization
         end
       end

@@ -11,6 +11,12 @@ module ActiveJob
     #
     #   Rails.application.config.active_job.queue_adapter = :cloudtasker
     class CloudtaskerAdapter
+      SERIALIZATION_FILTERED_OUT_KEYS = [
+        'executions', # Given by the worker at processing
+        'provider_job_id', # Also given by the worker at processing
+        'priority' # What is priority?
+      ]
+
       def enqueue(job)
         build_worker(job).schedule
       end
@@ -22,11 +28,13 @@ module ActiveJob
       private
 
       def build_worker(job)
-        job_serialization = job.serialize
+        job_serialization = job
+          .serialize
+          .except(*SERIALIZATION_FILTERED_OUT_KEYS)
 
-        Worker.new job_queue: job_serialization['queue_name'],
-                   job_args: [job_serialization],
-                   job_id: job_serialization['job_id']
+        Worker.new job_id: job_serialization.delete('job_id'),
+                   job_queue: job_serialization.delete('queue_name'),
+                   job_args: [job_serialization]
       end
     end
   end
