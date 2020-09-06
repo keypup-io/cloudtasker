@@ -15,9 +15,9 @@ RSpec.shared_context 'of Cloudtasker ActiveJob instantiation' do
   let(:example_job) { example_job_class.new(*example_job_arguments) }
   
   let :example_job_serialization do
-    example_job
-      .serialize
-      .except(*%w[executions provider_job_id priority job_id queue_name])
+    example_job.serialize.except(
+      *%w[executions provider_job_id priority job_id queue_name]
+    )
   end
 
   let :example_worker_args do
