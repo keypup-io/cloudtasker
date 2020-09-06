@@ -1,33 +1,15 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
+require_relative '../../shared/active_job/instantiation_context'
 
 RSpec.describe ActiveJob::QueueAdapters::CloudtaskerAdapter do
-  let :example_job_class do
-    Class.new(ActiveJob::Base) do
-      def self.name
-        'ExampleJob'
-      end
-    end
-  end
-
-  let(:example_job_setup) { {} }
-  let(:example_job_arguments) { [1, 'two', { three: 3 }] }
-  let(:example_job) { example_job_class.new(*example_job_arguments) }
-  let(:example_job_serialization) { example_job.serialize }
-
-  let :expected_worker_args do
-    {
-      job_queue: example_job.queue_name,
-      job_args: [example_job_serialization],
-      job_id: example_job.job_id
-    }
-  end
+  include_context 'of Cloudtasker ActiveJob instantiation'
 
   let :example_worker_double do
     instance_double(
       "#{described_class.name}::Worker",
-      expected_worker_args
+      example_worker_args
     ).tap { |double| allow(double).to receive(:schedule) }
   end
 
@@ -38,7 +20,7 @@ RSpec.describe ActiveJob::QueueAdapters::CloudtaskerAdapter do
 
   shared_examples 'of instantiating a Cloudtasker Worker from ActiveJob' do
     it 'instantiates a new CloudtaskerAdapter Worker for the given job' do
-      expect(described_class::Worker).to receive(:new).with expected_worker_args
+      expect(described_class::Worker).to receive(:new).with example_worker_args
 
       subject.enqueue(example_job)
     end
