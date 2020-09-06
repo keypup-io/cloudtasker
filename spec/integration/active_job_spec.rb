@@ -49,7 +49,7 @@ RSpec.describe 'ActiveJob integration' do
       it 'enqueues the job to run as soon as possible' do
         expect(Cloudtasker::CloudTask)
           .to receive(:create).with expected_cloud_task_create_argument
-  
+
         example_job_class.perform_later(*example_job_arguments)
       end
     end
