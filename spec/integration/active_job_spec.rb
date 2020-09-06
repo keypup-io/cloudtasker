@@ -1,13 +1,17 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
-# rubocop:disable Metrics/BlockLength
+# rubocop:disable RSpec/DescribeClass
 RSpec.describe 'ActiveJob integration' do
-  let(:example_job_arguments) { [ 1, 'two', { three: 3 }] }
+  let(:example_job_arguments) { [1, 'two', { three: 3 }] }
   let(:example_verification_token) { 'VERIFICATION_TOKEN' }
 
   let :example_job_class do
     Class.new(ActiveJob::Base) do
-      def self.name; 'ExampleJob';  end
+      def self.name
+        'ExampleJob'
+      end
     end
   end
 
@@ -34,19 +38,23 @@ RSpec.describe 'ActiveJob integration' do
       job_arguments = ActiveJob::Arguments.serialize example_job_arguments
       include_json 'worker' => 'ActiveJob::QueueAdapters::CloudtaskerAdapter::Worker',
                    'job_args' => a_collection_including(
-                     a_hash_including 'job_class' => example_job_class.name,
-                                      'arguments' => job_arguments
+                     a_hash_including(
+                       'job_class' => example_job_class.name,
+                       'arguments' => job_arguments
+                     )
                    )
     end
 
-    it 'enqueues the job to run as soon as possible' do
-      expect(Cloudtasker::CloudTask)
-        .to receive(:create).with expected_cloud_task_create_argument
-
-      example_job_class.perform_later(*example_job_arguments)
+    context 'without any custom execution setup' do
+      it 'enqueues the job to run as soon as possible' do
+        expect(Cloudtasker::CloudTask)
+          .to receive(:create).with expected_cloud_task_create_argument
+  
+        example_job_class.perform_later(*example_job_arguments)
+      end
     end
 
-    context 'setting a custom execution wait time' do
+    context 'with a custom execution wait time' do
       let!(:expected_calculated_datetime) { 1.week.from_now }
 
       let :expected_cloud_task_create_argument do
@@ -65,9 +73,9 @@ RSpec.describe 'ActiveJob integration' do
       end
     end
 
-    context 'setting a different queue to execute the job' do
+    context 'with a different queue to execute the job' do
       let(:example_queue_name) { 'another-queue' }
-      
+
       let :expected_cloud_task_create_argument do
         a_hash_including http_request: expected_cloud_task_http_request_data,
                          queue: example_queue_name
@@ -84,4 +92,4 @@ RSpec.describe 'ActiveJob integration' do
     end
   end
 end
-# rubocop:enable Metrics/BlockLength
+# rubocop:enable RSpec/DescribeClass
