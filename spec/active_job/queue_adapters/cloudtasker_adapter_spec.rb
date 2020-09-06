@@ -6,14 +6,14 @@ require_relative '../../shared/active_job/instantiation_context'
 RSpec.describe ActiveJob::QueueAdapters::CloudtaskerAdapter do
   include_context 'of Cloudtasker ActiveJob instantiation'
 
+  subject(:adapter) { described_class.new }
+
   let :example_worker_double do
     instance_double(
       "#{described_class.name}::Worker",
       example_worker_args
     ).tap { |double| allow(double).to receive(:schedule) }
   end
-
-  subject(:adapter) { described_class.new }
 
   before do
     allow(described_class::Worker).to receive(:new)
