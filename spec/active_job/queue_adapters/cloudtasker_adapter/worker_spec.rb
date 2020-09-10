@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'spec_helper'
-require_relative '../../../shared/active_job/instantiation_context'
 
 RSpec.describe ActiveJob::QueueAdapters::CloudtaskerAdapter::Worker do
   include_context 'of Cloudtasker ActiveJob instantiation'
