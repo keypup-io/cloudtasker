@@ -27,7 +27,6 @@ RSpec.describe 'ActiveJob integration' do
   end
 
   before do
-    # I'm not sure if this is "knowing too much about the implementation"...
     allow(Cloudtasker::Authenticator)
       .to receive(:verification_token).and_return example_verification_token
   end
