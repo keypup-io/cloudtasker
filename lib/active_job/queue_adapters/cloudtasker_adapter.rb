@@ -17,11 +17,24 @@ module ActiveJob
         'priority' # Not used
       ].freeze
 
+      # Enqueues the given ActiveJob instance for execution
+      #
+      # @param job [ActiveJob::Base] The ActiveJob instance
+      #
+      # @return [Cloudtasker::CloudTask] The Google Task response
+      #
       def enqueue(job)
         build_worker(job).schedule
       end
 
-      def enqueue_at(job, precise_timestamp) #:nodoc:
+      # Enqueues the given ActiveJob instance for execution at a given time
+      #
+      # @param job [ActiveJob::Base] The ActiveJob instance
+      # @param precise_timestamp [Integer] The timestamp at which the job must be executed
+      #
+      # @return [Cloudtasker::CloudTask] The Google Task response
+      #
+      def enqueue_at(job, precise_timestamp)
         build_worker(job).schedule time_at: Time.at(precise_timestamp)
       end
 
