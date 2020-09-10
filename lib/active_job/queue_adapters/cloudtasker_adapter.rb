@@ -30,9 +30,9 @@ module ActiveJob
       def build_worker(job)
         job_serialization = job.serialize.except(*SERIALIZATION_FILTERED_KEYS)
 
-        Worker.new job_id: job_serialization.delete('job_id'),
-                   job_queue: job_serialization.delete('queue_name'),
-                   job_args: [job_serialization]
+        JobWrapper.new job_id: job_serialization.delete('job_id'),
+                       job_queue: job_serialization.delete('queue_name'),
+                       job_args: [job_serialization]
       end
     end
   end

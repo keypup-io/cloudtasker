@@ -16,7 +16,7 @@ module Cloudtasker
     end
 
     config.after_initialize do
-      require 'active_job/queue_adapters/cloudtasker_adapter/worker'
+      require 'active_job/queue_adapters/cloudtasker_adapter/job_wrapper'
     end
 
     config.generators do |g|
