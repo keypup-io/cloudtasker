@@ -2,11 +2,11 @@
 
 require 'spec_helper'
 
-RSpec.describe ActiveJob::QueueAdapters::CloudtaskerAdapter::Worker do
+RSpec.describe ActiveJob::QueueAdapters::CloudtaskerAdapter::JobWrapper do
   include_context 'of Cloudtasker ActiveJob instantiation'
 
   subject :worker do
-    described_class.new example_worker_args.merge task_id: '00000001'
+    described_class.new example_job_wrapper_args.merge task_id: '00000001'
   end
 
   let :example_unreconstructed_job_serialization do

@@ -22,7 +22,7 @@ RSpec.shared_context 'of Cloudtasker ActiveJob instantiation' do
                                  'provider_job_id'
   end
 
-  let :example_worker_args do
+  let :example_job_wrapper_args do
     {
       job_queue: example_job.queue_name,
       job_args: [example_job_serialization],

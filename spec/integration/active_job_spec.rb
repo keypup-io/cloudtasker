@@ -36,7 +36,7 @@ RSpec.describe 'ActiveJob integration' do
   describe 'Calling .perform_later on an ActiveJob class' do
     let :expected_cloud_task_body do
       job_arguments = ActiveJob::Arguments.serialize example_job_arguments
-      include_json 'worker' => 'ActiveJob::QueueAdapters::CloudtaskerAdapter::Worker',
+      include_json 'worker' => 'ActiveJob::QueueAdapters::CloudtaskerAdapter::JobWrapper',
                    'job_args' => a_collection_including(
                      a_hash_including(
                        'job_class' => example_job_class.name,
