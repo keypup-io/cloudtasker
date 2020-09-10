@@ -2,7 +2,6 @@
 
 require 'spec_helper'
 
-# rubocop:disable RSpec/DescribeClass
 RSpec.describe 'ActiveJob integration' do
   let(:example_job_arguments) { [1, 'two', { three: 3 }] }
   let(:example_verification_token) { 'VERIFICATION_TOKEN' }
@@ -92,4 +91,3 @@ RSpec.describe 'ActiveJob integration' do
     end
   end
 end
-# rubocop:enable RSpec/DescribeClass
