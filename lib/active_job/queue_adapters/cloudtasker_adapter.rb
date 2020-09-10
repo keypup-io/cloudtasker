@@ -14,7 +14,7 @@ module ActiveJob
       SERIALIZATION_FILTERED_KEYS = [
         'executions', # Given by the worker at processing
         'provider_job_id', # Also given by the worker at processing
-        'priority' # What is priority?
+        'priority' # Not used
       ].freeze
 
       def enqueue(job)

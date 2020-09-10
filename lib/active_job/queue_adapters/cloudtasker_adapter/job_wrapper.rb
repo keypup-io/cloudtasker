@@ -16,7 +16,7 @@ module ActiveJob
                                    'queue_name' => job_queue,
                                    'provider_job_id' => task_id,
                                    'executions' => job_executions,
-                                   'priority' => nil # What is job priority?
+                                   'priority' => nil
 
           Base.execute job_serialization
         end
