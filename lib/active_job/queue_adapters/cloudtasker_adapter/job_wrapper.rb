@@ -22,11 +22,13 @@ module ActiveJob
         def perform(job_serialization, *_extra_options)
           job_executions = job_retries < 1 ? 0 : (job_retries + 1)
 
-          job_serialization.merge! 'job_id' => job_id,
-                                   'queue_name' => job_queue,
-                                   'provider_job_id' => task_id,
-                                   'executions' => job_executions,
-                                   'priority' => nil
+          job_serialization.merge!(
+            'job_id' => job_id,
+            'queue_name' => job_queue,
+            'provider_job_id' => task_id,
+            'executions' => job_executions,
+            'priority' => nil
+          )
 
           Base.execute job_serialization
         end
