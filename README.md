@@ -75,7 +75,7 @@ Cloudtasker.configure do |config|
   # Adapt the server port to be the one used by your Rails web process
   #
   config.processor_host = 'http://localhost:3000'
-  
+
   #
   # If you do not have any Rails secret_key_base defined, uncomment the following
   # This secret is used to authenticate jobs sent to the processing endpoint
@@ -158,14 +158,14 @@ The gem can be configured through an initializer. See below all the available co
 Cloudtasker.configure do |config|
   #
   # If you do not have any Rails secret_key_base defined, uncomment the following.
-  # This secret is used to authenticate jobs sent to the processing endpoint 
+  # This secret is used to authenticate jobs sent to the processing endpoint
   # of your application.
   #
   # Default with Rails: Rails.application.credentials.secret_key_base
   #
   # config.secret = 'some-long-token'
 
-  # 
+  #
   # Specify the details of your Google Cloud Task location.
   #
   # This not required in development using the Cloudtasker local server.
@@ -189,21 +189,21 @@ Cloudtasker.configure do |config|
   #
   # Specific queues can be created in Cloud Tasks using the gcloud SDK or
   # via the `rake cloudtasker:setup_queue name=<queue_name>` task.
-  # 
+  #
   config.gcp_queue_prefix = 'my-app'
 
-  # 
+  #
   # Specify the publicly accessible host for your application
   #
   # > E.g. in development, using the cloudtasker local server
   # config.processor_host = 'http://localhost:3000'
-  # 
+  #
   # > E.g. in development, using `config.mode = :production` and ngrok
   # config.processor_host = 'https://111111.ngrok.io'
   #
   config.processor_host = 'https://app.mydomain.com'
 
-  # 
+  #
   # Specify the mode of operation:
   # - :development => jobs will be pushed to Redis and picked up by the Cloudtasker local server
   # - :production => jobs will be pushed to Google Cloud Tasks. Requires a publicly accessible domain.
@@ -212,20 +212,20 @@ Cloudtasker.configure do |config|
   #
   # config.mode = Rails.env.production? || Rails.env.my_other_env? ? :production : :development
 
-  # 
+  #
   # Specify the logger to use
-  # 
+  #
   # Default with Rails: Rails.logger
   # Default without Rails: Logger.new(STDOUT)
-  # 
+  #
   # config.logger = MyLogger.new(STDOUT)
 
-  # 
+  #
   # Specify how many retries are allowed on jobs. This number of retries excludes any
   # connectivity error due to the application being down or unreachable.
-  # 
+  #
   # Default: 25
-  # 
+  #
   # config.max_retries = 10
 
   #
@@ -262,7 +262,7 @@ Cloudtasker.configure do |config|
 end
 ```
 
-If the default queue `<gcp_queue_prefix>-default` does not exist in Cloud Tasks you should [create it using the gcloud sdk](https://cloud.google.com/tasks/docs/creating-queues). 
+If the default queue `<gcp_queue_prefix>-default` does not exist in Cloud Tasks you should [create it using the gcloud sdk](https://cloud.google.com/tasks/docs/creating-queues).
 
 Alternatively with Rails you can simply run the following rake task if you have queue admin permissions (`cloudtasks.queues.get` and `cloudtasks.queues.create`).
 ```bash
@@ -364,7 +364,7 @@ CriticalWorker.schedule(args: [1], queue: :important)
 Cloudtasker comes with three optional features:
 - Cron Jobs [[docs](docs/CRON_JOBS.md)]: Run jobs at fixed intervals.
 - Batch Jobs [[docs](docs/BATCH_JOBS.md)]: Run jobs in jobs and track completion of the overall batch.
-- Unique Jobs [[docs](docs/UNIQUE_JOBS.md)]: Ensure uniqueness of jobs based on job arguments. 
+- Unique Jobs [[docs](docs/UNIQUE_JOBS.md)]: Ensure uniqueness of jobs based on job arguments.
 
 ## Working locally
 
@@ -381,9 +381,9 @@ You can configure your application to use the Cloudtasker local server using the
 
 Cloudtasker.configure do |config|
   # ... other options
-  
+
   # Push jobs to redis and let the Cloudtasker local server collect them
-  # This is the default mode unless CLOUDTASKER_ENV or RAILS_ENV or RACK_ENV is set 
+  # This is the default mode unless CLOUDTASKER_ENV or RAILS_ENV or RACK_ENV is set
   # to a non-development environment
   config.mode = :development
 end
@@ -427,7 +427,7 @@ Cloudtasker.configure do |config|
 
   # Use your ngrok domain as the processor host
   config.processor_host = 'https://your-tunnel-id.ngrok.io'
-  
+
   # Force Cloudtasker to use Google Cloud Tasks in development
   config.mode = :production
 end
@@ -578,19 +578,17 @@ E.g. Set max number of retries globally via the cloudtasker initializer.
 # config/initializers/cloudtasker.rb
 
 Cloudtasker.configure do |config|
-  # 
+  #
   # Specify how many retries are allowed on jobs. This number of retries excludes any
   # connectivity error that would be due to the application being down or unreachable.
-  # 
+  #
   # Default: 25
-  # 
+  #
   config.max_retries = 10
 end
 ```
 
 E.g. Set max number of retries to 3 on a given worker
-
-E.g.
 ```ruby
 # app/workers/some_error_worker.rb
 
@@ -600,7 +598,30 @@ class SomeErrorWorker
   # This will override the global setting
   cloudtasker_options max_retries: 3
 
-  def perform()
+  def perform
+    raise(ArgumentError)
+  end
+end
+```
+
+E.g. Evaluate the number of max retries at runtime (target: v0.11.0)
+```ruby
+# app/workers/some_error_worker.rb
+
+class SomeErrorWorker
+  include Cloudtasker::Worker
+
+  # Return the number of max retries based on
+  # worker arguments.
+  #
+  # If this method returns nil then max_retries
+  # will delegate to the class `max_retries` setting or Cloudtasker
+  # `max_retries` configuration otion.
+  def max_retries(arg1, arg2)
+    arg1 == 'foo' ? 13 : nil
+  end
+
+  def perform(arg1, arg2)
     raise(ArgumentError)
   end
 end
@@ -618,7 +639,7 @@ require 'cloudtasker/testing'
 # Mode 1 (default): Push jobs to Google Cloud Tasks (env != development) or Redis (env == development)
 Cloudtasker::Testing.enable!
 
-# Mode 2: Push jobs to an in-memory queue. Jobs will not be processed until you call 
+# Mode 2: Push jobs to an in-memory queue. Jobs will not be processed until you call
 # Cloudtasker::Worker.drain_all (process all jobs) or MyWorker.drain (process jobs for specific worker)
 Cloudtasker::Testing.fake!
 
@@ -682,9 +703,9 @@ Below are examples of rspec tests. It is assumed that `Cloudtasker::Testing.fake
 **Example 1**: Testing that a job is scheduled
 ```ruby
 describe 'worker scheduling'
-  subject(:enqueue_job) { MyWorker.perform_async(1,2) } 
-  
-  it { expect { enqueue_job }.to change(MyWorker.jobs, :size).by(1) } 
+  subject(:enqueue_job) { MyWorker.perform_async(1,2) }
+
+  it { expect { enqueue_job }.to change(MyWorker.jobs, :size).by(1) }
 end
 ```
 
@@ -692,7 +713,7 @@ end
 ```ruby
 describe 'worker calls api'
   subject { Cloudtasker::Testing.inline! { MyApiWorker.perform_async(1,2) } }
-  
+
   before { expect(MyApi).to receive(:fetch).and_return([]) }
   it { is_expected.to be_truthy }
 end

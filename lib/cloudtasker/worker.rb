@@ -297,13 +297,27 @@ module Cloudtasker
     end
 
     #
+    # Return the max number of retries allowed for this job.
+    #
+    # The order of precedence for retry lookup is:
+    # - Worker `max_retries` method
+    # - Class `max_retries` option
+    # - Cloudtasker `max_retries` config option
+    #
+    # @return [Integer] The number of retries
+    #
+    def job_max_retries
+      @job_max_retries ||= (try(:max_retries, *job_args) || self.class.max_retries)
+    end
+
+    #
     # Return true if the job has excceeded its maximum number
     # of retries
     #
     # @return [Boolean] True if the job is dead
     #
     def job_dead?
-      job_retries >= Cloudtasker.config.max_retries
+      job_retries >= job_max_retries
     end
 
     #

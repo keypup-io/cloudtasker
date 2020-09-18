@@ -454,19 +454,43 @@ RSpec.describe Cloudtasker::Worker do
     end
   end
 
+  describe '#job_max_retries' do
+    subject { worker.job_max_retries }
+
+    let(:worker) { worker_class.new(job_args: [1, 2]) }
+
+    context 'with max_retries method defined' do
+      let(:max_retries) { 10 }
+
+      before { expect(worker).to receive(:max_retries).with(*worker.job_args).and_return(max_retries) }
+      it { is_expected.to eq(max_retries) }
+    end
+
+    context 'with max_retries returning nil' do
+      before { expect(worker).to receive(:max_retries).with(*worker.job_args).and_return(nil) }
+      it { is_expected.to eq(worker_class.max_retries) }
+    end
+
+    context 'without max_retries method defined' do
+      it { is_expected.to eq(worker_class.max_retries) }
+    end
+  end
+
   describe '#job_dead?' do
     subject { worker }
 
-    let(:worker) { worker_class.new(job_retries: job_retries) }
+    let(:worker) { worker_class.new(job_retries: 5) }
+
+    before { allow(worker).to receive(:job_max_retries).and_return(max_retries) }
 
     context 'with job retries exceeded' do
-      let(:job_retries) { Cloudtasker.config.max_retries }
+      let(:max_retries) { 5 }
 
       it { is_expected.to be_job_dead }
     end
 
     context 'with job retrieve below max' do
-      let(:job_retries) { Cloudtasker.config.max_retries - 1 }
+      let(:max_retries) { 10 }
 
       it { is_expected.not_to be_job_dead }
     end
