@@ -166,6 +166,9 @@ module Cloudtasker
         # Delete task
         self.class.delete(id)
         resp
+      rescue DeadWorkerError => e
+        self.class.delete(id)
+        raise(e) if self.class.inline_mode?
       rescue StandardError => e
         self.job_retries += 1
         raise(e) if self.class.inline_mode?

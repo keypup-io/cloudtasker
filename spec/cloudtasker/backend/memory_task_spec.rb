@@ -214,6 +214,22 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
       it { is_expected.to eq(resp) }
     end
 
+    context 'with dead worker and inline_mode' do
+      before { allow(described_class).to receive(:inline_mode?).and_return(true) }
+      before { allow(worker).to receive(:execute).and_raise(Cloudtasker::DeadWorkerError) }
+      after { expect(described_class).to have_received(:delete) }
+      after { expect(task).to have_attributes(job_retries: 0) }
+      it { expect { execute }.to raise_error(Cloudtasker::DeadWorkerError) }
+    end
+
+    context 'with error and no inline_mode' do
+      before { allow(described_class).to receive(:inline_mode?).and_return(false) }
+      before { allow(worker).to receive(:execute).and_raise(Cloudtasker::DeadWorkerError) }
+      after { expect(described_class).to have_received(:delete) }
+      after { expect(task).to have_attributes(job_retries: 0) }
+      it { expect { execute }.not_to raise_error }
+    end
+
     context 'with error and inline_mode' do
       before { allow(described_class).to receive(:inline_mode?).and_return(true) }
       before { allow(worker).to receive(:execute).and_raise(StandardError) }
