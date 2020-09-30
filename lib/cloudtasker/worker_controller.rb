@@ -8,7 +8,7 @@ module Cloudtasker
     delegate :call, to: :class
 
     def self.call(env)
-      processor = ActionRouter.match_processor(env)
+      processor = RequestProcessorRouter.match_processor(env)
 
       processor.perform
     end
@@ -118,7 +118,7 @@ module Cloudtasker
     end
 
     # A simple class that routes request to it's intended processor
-    class ActionRouter
+    class RequestProcessorRouter
       ROUTE_MATCHERS = {
         ['POST', '/run'] => RunRequestProcessor
       }.freeze
