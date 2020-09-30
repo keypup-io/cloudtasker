@@ -46,7 +46,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'timecop'
   spec.add_development_dependency 'webmock'
 
-  spec.add_development_dependency 'rails'
   spec.add_development_dependency 'rack-test'
+  spec.add_development_dependency 'rails'
   spec.add_development_dependency 'sqlite3'
 end
