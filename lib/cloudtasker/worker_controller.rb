@@ -43,10 +43,10 @@ module Cloudtasker
       rescue InvalidWorkerError
         # 404: Job will be retried
         head :not_found
-      rescue StandardError => error
+      rescue StandardError => e
         # 404: Job will be retried
-        Cloudtasker.logger.error(error)
-        Cloudtasker.logger.error(error.backtrace.join("\n"))
+        Cloudtasker.logger.error(e)
+        Cloudtasker.logger.error(e.backtrace.join("\n"))
         head :unprocessable_entity
       end
 
