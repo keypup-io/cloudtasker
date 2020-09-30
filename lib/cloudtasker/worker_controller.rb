@@ -13,6 +13,7 @@ module Cloudtasker
       processor.perform
     end
 
+    # Base module used by any pretended request processor
     module RequestResponder
       attr_reader :request
 
@@ -28,6 +29,7 @@ module Cloudtasker
       end
     end
 
+    # Processes Run Requests
     class RunRequestProcessor
       include RequestResponder
 
@@ -117,6 +119,7 @@ module Cloudtasker
       end
     end
 
+    # A simple class that routes request to it's intended processor
     class ActionRouter
       ROUTE_MATCHERS = {
         ['POST', '/run'] => RunRequestProcessor
@@ -139,6 +142,8 @@ module Cloudtasker
 
       private
 
+      # A null-object request processor used when the route doesn't match a
+      # real processor.
       class NullProcessor
         include RequestResponder
 
