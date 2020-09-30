@@ -7,7 +7,7 @@ module Cloudtasker
 
     initializer 'cloudtasker', before: :load_config_initializers do
       Rails.application.routes.append do
-        mount Cloudtasker::Engine, at: '/cloudtasker'
+        mount Cloudtasker::WorkerController, at: '/cloudtasker'
       end
     end
 
