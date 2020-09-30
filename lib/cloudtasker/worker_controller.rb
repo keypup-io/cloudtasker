@@ -13,8 +13,8 @@ module Cloudtasker
       processor.perform
     end
 
-    # Base module used by any pretended request processor
-    module RequestResponder
+    # Base class used by any pretended request processor
+    class BaseRequestProcessor
       attr_reader :request
 
       def initialize(env)
@@ -30,9 +30,7 @@ module Cloudtasker
     end
 
     # Processes Run Requests
-    class RunRequestProcessor
-      include RequestResponder
-
+    class RunRequestProcessor < BaseRequestProcessor
       def perform
         authenticate_request
         process_received_payload
@@ -144,9 +142,7 @@ module Cloudtasker
 
       # A null-object request processor used when the route doesn't match a
       # real processor.
-      class NullProcessor
-        include RequestResponder
-
+      class NullProcessor < BaseRequestProcessor
         def perform
           head :not_found
         end
