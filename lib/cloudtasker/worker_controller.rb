@@ -21,12 +21,12 @@ module Cloudtasker
         @request = Rack::Request.new(env)
       end
 
-      private
-
-      def head(status)
+      def self.head(status)
         status_code = Rack::Utils::SYMBOL_TO_STATUS_CODE[status]
         [status_code, {}, []]
       end
+
+      delegate :head, to: :class
     end
 
     # Processes Run Requests
