@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.9.4](https://github.com/keypup-io/cloudtasker/tree/v0.9.4) (2020-10-05)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.9.3...v0.9.4)
+
+**Fixed bugs:**
+- Logging: fix log processing with `semantic_logger` `v4.7.2`. Accept any args on block passed to the logger.
+
 ## [v0.9.3](https://github.com/keypup-io/cloudtasker/tree/v0.9.3) (2020-06-25)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.9.2...v0.9.3)
