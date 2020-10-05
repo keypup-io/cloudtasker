@@ -3,6 +3,7 @@
 require 'bundler/setup'
 require 'timecop'
 require 'webmock/rspec'
+require 'semantic_logger'
 
 # Configure Rails dummary app
 ENV['RAILS_ENV'] ||= 'test'

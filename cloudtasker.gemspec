@@ -43,6 +43,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'rubocop', '0.76.0'
   spec.add_development_dependency 'rubocop-rspec', '1.37.0'
+  spec.add_development_dependency 'semantic_logger'
   spec.add_development_dependency 'timecop'
   spec.add_development_dependency 'webmock'
 

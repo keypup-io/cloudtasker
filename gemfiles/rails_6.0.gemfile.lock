@@ -235,6 +235,8 @@ GEM
     sawyer (0.8.2)
       addressable (>= 2.3.5)
       faraday (> 0.8, < 2.0)
+    semantic_logger (4.7.0)
+      concurrent-ruby (~> 1.0)
     signet (0.14.0)
       addressable (~> 2.3)
       faraday (>= 0.17.3, < 2.0)
@@ -277,6 +279,7 @@ DEPENDENCIES
   rspec-rails
   rubocop (= 0.76.0)
   rubocop-rspec (= 1.37.0)
+  semantic_logger
   sqlite3
   timecop
   webmock

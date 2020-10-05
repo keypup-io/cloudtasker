@@ -142,7 +142,7 @@ module Cloudtasker
     #
     def log_message(level, msg, &block)
       # Merge log-specific context into worker-specific context
-      payload_block = -> { log_block.call.merge(block&.call || {}) }
+      payload_block = ->(*_args) { log_block.call.merge(block&.call || {}) }
 
       # ActiveSupport::Logger does not support passing a payload through a block on top
       # of a message.
