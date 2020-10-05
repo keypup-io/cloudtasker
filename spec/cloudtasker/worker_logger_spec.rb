@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 RSpec.shared_examples 'a log appender' do |level|
-  subject { logger.send(level, msg, &block) }
+  subject(:log_action) { logger.send(level, msg, &block) }
 
   let(:msg) { 'Some message' }
   let(:block) { nil }
@@ -33,6 +33,31 @@ RSpec.shared_examples 'a log appender' do |level|
       end
     end
     it { is_expected.to be_truthy }
+  end
+
+  describe 'end to end' do
+    let(:block) { proc { { foo: 'bar' } } }
+
+    before { allow(logger).to receive(:logger).and_return(logger_adapter) }
+
+    context 'with Logger' do
+      let(:logger_adapter) { ::Logger.new(nil) }
+
+      it { expect { log_action }.not_to raise_error }
+    end
+
+    context 'with ActiveSupport::Logger' do
+      let(:logger_adapter) { ActiveSupport::Logger.new(nil) }
+
+      it { expect { log_action }.not_to raise_error }
+    end
+
+    context 'with SemanticLogger' do
+      let(:logger_adapter) { SemanticLogger[Cloudtasker] }
+      let(:block) { -> { { foo: 'bar' } } }
+
+      it { expect { log_action }.not_to raise_error }
+    end
   end
 end
 
