@@ -1,11 +1,13 @@
 # frozen_string_literal: true
 
-RSpec.describe Cloudtasker::WorkerController, type: :controller do
-  routes { Cloudtasker::Engine.routes }
+require 'rack/test'
 
-  describe 'POST #run' do
-    subject { post :run, body: request_body, as: mime_type }
+RSpec.describe Cloudtasker::WorkerController do
+  include Rack::Test::Methods
 
+  let(:app) { described_class.new }
+
+  describe 'POST /cloudtasker/run' do
     let(:payload) do
       {
         'worker' => worker_class_name,
@@ -16,6 +18,7 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
         'other' => 'foo'
       }
     end
+
     let(:mime_type) { :json }
     let(:request_body) { payload.to_json }
     let(:expected_payload) { payload.merge(job_retries: retries, task_id: task_id) }
@@ -27,21 +30,37 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
     let(:retries) { 3 }
     let(:queue) { 'some-queue' }
     let(:auth_token) { Cloudtasker::Authenticator.verification_token }
-    let(:env_retries_header) { "HTTP_#{Cloudtasker::Config::RETRY_HEADER.tr('-', '_').upcase}" }
-    let(:env_task_id_header) { "HTTP_#{Cloudtasker::Config::TASK_ID_HEADER.tr('-', '_').upcase}" }
 
-    before { request.env[env_retries_header] = retries }
-    before { request.env[env_task_id_header] = task_id }
+    before do
+      header 'Content-Type', 'application/json'
+      header Cloudtasker::Config::RETRY_HEADER, retries
+      header Cloudtasker::Config::TASK_ID_HEADER, task_id
+    end
 
-    context 'with valid worker' do
+    shared_examples 'of a successful run call' do
       before do
-        request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"
         allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
           .with(expected_payload)
           .and_return(true)
       end
-      after { expect(Cloudtasker::WorkerHandler).to have_received(:execute_from_payload!) }
-      it { is_expected.to be_successful }
+
+      it 'calls Cloudtasker::WorkerHandler#execute_from_payload!' do
+        post '/cloudtasker/run', request_body
+        expect(
+          Cloudtasker::WorkerHandler
+        ).to have_received(:execute_from_payload!).with(expected_payload)
+      end
+
+      it 'suceeds with HTTP Status 204 - No Content' do
+        post '/cloudtasker/run', request_body
+        expect(last_response.status).to eq 204
+      end
+    end
+
+    context 'with valid worker' do
+      before { header 'Authorization', "Bearer #{auth_token}" }
+
+      include_examples 'of a successful run call'
     end
 
     context 'with base64 encoded body' do
@@ -49,53 +68,72 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
       let(:request_body) { Base64.encode64(payload.to_json) }
 
       before do
-        request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"
-        request.env['HTTP_CONTENT_TRANSFER_ENCODING'] = 'BASE64'
-        allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
-          .with(expected_payload)
-          .and_return(true)
+        header 'Authorization', "Bearer #{auth_token}"
+        header 'Content-Transfer-Encoding', 'BASE64'
       end
-      after { expect(Cloudtasker::WorkerHandler).to have_received(:execute_from_payload!) }
-      it { is_expected.to be_successful }
+
+      include_examples 'of a successful run call'
     end
 
     context 'with execution errors' do
       before do
-        request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"
+        header 'Authorization', "Bearer #{auth_token}"
+
         allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
           .with(expected_payload)
           .and_raise(ArgumentError)
       end
-      it { is_expected.to have_http_status(:unprocessable_entity) }
+
+      it 'fails with HTTP Status 422 - Unprocessable Entity' do
+        post '/cloudtasker/run', request_body
+        expect(last_response.status).to eq 422
+      end
     end
 
     context 'with dead worker' do
       before do
-        request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"
+        header 'Authorization', "Bearer #{auth_token}"
+
         allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
           .with(expected_payload)
           .and_raise(Cloudtasker::DeadWorkerError)
       end
-      it { is_expected.to have_http_status(:reset_content) }
+
+      it 'succeeds with HTTP Status 205 - Reset Content' do
+        post '/cloudtasker/run', request_body
+        expect(last_response.status).to eq 205
+      end
     end
 
     context 'with invalid worker' do
       before do
-        request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"
+        header 'Authorization', "Bearer #{auth_token}"
+
         allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
           .with(expected_payload)
           .and_raise(Cloudtasker::InvalidWorkerError)
       end
-      it { is_expected.to have_http_status(:not_found) }
+
+      it 'fails with HTTP Status 404 - Not Found' do
+        post '/cloudtasker/run', request_body
+        expect(last_response.status).to eq 404
+      end
     end
 
     context 'with no authentication' do
-      it { is_expected.to have_http_status(:unauthorized) }
+      it 'fails with HTTP Status 401 - Unauthorized' do
+        post '/cloudtasker/run', request_body
+        expect(last_response.status).to eq 401
+      end
     end
 
     context 'with invalid authentication' do
-      before { request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}aaa" }
-      it { is_expected.to have_http_status(:unauthorized) }
+      before { header 'Authorization', "Bearer #{auth_token}aaa" }
+
+      it 'fails with HTTP Status 401 - Unauthorized' do
+        post '/cloudtasker/run', request_body
+        expect(last_response.status).to eq 401
+      end
     end
   end
 end

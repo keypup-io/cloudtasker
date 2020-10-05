@@ -13,6 +13,7 @@ require 'cloudtasker/max_task_size_exceeded_error'
 require 'cloudtasker/middleware/chain'
 require 'cloudtasker/authenticator'
 require 'cloudtasker/cloud_task'
+require 'cloudtasker/worker_controller'
 require 'cloudtasker/worker_logger'
 require 'cloudtasker/worker_handler'
 require 'cloudtasker/meta_store'
@@ -48,4 +49,4 @@ module Cloudtasker
   end
 end
 
-require 'cloudtasker/engine' if defined?(::Rails::Engine)
+require 'cloudtasker/railtie' if defined?(::Rails)
