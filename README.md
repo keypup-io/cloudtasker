@@ -604,7 +604,7 @@ class SomeErrorWorker
 end
 ```
 
-E.g. Evaluate the number of max retries at runtime (target: v0.11.0)
+E.g. Evaluate the number of max retries at runtime (Supported since: v0.10.1)
 ```ruby
 # app/workers/some_error_worker.rb
 

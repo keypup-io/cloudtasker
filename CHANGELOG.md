@@ -5,7 +5,9 @@
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.10.0...v0.10.1)
 
 **Fixed bugs:**
+- Local server: delete dead task from local server queue
 - Logging: fix log processing with `semantic_logger` `v4.7.2`. Accept any args on block passed to the logger.
+- Worker: fix configuration of `max_retries` at worker level
 
 ## [v0.10.0](https://github.com/keypup-io/cloudtasker/tree/v0.10.0) (2020-09-02)
 
@@ -24,6 +26,13 @@
 - Redis client: use connecion pool with Redis to prevent race conditions
 - Google API: improve error handling on job creation
 - Google API: use the `X-CloudTasks-TaskRetryCount` instead of `X-CloudTasks-TaskExecutionCount` to detect how many retries Google Cloud Tasks has performed. Using `X-CloudTasks-TaskRetryCount` is theoretically less accurate than using `X-CloudTasks-TaskExecutionCount` because it includes the number of "app unreachable" retries but `X-CloudTasks-TaskExecutionCount` is currently bugged and remains at zero all the time. See [this issue](https://github.com/keypup-io/cloudtasker/issues/6)
+
+## [v0.9.4](https://github.com/keypup-io/cloudtasker/tree/v0.9.4) (2020-10-05)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.9.3...v0.9.4)
+
+**Fixed bugs:**
+- Logging: fix log processing with `semantic_logger` `v4.7.2`. Accept any args on block passed to the logger.
 
 ## [v0.9.3](https://github.com/keypup-io/cloudtasker/tree/v0.9.3) (2020-06-25)
 
