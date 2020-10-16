@@ -338,15 +338,19 @@ RSpec.describe Cloudtasker::Worker do
     let(:args) { [1, 2] }
     let(:resp) { 'some-result' }
 
-    before { allow(worker).to receive(:perform).with(*args).and_return(resp) }
-    before { expect(worker).to have_attributes(perform_started_at: nil, perform_ended_at: nil) }
-    after { expect(worker).to have_attributes(perform_started_at: be_a(Time), perform_ended_at: be_a(Time)) }
-
-    it { is_expected.to eq(resp) }
+    context 'with no middleware chain' do
+      before { allow(worker).to receive(:perform).with(*args).and_return(resp) }
+      before { expect(worker).to have_attributes(perform_started_at: nil, perform_ended_at: nil) }
+      after { expect(worker).to have_attributes(perform_started_at: be_a(Time), perform_ended_at: be_a(Time)) }
+      it { is_expected.to eq(resp) }
+    end
 
     context 'with server middleware chain' do
+      before { allow(worker).to receive(:perform).with(*args).and_return(resp) }
+      before { expect(worker).to have_attributes(perform_started_at: nil, perform_ended_at: nil) }
       before { Cloudtasker.config.server_middleware.add(TestMiddleware) }
       after { expect(worker.middleware_called).to be_truthy }
+      after { expect(worker).to have_attributes(perform_started_at: be_a(Time), perform_ended_at: be_a(Time)) }
       it { is_expected.to eq(resp) }
     end
 
@@ -369,6 +373,12 @@ RSpec.describe Cloudtasker::Worker do
       after { expect(worker).to have_received(:on_error) }
       after { expect(worker).to have_received(:on_dead) }
       it { expect { execute }.to raise_error(Cloudtasker::DeadWorkerError) }
+    end
+
+    context 'with missing worker arguments' do
+      let(:args) { [] }
+
+      it { expect { execute }.to raise_error(Cloudtasker::MissingWorkerArgumentsError) }
     end
   end
 

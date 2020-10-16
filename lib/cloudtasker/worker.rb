@@ -347,6 +347,13 @@ module Cloudtasker
 
       Cloudtasker.config.server_middleware.invoke(self) do
         begin
+          # Abort if arguments are missing. This may happen with redis arguments storage
+          # if Cloud Tasks times out on a job but the job still succeeds
+          if job_args.empty? && [0, -1].exclude?(method(:perform).arity)
+            raise(MissingWorkerArgumentsError, 'worker arguments are missing')
+          end
+
+          # Perform the job
           perform(*job_args)
         rescue StandardError => e
           try(:on_error, e)

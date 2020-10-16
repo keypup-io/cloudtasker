@@ -33,7 +33,7 @@ post '/cloudtasker/run' do
     # Process payload
     Cloudtasker::WorkerHandler.execute_from_payload!(payload)
     return 204
-  rescue Cloudtasker::DeadWorkerError
+  rescue Cloudtasker::DeadWorkerError, Cloudtasker::MissingWorkerArgumentsError
     # 205: job will NOT be retried
     return 205
   rescue Cloudtasker::AuthenticationError

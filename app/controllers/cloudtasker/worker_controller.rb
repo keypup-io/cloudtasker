@@ -19,20 +19,31 @@ module Cloudtasker
       # Process payload
       WorkerHandler.execute_from_payload!(payload)
       head :no_content
-    rescue DeadWorkerError
+    rescue DeadWorkerError, MissingWorkerArgumentsError => e
       # 205: job will NOT be retried
+      log_error(e)
       head :reset_content
-    rescue InvalidWorkerError
+    rescue InvalidWorkerError => e
       # 404: Job will be retried
+      log_error(e)
       head :not_found
     rescue StandardError => e
       # 404: Job will be retried
-      Cloudtasker.logger.error(e)
-      Cloudtasker.logger.error(e.backtrace.join("\n"))
+      log_error(e)
       head :unprocessable_entity
     end
 
     private
+
+    #
+    # Log an error via cloudtasker logger.
+    #
+    # @param [Exception] e The error to log
+    #
+    def log_error(error)
+      Cloudtasker.logger.error(error)
+      Cloudtasker.logger.error(error.backtrace.join("\n"))
+    end
 
     #
     # Parse the request body and return the actual job
