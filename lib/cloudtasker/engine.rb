@@ -3,22 +3,18 @@
 module Cloudtasker
   # Cloudtasker Rails engine
   class Engine < ::Rails::Engine
-    JOB_ADAPTR_PATH = 'active_job/queue_adapters/cloudtasker_adapter'
-
     isolate_namespace Cloudtasker
 
+    # Setup cloudtasker processing route
     initializer 'cloudtasker', before: :load_config_initializers do
       Rails.application.routes.append do
         mount Cloudtasker::Engine, at: '/cloudtasker'
       end
     end
 
-    config.before_configuration do
-      require JOB_ADAPTR_PATH if defined?(::ActiveJob::Railtie)
-    end
-
-    config.after_initialize do
-      require "#{JOB_ADAPTR_PATH}/job_wrapper" if defined?(::ActiveJob::Railtie)
+    # Setup active job adapter
+    initializer 'cloudtasker.active_job', after: :load_config_initializers do
+      require 'active_job/queue_adapters/cloudtasker_adapter' if defined?(::ActiveJob::Railtie)
     end
 
     config.generators do |g|
