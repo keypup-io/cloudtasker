@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    cloudtasker (0.11.rc1)
+    cloudtasker (0.11.rc2)
       activesupport
       connection_pool
       fugit
@@ -89,9 +89,9 @@ GEM
       multipart-post (>= 1.2, < 3)
     faraday-http-cache (2.2.0)
       faraday (>= 0.8)
-    fugit (1.3.9)
+    fugit (1.4.0)
       et-orbi (~> 1.1, >= 1.1.8)
-      raabro (~> 1.3)
+      raabro (~> 1.4)
     github_changelog_generator (1.15.2)
       activesupport
       faraday-http-cache
@@ -113,7 +113,7 @@ GEM
       googleauth (~> 0.9)
       grpc (~> 1.24)
       rly (~> 0.2.3)
-    google-protobuf (3.13.0-universal-darwin)
+    google-protobuf (3.14.0-universal-darwin)
     googleapis-common-protos (1.3.10)
       google-protobuf (~> 3.11)
       googleapis-common-protos-types (>= 1.0.5, < 2.0)
@@ -197,7 +197,7 @@ GEM
       thor (>= 0.20.3, < 2.0)
     rainbow (3.0.0)
     rake (13.0.1)
-    redis (4.2.2)
+    redis (4.2.5)
     retriable (3.1.2)
     rly (0.2.3)
     rspec (3.9.0)
@@ -209,6 +209,7 @@ GEM
     rspec-expectations (3.9.1)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.9.0)
+    rspec-json_expectations (2.2.0)
     rspec-mocks (3.9.1)
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.9.0)
@@ -276,6 +277,7 @@ DEPENDENCIES
   rails (= 6.0)
   rake (>= 12.3.3)
   rspec (~> 3.0)
+  rspec-json_expectations (~> 2.2)
   rspec-rails
   rubocop (= 0.76.0)
   rubocop-rspec (= 1.37.0)

@@ -1,5 +1,13 @@
 # Changelog
 
+## Latest RC: [v0.11.rc2](https://github.com/keypup-io/cloudtasker/tree/v0.11.rc2) (2020-11-23)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.10.0...v0.11.rc2)
+
+**Improvements:**
+- Worker: drop job (return 205 response) when worker arguments are not available (e.g. arguments were stored in Redis and the latter was flushed)
+- Rails: add ActiveJob adapter (thanks @vovimayhem)
+
 ## [v0.10.1](https://github.com/keypup-io/cloudtasker/tree/v0.10.1) (2020-10-05)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.10.0...v0.10.1)
