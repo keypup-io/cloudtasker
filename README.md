@@ -16,6 +16,7 @@ A local processing server is also available for development. This local server p
 
 1. [Installation](#installation)
 2. [Get started with Rails](#get-started-with-rails)
+2. [Get started with Rails & ActiveJob](#get-started-with-rails--activejob)
 3. [Configuring Cloudtasker](#configuring-cloudtasker)
     1. [Cloud Tasks authentication & permissions](#cloud-tasks-authentication--permissions)
     2. [Cloudtasker initializer](#cloudtasker-initializer)
@@ -131,6 +132,95 @@ I, [2019-11-22T09:20:09.320966 #49257]  INFO -- [Cloudtasker][d76040a1-367e-4e3b
 That's it! Your job was picked up by the Cloudtasker local server and sent for processing to your Rails web process.
 
 Now jump to the next section to configure your app to use Google Cloud Tasks as a backend.
+
+## Get started with Rails & ActiveJob
+**Note**: ActiveJob is supported since `0.11.rc2`  
+**Note**: Cloudtasker extensions (cron, batch and unique jobs) are not available when using cloudtasker via ActiveJob.
+
+Cloudtasker is pre-integrated with ActiveJob. Follow the steps below to get started.
+
+Install redis on your machine (this is required by the Cloudtasker local processing server)
+```bash
+# E.g. using brew
+brew install redis
+```
+
+Add the following initializer
+```ruby
+# config/initializers/cloudtasker.rb
+
+Cloudtasker.configure do |config|
+  #
+  # Adapt the server port to be the one used by your Rails web process
+  #
+  config.processor_host = 'http://localhost:3000'
+
+  #
+  # If you do not have any Rails secret_key_base defined, uncomment the following
+  # This secret is used to authenticate jobs sent to the processing endpoint
+  # of your application.
+  #
+  # config.secret = 'some-long-token'
+end
+```
+
+Configure ActiveJob to use Cloudtasker. You can also configure ActiveJob per environment via the config/environments/:env.rb files
+```ruby
+# config/application.rb
+
+require_relative 'boot'
+require 'rails/all'
+
+Bundler.require(*Rails.groups)
+
+module Dummy
+  class Application < Rails::Application
+    # Initialize configuration defaults for originally generated Rails version.
+    config.load_defaults 6.0
+
+    # Settings in config/environments/* take precedence over those specified here.
+    # Application configuration can go into files in config/initializers
+    # -- all .rb files in that directory are automatically loaded after loading
+    # the framework and any gems in your application.
+
+    # Use cloudtasker as the ActiveJob backend:
+    config.active_job.queue_adapter = :cloudtasker
+  end
+end
+
+```
+
+Define your first job:
+```ruby
+# app/jobs/example_job.rb
+
+class ExampleJob < ApplicationJob
+  queue_as :default
+
+  def perform(some_arg)
+    logger.info("Job run with #{some_arg}. This is working!")
+  end
+end
+```
+
+Launch Rails and the local Cloudtasker processing server (or add `cloudtasker` to your foreman config as a `worker` process)
+```bash
+# In one terminal
+> rails s -p 3000
+
+# In another terminal
+> cloudtasker
+```
+
+Open a Rails console and enqueue some jobs
+```ruby
+  # Process job as soon as possible
+  ExampleJob.perform_later('foo')
+
+  # Process job in 60 seconds
+  ExampleJob.set(wait: 60).perform_later('foo')
+```
+
 
 ## Configuring Cloudtasker
 
@@ -361,6 +451,8 @@ CriticalWorker.schedule(args: [1], queue: :important)
 ```
 
 ## Extensions
+**Note**: Extensions are not available when using cloudtasker via ActiveJob.
+
 Cloudtasker comes with three optional features:
 - Cron Jobs [[docs](docs/CRON_JOBS.md)]: Run jobs at fixed intervals.
 - Batch Jobs [[docs](docs/BATCH_JOBS.md)]: Run jobs in jobs and track completion of the overall batch.
