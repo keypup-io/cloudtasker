@@ -64,6 +64,7 @@ module Cloudtasker
       return false unless File.exist?('./config/environment.rb')
 
       require 'rails'
+      require 'cloudtasker/engine'
       require File.expand_path('./config/environment.rb')
     end
 
