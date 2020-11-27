@@ -12,6 +12,8 @@ Cloudtasker also provides optional modules for running [cron jobs](docs/CRON_JOB
 
 A local processing server is also available for development. This local server processes jobs in lieu of Cloud Tasks and allows you to work offline.
 
+**Maturity**: This gem is production-ready. We at Keypup have already processed millions of jobs using Cloudtasker and all related extensions (cron, batch and unique jobs). I'm waiting till the end of 2020 before releasing the official `v1.0.0` in case we've missed any edge-case bug.
+
 ## Summary
 
 1. [Installation](#installation)
