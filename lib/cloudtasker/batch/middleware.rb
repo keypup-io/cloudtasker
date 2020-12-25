@@ -16,6 +16,8 @@ module Cloudtasker
         Cloudtasker.configure do |config|
           config.server_middleware { |c| c.add(Middleware::Server) }
         end
+
+        # Inject worker extension on main module
         Cloudtasker::Worker.include(Extension::Worker)
       end
     end
