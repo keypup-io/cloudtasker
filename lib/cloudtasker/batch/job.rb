@@ -62,6 +62,10 @@ module Cloudtasker
       # @return [Cloudtasker::Batch::Job] The attached batch.
       #
       def self.for(worker)
+        # Load extension if not loaded already on the worker class
+        worker.class.include(Extension::Worker) unless worker.class <= Extension::Worker
+
+        # Add batch capability
         worker.batch = new(worker)
       end
 

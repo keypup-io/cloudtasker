@@ -25,9 +25,21 @@ RSpec.describe Cloudtasker::Batch::Job do
   describe '.for' do
     subject(:batch) { described_class.for(worker) }
 
-    after { expect(worker.batch).to eq(batch) }
-    it { is_expected.to be_a(described_class) }
-    it { is_expected.to have_attributes(worker: worker) }
+    context 'with batch extension loaded' do
+      after { expect(worker.batch).to eq(batch) }
+      it { is_expected.to be_a(described_class) }
+      it { is_expected.to have_attributes(worker: worker) }
+    end
+
+    context 'with batch extension not loaded' do
+      let(:worker) { TestNonWorker.new }
+
+      before { batch }
+      after { expect(worker.batch).to eq(batch) }
+      it { is_expected.to be_a(described_class) }
+      it { is_expected.to have_attributes(worker: worker) }
+      it { expect(worker.class).to be < Cloudtasker::Batch::Extension::Worker }
+    end
   end
 
   describe '.key' do
