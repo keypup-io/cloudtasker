@@ -1,4 +1,4 @@
-# Cloudtasker Unique Jobs
+# Cloudtasker Batch Jobs
 
 **Note**: this extension requires redis
 
