@@ -46,6 +46,28 @@ module Cloudtasker
     end
 
     #
+    # Log error on execution failure.
+    #
+    # @param [Cloudtasker::Worker, nil] worker The worker.
+    # @param [Exception] error The error to log.
+    #
+    # @void
+    #
+    def self.log_execution_error(worker, error)
+      # ActiveJob has its own error logging. No need to double log the error.
+      # Note: we use string matching instead of class matching as
+      # ActiveJob::QueueAdapters::CloudtaskerAdapter::JobWrapper might not be loaded
+      return if worker.class.to_s =~ /^ActiveJob::/
+
+      # Choose logger to use based on context
+      # Worker will be nil on InvalidWorkerError - in that case we use generic logging
+      logger = worker&.logger || Cloudtasker.logger
+
+      # Log error
+      logger.error([error, error.backtrace].flatten.join("\n"))
+    end
+
+    #
     # Execute a task worker from a task payload
     #
     # @param [Hash] input_payload The Cloud Task payload.
@@ -88,6 +110,10 @@ module Cloudtasker
     rescue DeadWorkerError, MissingWorkerArgumentsError => e
       # Delete stored args payload if job is dead
       redis.expire(args_payload_key, ARGS_PAYLOAD_CLEANUP_TTL) if args_payload_key
+      log_execution_error(worker, e)
+      raise(e)
+    rescue StandardError => e
+      log_execution_error(worker, e)
       raise(e)
     end
 

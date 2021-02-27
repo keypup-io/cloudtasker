@@ -261,8 +261,7 @@ module Cloudtasker
       def run_worker_callback(callback, *args)
         worker.try(callback, *args)
       rescue StandardError => e
-        Cloudtasker.logger.error("Error running callback #{callback}: #{e}")
-        Cloudtasker.logger.error(e.backtrace.join("\n"))
+        Cloudtasker.logger.error(["Error running callback #{callback}: #{e}", e.backtrace].flatten.join("\n"))
         nil
       end
 
