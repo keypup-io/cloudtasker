@@ -375,6 +375,19 @@ RSpec.describe Cloudtasker::Worker do
       it { expect { execute }.to raise_error(Cloudtasker::DeadWorkerError) }
     end
 
+    context 'with already dead job' do
+      let(:error) { StandardError.new('some-message') }
+
+      before { worker.job_retries = worker_class.max_retries + 1 }
+      before { allow(worker).to receive(:perform) }
+      before { allow(worker).to receive(:on_error) }
+      before { allow(worker).to receive(:on_dead).with(nil) }
+      after { expect(worker).not_to have_received(:perform) }
+      after { expect(worker).not_to have_received(:on_error) }
+      after { expect(worker).to have_received(:on_dead) }
+      it { expect { execute }.to raise_error(Cloudtasker::DeadWorkerError) }
+    end
+
     context 'with missing worker arguments' do
       let(:args) { [] }
 
@@ -486,7 +499,7 @@ RSpec.describe Cloudtasker::Worker do
     end
   end
 
-  describe '#job_dead?' do
+  describe '#job_must_die?' do
     subject { worker }
 
     let(:worker) { worker_class.new(job_retries: 5) }
@@ -496,11 +509,31 @@ RSpec.describe Cloudtasker::Worker do
     context 'with job retries exceeded' do
       let(:max_retries) { 5 }
 
-      it { is_expected.to be_job_dead }
+      it { is_expected.to be_job_must_die }
     end
 
     context 'with job retrieve below max' do
       let(:max_retries) { 10 }
+
+      it { is_expected.not_to be_job_must_die }
+    end
+  end
+
+  describe '#job_dead?' do
+    subject { worker }
+
+    let(:worker) { worker_class.new(job_retries: 5) }
+
+    before { allow(worker).to receive(:job_max_retries).and_return(max_retries) }
+
+    context 'with job retries exceeded' do
+      let(:max_retries) { 4 }
+
+      it { is_expected.to be_job_dead }
+    end
+
+    context 'with job retrieve below or equal to max' do
+      let(:max_retries) { 5 }
 
       it { is_expected.not_to be_job_dead }
     end

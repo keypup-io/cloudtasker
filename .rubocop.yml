@@ -13,6 +13,8 @@ Metrics/ModuleLength:
 
 Metrics/AbcSize:
   Max: 20
+  Exclude:
+    - 'spec/support/*'
 
 Metrics/LineLength:
   Max: 120
@@ -48,3 +50,8 @@ Metrics/ParameterLists:
 
 RSpec/MessageSpies:
   Enabled: false
+
+RSpec/MultipleExpectations:
+  Exclude:
+    - 'examples/**/*'
+    - 'spec/integration/**/*'
