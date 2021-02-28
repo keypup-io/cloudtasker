@@ -568,4 +568,16 @@ RSpec.describe Cloudtasker::Worker do
       it { is_expected.to eq(0.0) }
     end
   end
+
+  describe '#run_worker_callback' do
+    subject(:run_worker_callback) { worker.run_callback(callback, *args) }
+
+    let(:worker) { worker_class.new }
+    let(:callback) { :some_callback }
+    let(:args) { [1, 'arg'] }
+    let(:resp) { 'some-response' }
+
+    before { allow(worker).to receive(callback).with(*args).and_return(resp) }
+    it { is_expected.to eq(resp) }
+  end
 end

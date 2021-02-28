@@ -303,7 +303,7 @@ RSpec.describe Cloudtasker::Batch::Job do
 
     context 'with errored callback' do
       before { allow(worker).to receive(callback).and_raise(ArgumentError) }
-      it { expect { run_worker_callback }.to raise_error(Cloudtasker::Batch::CallbackError) }
+      it { expect { run_worker_callback }.to raise_error(ArgumentError) }
     end
 
     context 'with errored on_child_error callback' do

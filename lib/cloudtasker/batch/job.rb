@@ -254,8 +254,8 @@ module Cloudtasker
       end
 
       #
-      # Run worker callback in a controlled environment to
-      # avoid interruption of the callback flow.
+      # Run worker callback. The error and dead callbacks get
+      # silenced should they raise an error.
       #
       # @param [String, Symbol] callback The callback to run.
       # @param [Array<any>] *args The callback arguments.
@@ -265,15 +265,15 @@ module Cloudtasker
       def run_worker_callback(callback, *args)
         worker.try(callback, *args)
       rescue StandardError => e
-        error = CallbackError.new(e)
-
         # There is no point in retrying jobs due to failure callbacks failing
         # Only completion callbacks will trigger a re-run of the job because
         # these do matter for batch completion
-        raise error unless IGNORED_ERRORED_CALLBACKS.include?(callback)
+        raise(e) unless IGNORED_ERRORED_CALLBACKS.include?(callback)
 
         # Log error instead
-        worker.logger.error(["Callback error ignored for #{callback}", error, error.backtrace].flatten.join("\n"))
+        worker.logger.error(
+          ["Callback #{callback} failed to run. Skipping to preserve error flow.", e, e.backtrace].flatten.join("\n")
+        )
       end
 
       #

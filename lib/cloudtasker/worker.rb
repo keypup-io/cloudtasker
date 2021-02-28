@@ -344,6 +344,18 @@ module Cloudtasker
       (perform_ended_at - perform_started_at).ceil(3)
     end
 
+    #
+    # Run worker callback.
+    #
+    # @param [String, Symbol] callback The callback to run.
+    # @param [Array<any>] *args The callback arguments.
+    #
+    # @return [any] The callback return value
+    #
+    def run_callback(callback, *args)
+      try(callback, *args)
+    end
+
     #=============================
     # Private
     #=============================
@@ -356,7 +368,7 @@ module Cloudtasker
     # @param [Exception, nil] error An optional exception to be passed to the DeadWorkerError.
     #
     def flag_as_dead(error = nil)
-      try(:on_dead, error)
+      run_callback(:on_dead, error)
     ensure
       raise(DeadWorkerError, error)
     end
@@ -383,7 +395,7 @@ module Cloudtasker
           # Perform the job
           perform(*job_args)
         rescue StandardError => e
-          try(:on_error, e)
+          run_callback(:on_error, e)
           return raise(e) unless job_must_die?
 
           # Flag job as dead
