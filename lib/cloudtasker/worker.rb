@@ -368,7 +368,7 @@ module Cloudtasker
     # @param [Exception, nil] error An optional exception to be passed to the DeadWorkerError.
     #
     def flag_as_dead(error = nil)
-      run_callback(:on_dead, error)
+      run_callback(:on_dead, error || DeadWorkerError.new)
     ensure
       raise(DeadWorkerError, error)
     end

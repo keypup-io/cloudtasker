@@ -358,33 +358,33 @@ RSpec.describe Cloudtasker::Worker do
       let(:error) { StandardError.new('some-message') }
 
       before { allow(worker).to receive(:perform).and_raise(error) }
-      before { allow(worker).to receive(:on_error).with(error) }
-      after { expect(worker).to have_received(:on_error) }
+      before { allow(worker).to receive(:on_error) }
+      after { expect(worker).to have_received(:on_error).with(error) }
       it { expect { execute }.to raise_error(error) }
+    end
+
+    context 'with dying job' do
+      let(:error) { StandardError.new('some-message') }
+
+      before { worker.job_retries = worker_class.max_retries }
+      before { allow(worker).to receive(:perform).and_raise(error) }
+      before { allow(worker).to receive(:on_error) }
+      before { allow(worker).to receive(:on_dead) }
+      after { expect(worker).to have_received(:on_error).with(error) }
+      after { expect(worker).to have_received(:on_dead).with(error) }
+      it { expect { execute }.to raise_error(Cloudtasker::DeadWorkerError) }
     end
 
     context 'with dead job' do
       let(:error) { StandardError.new('some-message') }
 
-      before { worker.job_retries = worker_class.max_retries }
-      before { allow(worker).to receive(:perform).and_raise(error) }
-      before { allow(worker).to receive(:on_error).with(error) }
-      before { allow(worker).to receive(:on_dead).with(error) }
-      after { expect(worker).to have_received(:on_error) }
-      after { expect(worker).to have_received(:on_dead) }
-      it { expect { execute }.to raise_error(Cloudtasker::DeadWorkerError) }
-    end
-
-    context 'with already dead job' do
-      let(:error) { StandardError.new('some-message') }
-
       before { worker.job_retries = worker_class.max_retries + 1 }
       before { allow(worker).to receive(:perform) }
       before { allow(worker).to receive(:on_error) }
-      before { allow(worker).to receive(:on_dead).with(nil) }
+      before { allow(worker).to receive(:on_dead) }
       after { expect(worker).not_to have_received(:perform) }
       after { expect(worker).not_to have_received(:on_error) }
-      after { expect(worker).to have_received(:on_dead) }
+      after { expect(worker).to have_received(:on_dead).with(be_a(Cloudtasker::DeadWorkerError)) }
       it { expect { execute }.to raise_error(Cloudtasker::DeadWorkerError) }
     end
 
