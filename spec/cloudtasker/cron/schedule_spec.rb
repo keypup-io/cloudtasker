@@ -3,6 +3,7 @@
 require 'cloudtasker/cron/middleware'
 
 RSpec.describe Cloudtasker::Cron::Schedule do
+  let(:redis) { described_class.redis }
   let(:id) { 'SomeScheduleId' }
   let(:cron) { '0 0 * * *' }
   let(:worker_klass) { TestWorker }
@@ -36,12 +37,12 @@ RSpec.describe Cloudtasker::Cron::Schedule do
     context 'with nil' do
       let(:val) { nil }
 
-      it { is_expected.to be_nil }
+      it { is_expected.to eq(described_class.to_s.underscore) }
     end
   end
 
   describe '.all' do
-    subject { described_class.all.sort_by(&:id) }
+    subject { described_class.all&.sort_by(&:id) }
 
     let!(:schedules) do
       3.times.map do |n|
@@ -51,7 +52,16 @@ RSpec.describe Cloudtasker::Cron::Schedule do
       end.sort_by(&:id)
     end
 
-    it { is_expected.to eq(schedules) }
+    context 'with schedule set available' do
+      after { expect(redis.smembers(described_class.key).sort).to eq(schedules.map(&:id)) }
+      it { is_expected.to eq(schedules) }
+    end
+
+    context 'without schedule set available' do
+      before { redis.del(described_class.key) }
+      after { expect(redis.smembers(described_class.key).sort).to eq(schedules.map(&:id)) }
+      it { is_expected.to eq(schedules) }
+    end
   end
 
   describe '.load_from_hash!' do
@@ -123,6 +133,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
       let(:task_id) { '222' }
 
       before { described_class.delete(id) }
+      after { expect(redis.smembers(described_class.key)).to eq([]) }
       after { expect(Cloudtasker::CloudTask).to have_received(:delete) }
       it { is_expected.to be_nil }
     end
@@ -342,6 +353,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
     context 'with invalid schedule' do
       before { allow(schedule).to receive(:valid?).and_return(false) }
       after { expect(described_class.find(id)).to be_nil }
+      after { expect(redis.smembers(described_class.key)).to be_empty }
       after { expect(job).not_to have_received(:schedule!) }
       it { is_expected.to be_falsey }
     end
@@ -349,6 +361,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
     context 'with config changed' do
       before { allow(schedule).to receive(:config_changed?).and_return(true) }
       after { expect(described_class.find(id)).to eq(schedule) }
+      after { expect(redis.smembers(described_class.key)).to eq([schedule.id]) }
       after { expect(job).to have_received(:schedule!) }
       it { is_expected.to be_truthy }
     end
@@ -358,6 +371,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
 
       before { allow(schedule).to receive(:config_changed?).and_return(true) }
       after { expect(described_class.find(id)).to eq(schedule) }
+      after { expect(redis.smembers(described_class.key)).to eq([schedule.id]) }
       after { expect(job).to have_received(:schedule!) }
       after { expect(Cloudtasker::CloudTask).to have_received(:delete).with(task_id) }
       it { is_expected.to be_truthy }
@@ -369,6 +383,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
 
       before { allow(schedule).to receive(:config_changed?).and_return(false) }
       after { expect(described_class.find(id)).to eq(schedule) }
+      after { expect(redis.smembers(described_class.key)).to eq([schedule.id]) }
       after { expect(job).not_to have_received(:schedule!) }
       it { is_expected.to be_truthy }
     end
@@ -379,6 +394,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
 
       before { allow(schedule).to receive(:config_changed?).and_return(false) }
       after { expect(described_class.find(id)).to eq(schedule) }
+      after { expect(redis.smembers(described_class.key)).to eq([schedule.id]) }
       after { expect(job).to have_received(:schedule!) }
       after { expect(Cloudtasker::CloudTask).to have_received(:delete).with(task_id) }
       it { is_expected.to be_truthy }
