@@ -7,7 +7,7 @@ RSpec.describe ActiveJob::QueueAdapters::CloudtaskerAdapter do
 
   subject(:adapter) { described_class.new }
 
-  let :example_job_wrapper_double do
+  let(:example_job_wrapper_double) do
     instance_double(
       "#{described_class.name}::JobWrapper",
       example_job_wrapper_args
@@ -39,7 +39,7 @@ RSpec.describe ActiveJob::QueueAdapters::CloudtaskerAdapter do
   end
 
   describe '#enqueue_at' do
-    let(:example_execution_timestamp) { 1.week.from_now.to_f }
+    let(:example_execution_timestamp) { 1.week.from_now.to_i }
     let(:expected_execution_time) { Time.at(example_execution_timestamp) }
 
     include_examples 'of instantiating a Cloudtasker JobWrapper from ActiveJob'

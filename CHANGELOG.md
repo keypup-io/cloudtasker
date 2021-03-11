@@ -1,8 +1,8 @@
 # Changelog
 
-## Latest RC: [v0.11.rc2](https://github.com/keypup-io/cloudtasker/tree/v0.11.rc2) (2020-11-23)
+## [v0.11.0](https://github.com/keypup-io/cloudtasker/tree/v0.11.0) (2020-11-23)
 
-[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.10.0...v0.11.rc2)
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.10.0...v0.11.0)
 
 **Improvements:**
 - Worker: drop job (return 205 response) when worker arguments are not available (e.g. arguments were stored in Redis and the latter was flushed)
