@@ -1,6 +1,6 @@
 # Changelog
 
-## [v0.11.0](https://github.com/keypup-io/cloudtasker/tree/v0.11.0) (2020-11-23)
+## [v0.11.0](https://github.com/keypup-io/cloudtasker/tree/v0.11.0) (2021-03-11)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.10.0...v0.11.0)
 
