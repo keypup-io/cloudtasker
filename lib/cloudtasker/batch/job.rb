@@ -13,6 +13,10 @@ module Cloudtasker
       # List of statuses triggering a completion callback
       COMPLETION_STATUSES = %w[completed dead].freeze
 
+      # These callbacks do not need to raise errors on their own
+      # because the jobs will be either retried or dropped
+      IGNORED_ERRORED_CALLBACKS = %i[on_child_error on_child_dead].freeze
+
       #
       # Return the cloudtasker redis client
       #
@@ -250,8 +254,8 @@ module Cloudtasker
       end
 
       #
-      # Run worker callback in a controlled environment to
-      # avoid interruption of the callback flow.
+      # Run worker callback. The error and dead callbacks get
+      # silenced should they raise an error.
       #
       # @param [String, Symbol] callback The callback to run.
       # @param [Array<any>] *args The callback arguments.
@@ -261,9 +265,15 @@ module Cloudtasker
       def run_worker_callback(callback, *args)
         worker.try(callback, *args)
       rescue StandardError => e
-        Cloudtasker.logger.error("Error running callback #{callback}: #{e}")
-        Cloudtasker.logger.error(e.backtrace.join("\n"))
-        nil
+        # There is no point in retrying jobs due to failure callbacks failing
+        # Only completion callbacks will trigger a re-run of the job because
+        # these do matter for batch completion
+        raise(e) unless IGNORED_ERRORED_CALLBACKS.include?(callback)
+
+        # Log error instead
+        worker.logger.error(
+          ["Callback #{callback} failed to run. Skipping to preserve error flow.", e, e.backtrace].flatten.join("\n")
+        )
       end
 
       #
@@ -275,7 +285,7 @@ module Cloudtasker
 
         # Propagate event
         parent_batch&.on_child_complete(self, status)
-      ensure
+
         # The batch tree is complete. Cleanup the tree.
         cleanup unless parent_batch
       end

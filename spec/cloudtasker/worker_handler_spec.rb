@@ -30,6 +30,48 @@ RSpec.describe Cloudtasker::WorkerHandler do
     it { is_expected.to be_a(Cloudtasker::RedisClient) }
   end
 
+  describe '.log_execution_error' do
+    subject { described_class.log_execution_error(worker, error) }
+
+    let(:worker) { instance_double('TestWorker') }
+    let(:error) { instance_double('ArgumentError', backtrace: %w[1 2 3]) }
+    let(:error_msg) { [error, error.backtrace].flatten.join("\n") }
+
+    context 'with ActiveJob worker' do
+      let(:worker) { ActiveJob::QueueAdapters::CloudtaskerAdapter::JobWrapper.new }
+
+      before do
+        expect(worker).not_to receive(:logger)
+        expect(Cloudtasker).not_to receive(:logger)
+      end
+
+      it { is_expected.to be_nil }
+    end
+
+    context 'with no worker' do
+      let(:worker) { nil }
+      let(:logger) { instance_double('ActiveSupport::Logger') }
+
+      before do
+        allow(Cloudtasker).to receive(:logger).and_return(logger)
+        expect(logger).to receive(:error).with(error_msg).and_return(true)
+      end
+
+      it { is_expected.to be_truthy }
+    end
+
+    context 'with worker' do
+      let(:logger) { instance_double('Cloudtasker::WorkerLogger') }
+
+      before do
+        allow(worker).to receive(:logger).and_return(logger)
+        expect(logger).to receive(:error).with(error_msg).and_return(true)
+      end
+
+      it { is_expected.to be_truthy }
+    end
+  end
+
   describe '.extract_payload' do
     subject { described_class.extract_payload(input_payload) }
 

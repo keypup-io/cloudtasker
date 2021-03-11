@@ -23,14 +23,12 @@ module Cloudtasker
       #
       # Return a namespaced key.
       #
-      # @param [String, Symbol] val The key to namespace
+      # @param [String, Symbol, nil] val The key to namespace
       #
       # @return [String] The namespaced key.
       #
-      def self.key(val)
-        return nil if val.nil?
-
-        [to_s.underscore, val.to_s].join('/')
+      def self.key(val = nil)
+        [to_s.underscore, val].compact.map(&:to_s).join('/')
       end
 
       #
@@ -39,9 +37,17 @@ module Cloudtasker
       # @return [Array<Cloudtasker::Backend::RedisTask>] All the tasks.
       #
       def self.all
-        redis.search(key('*')).map do |gid|
-          payload = redis.fetch(gid)
-          new(payload.merge(id: gid.sub(key(''), '')))
+        if redis.exists?(key)
+          # Use Schedule Set if available
+          redis.smembers(key).map { |id| find(id) }
+        else
+          # Fallback to redis key matching and migrate tasks
+          # to use Task Set instead.
+          redis.search(key('*')).map do |gid|
+            task_id = gid.sub(key(''), '')
+            redis.sadd(key, task_id)
+            find(task_id)
+          end
         end
       end
 
@@ -82,6 +88,7 @@ module Cloudtasker
 
         # Save job
         redis.write(key(id), payload)
+        redis.sadd(key, id)
         new(payload.merge(id: id))
       end
 
@@ -105,6 +112,7 @@ module Cloudtasker
       # @param [String] id The task id.
       #
       def self.delete(id)
+        redis.srem(key, id)
         redis.del(key(id))
       end
 
@@ -176,7 +184,7 @@ module Cloudtasker
       # Remove the task from the queue.
       #
       def destroy
-        redis.del(gid)
+        self.class.delete(id)
       end
 
       #

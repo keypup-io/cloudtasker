@@ -21,14 +21,12 @@ module Cloudtasker
       #
       # Return a namespaced key.
       #
-      # @param [String, Symbol] val The key to namespace
+      # @param [String, Symbol, nil] val The key to namespace
       #
       # @return [String] The namespaced key.
       #
-      def self.key(val)
-        return nil if val.nil?
-
-        [to_s.underscore, val.to_s].join('/')
+      def self.key(val = nil)
+        [to_s.underscore, val].compact.map(&:to_s).join('/')
       end
 
       #
@@ -37,8 +35,17 @@ module Cloudtasker
       # @return [Array<Cloudtasker::Batch::Schedule>] The list of stored schedules.
       #
       def self.all
-        redis.search(key('*')).map do |gid|
-          find(gid.sub(key(''), ''))
+        if redis.exists?(key)
+          # Use Schedule Set if available
+          redis.smembers(key).map { |id| find(id) }
+        else
+          # Fallback to redis key matching and migrate schedules
+          # to use Schedule Set instead.
+          redis.search(key('*')).map do |gid|
+            schedule_id = gid.sub(key(''), '')
+            redis.sadd(key, schedule_id)
+            find(schedule_id)
+          end
         end
       end
 
@@ -90,7 +97,7 @@ module Cloudtasker
       end
 
       #
-      # Destroy a schedule by id.
+      # Delete a schedule by id.
       #
       # @param [String] id The schedule id.
       #
@@ -101,6 +108,7 @@ module Cloudtasker
 
           # Delete task and stored schedule
           CloudTask.delete(schedule.task_id) if schedule.task_id
+          redis.srem(key, schedule.id)
           redis.del(schedule.gid)
         end
       end
@@ -270,6 +278,7 @@ module Cloudtasker
 
         # Save schedule
         config_was_changed = config_changed?
+        redis.sadd(self.class.key, id)
         redis.write(gid, to_h)
 
         # Stop there if backend does not need update

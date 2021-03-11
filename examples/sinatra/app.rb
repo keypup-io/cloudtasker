@@ -42,10 +42,8 @@ post '/cloudtasker/run' do
   rescue Cloudtasker::InvalidWorkerError
     # 404: Job will be retried
     return 404
-  rescue StandardError => e
-    # 404: Job will be retried
-    Cloudtasker.logger.error(e)
-    Cloudtasker.logger.error(e.backtrace.join("\n"))
-    head :unprocessable_entity
+  rescue StandardError
+    # 422: Job will be retried
+    return 423
   end
 end

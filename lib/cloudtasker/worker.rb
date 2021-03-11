@@ -311,13 +311,25 @@ module Cloudtasker
     end
 
     #
-    # Return true if the job has excceeded its maximum number
-    # of retries
+    # Return true if the job must declared dead upon raising
+    # an error.
+    #
+    # @return [Boolean] True if the job must die on error.
+    #
+    def job_must_die?
+      job_retries >= job_max_retries
+    end
+
+    #
+    # Return true if the job has strictly excceeded its maximum number
+    # of retries.
+    #
+    # Used a preemptive filter when running the job.
     #
     # @return [Boolean] True if the job is dead
     #
     def job_dead?
-      job_retries >= job_max_retries
+      job_retries > job_max_retries
     end
 
     #
@@ -332,10 +344,34 @@ module Cloudtasker
       (perform_ended_at - perform_started_at).ceil(3)
     end
 
+    #
+    # Run worker callback.
+    #
+    # @param [String, Symbol] callback The callback to run.
+    # @param [Array<any>] *args The callback arguments.
+    #
+    # @return [any] The callback return value
+    #
+    def run_callback(callback, *args)
+      try(callback, *args)
+    end
+
     #=============================
     # Private
     #=============================
     private
+
+    #
+    # Flag the worker as dead by invoking the on_dead hook
+    # and raising a DeadWorkerError
+    #
+    # @param [Exception, nil] error An optional exception to be passed to the DeadWorkerError.
+    #
+    def flag_as_dead(error = nil)
+      run_callback(:on_dead, error || DeadWorkerError.new)
+    ensure
+      raise(DeadWorkerError, error)
+    end
 
     #
     # Execute the worker perform method through the middleware chain.
@@ -346,6 +382,9 @@ module Cloudtasker
       self.perform_started_at = Time.now
 
       Cloudtasker.config.server_middleware.invoke(self) do
+        # Immediately abort the job if it is already dead
+        flag_as_dead if job_dead?
+
         begin
           # Abort if arguments are missing. This may happen with redis arguments storage
           # if Cloud Tasks times out on a job but the job still succeeds
@@ -356,12 +395,11 @@ module Cloudtasker
           # Perform the job
           perform(*job_args)
         rescue StandardError => e
-          try(:on_error, e)
-          return raise(e) unless job_dead?
+          run_callback(:on_error, e)
+          return raise(e) unless job_must_die?
 
           # Flag job as dead
-          try(:on_dead, e)
-          raise(DeadWorkerError, e)
+          flag_as_dead(e)
         end
       end
     ensure

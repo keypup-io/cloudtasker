@@ -3,6 +3,7 @@
 require 'cloudtasker/backend/redis_task'
 
 RSpec.describe Cloudtasker::Backend::RedisTask do
+  let(:redis) { described_class.redis }
   let(:job_payload) do
     {
       http_request: {
@@ -40,22 +41,25 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
     context 'with nil' do
       let(:val) { nil }
 
-      it { is_expected.to be_nil }
+      it { is_expected.to eq(described_class.to_s.underscore) }
     end
   end
 
   describe '.all' do
     subject { described_class.all.sort_by(&:id) }
 
-    let(:expected) do
-      described_class.redis.keys.map do |gid|
-        payload = described_class.redis.fetch(gid)
-        described_class.new(payload.merge(id: gid.gsub(described_class.key(''), '')))
-      end.sort_by(&:id)
+    let!(:tasks) { 2.times.map { described_class.create(job_payload) }.sort_by(&:id) }
+
+    context 'with task set available' do
+      after { expect(redis.smembers(described_class.key).sort).to eq(tasks.map(&:id)) }
+      it { is_expected.to eq(tasks) }
     end
 
-    before { 2.times { described_class.create(job_payload) } }
-    it { is_expected.to eq(expected) }
+    context 'without task set available' do
+      before { redis.del(described_class.key) }
+      after { expect(redis.smembers(described_class.key).sort).to eq(tasks.map(&:id)) }
+      it { is_expected.to eq(tasks) }
+    end
   end
 
   describe '.ready_to_process' do
@@ -107,17 +111,22 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
       job_payload.merge(schedule_time: Time.at(job_payload[:schedule_time]))
     end
 
-    before { described_class.create(job_payload) }
+    before do
+      allow(SecureRandom).to receive(:uuid).and_return(task_id)
+      described_class.create(job_payload)
+    end
+    after { expect(redis.smembers(described_class.key)).to eq([task_id]) }
+
     it { is_expected.to have_attributes(expected_attrs) }
   end
 
   describe '.find' do
-    subject { described_class.find(id) }
+    subject { described_class.find(task_id) }
 
-    let(:id) { described_class.redis.keys.first.gsub(described_class.key(''), '') }
-    let(:expected_record) { described_class.new(job_payload.merge(id: id)) }
+    let(:expected_record) { described_class.new(job_payload.merge(id: task_id)) }
 
     context 'with record found' do
+      before { allow(SecureRandom).to receive(:uuid).and_return(task_id) }
       before { described_class.create(job_payload) }
       it { is_expected.to eq(expected_record) }
     end
@@ -130,12 +139,15 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
   end
 
   describe '.delete' do
-    subject { described_class.find(id) }
+    subject { described_class.find(task_id) }
 
-    let(:id) { described_class.redis.keys.first.gsub(described_class.key(''), '') }
+    before do
+      allow(SecureRandom).to receive(:uuid).and_return(task_id)
+      described_class.create(job_payload)
+      described_class.delete(task_id)
+    end
+    after { expect(redis.smembers(described_class.key)).to be_empty }
 
-    before { described_class.create(job_payload) }
-    before { described_class.delete(id) }
     it { is_expected.to be_nil }
   end
 
@@ -211,12 +223,12 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
   end
 
   describe '#destroy' do
-    subject { described_class.all.first }
+    subject { task.destroy }
 
     let!(:task) { described_class.create(job_payload) }
 
-    before { task.destroy }
-    it { is_expected.to be_nil }
+    before { expect(described_class).to receive(:delete).with(task.id).and_return(true) }
+    it { is_expected.to be_truthy }
   end
 
   describe '#deliver' do
