@@ -115,12 +115,53 @@ RSpec.describe Cloudtasker::WorkerLogger do
     it { is_expected.to eq(Cloudtasker.logger) }
   end
 
+  describe '#formatted_message_as_string' do
+    subject { logger.formatted_message_as_string(msg) }
+
+    let(:msg_content) { msg }
+    let(:expected_msg) { "[Cloudtasker][#{worker.class}][#{worker.job_id}] #{msg_content}" }
+
+    context 'with error' do
+      let(:msg) { StandardError.new('some error').tap { |k| k.set_backtrace(%w[line1 line2 line3]) } }
+      let(:msg_content) { [msg.inspect, msg.backtrace].flatten(1).join("\n") }
+
+      it { is_expected.to eq(expected_msg) }
+    end
+
+    context 'with string' do
+      let(:msg) { 'some message' }
+
+      it { is_expected.to eq(expected_msg) }
+    end
+
+    context 'with object' do
+      let(:msg) { { foo: 'bar' } }
+      let(:msg_content) { msg.inspect }
+
+      it { is_expected.to eq(expected_msg) }
+    end
+  end
+
   describe '#formatted_message' do
     subject { logger.formatted_message(msg) }
 
-    let(:msg) { 'some message' }
+    context 'with error' do
+      let(:msg) { StandardError.new('some error') }
 
-    it { is_expected.to eq("[Cloudtasker][#{worker.class}][#{worker.job_id}] #{msg}") }
+      it { is_expected.to eq(msg) }
+    end
+
+    context 'with string' do
+      let(:msg) { 'some message' }
+
+      it { is_expected.to eq(logger.formatted_message_as_string(msg)) }
+    end
+
+    context 'with object' do
+      let(:msg) { { foo: 'bar' } }
+
+      it { is_expected.to eq(msg) }
+    end
   end
 
   describe '#info' do

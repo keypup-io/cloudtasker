@@ -52,6 +52,26 @@ module Cloudtasker
     end
 
     #
+    # Format the log message as string.
+    #
+    # @param [Object] msg The log message or object.
+    #
+    # @return [String] The formatted message
+    #
+    def formatted_message_as_string(msg)
+      # Format message
+      msg_content = if msg.is_a?(Exception)
+                      [msg.inspect, msg.backtrace].flatten(1).join("\n")
+                    elsif msg.is_a?(String)
+                      msg
+                    else
+                      msg.inspect
+                    end
+
+      "[Cloudtasker][#{worker.class}][#{worker.job_id}] #{msg_content}"
+    end
+
+    #
     # Format main log message.
     #
     # @param [String] msg The message to log.
@@ -59,7 +79,12 @@ module Cloudtasker
     # @return [String] The formatted log message
     #
     def formatted_message(msg)
-      "[Cloudtasker][#{worker.class}][#{worker.job_id}] #{msg}"
+      if msg.is_a?(String)
+        formatted_message_as_string(msg)
+      else
+        # Delegate object formatting to logger
+        msg
+      end
     end
 
     #
@@ -147,7 +172,9 @@ module Cloudtasker
       # ActiveSupport::Logger does not support passing a payload through a block on top
       # of a message.
       if defined?(ActiveSupport::Logger) && logger.is_a?(ActiveSupport::Logger)
-        logger.send(level) { "#{formatted_message(msg)} -- #{payload_block.call}" }
+        # The logger is fairly basic in terms of formatting. All inputs get converted
+        # as regular strings.
+        logger.send(level) { "#{formatted_message_as_string(msg)} -- #{payload_block.call}" }
       else
         logger.send(level, formatted_message(msg), &payload_block)
       end
