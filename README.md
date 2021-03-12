@@ -136,7 +136,7 @@ That's it! Your job was picked up by the Cloudtasker local server and sent for p
 Now jump to the next section to configure your app to use Google Cloud Tasks as a backend.
 
 ## Get started with Rails & ActiveJob
-**Note**: ActiveJob is supported since `0.11.0`
+**Note**: ActiveJob is supported since `0.11.0`  
 **Note**: Cloudtasker extensions (cron, batch and unique jobs) are not available when using cloudtasker via ActiveJob.
 
 Cloudtasker is pre-integrated with ActiveJob. Follow the steps below to get started.
