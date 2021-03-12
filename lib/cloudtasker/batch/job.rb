@@ -271,9 +271,8 @@ module Cloudtasker
         raise(e) unless IGNORED_ERRORED_CALLBACKS.include?(callback)
 
         # Log error instead
-        worker.logger.error(
-          ["Callback #{callback} failed to run. Skipping to preserve error flow.", e, e.backtrace].flatten.join("\n")
-        )
+        worker.logger.error(e)
+        worker.logger.error("Callback #{callback} failed to run. Skipping to preserve error flow.")
       end
 
       #

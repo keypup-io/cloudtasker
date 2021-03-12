@@ -35,7 +35,6 @@ RSpec.describe Cloudtasker::WorkerHandler do
 
     let(:worker) { instance_double('TestWorker') }
     let(:error) { instance_double('ArgumentError', backtrace: %w[1 2 3]) }
-    let(:error_msg) { [error, error.backtrace].flatten.join("\n") }
 
     context 'with ActiveJob worker' do
       let(:worker) { ActiveJob::QueueAdapters::CloudtaskerAdapter::JobWrapper.new }
@@ -54,7 +53,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
 
       before do
         allow(Cloudtasker).to receive(:logger).and_return(logger)
-        expect(logger).to receive(:error).with(error_msg).and_return(true)
+        expect(logger).to receive(:error).with(error).and_return(true)
       end
 
       it { is_expected.to be_truthy }
@@ -65,7 +64,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
 
       before do
         allow(worker).to receive(:logger).and_return(logger)
-        expect(logger).to receive(:error).with(error_msg).and_return(true)
+        expect(logger).to receive(:error).with(error).and_return(true)
       end
 
       it { is_expected.to be_truthy }

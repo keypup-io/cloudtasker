@@ -64,7 +64,7 @@ module Cloudtasker
       logger = worker&.logger || Cloudtasker.logger
 
       # Log error
-      logger.error([error, error.backtrace].flatten.join("\n"))
+      logger.error(error)
     end
 
     #
