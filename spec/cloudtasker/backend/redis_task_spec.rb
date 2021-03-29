@@ -203,13 +203,16 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
     subject { described_class.all.first }
 
     let(:delay) { 3600 }
-    let(:task) { described_class.create(job_payload) }
+    let(:task) { described_class.create(job_payload).tap(&:destroy) }
     let(:retries) { job_payload[:retries] + 1 }
     let(:opts) { {} }
     let(:expected_attrs) { { queue: task.queue, retries: retries, schedule_time: Time.at(Time.now.to_i + delay) } }
 
-    before { Timecop.freeze }
-    before { task.retry_later(delay, opts) }
+    before do
+      Timecop.freeze
+      task.retry_later(delay, opts)
+      expect(redis.smembers(described_class.key)).to eq([task.id])
+    end
     after { Timecop.return }
 
     it { is_expected.to have_attributes(expected_attrs) }

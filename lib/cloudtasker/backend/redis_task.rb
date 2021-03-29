@@ -178,6 +178,7 @@ module Cloudtasker
           schedule_time: (Time.now + interval).to_i,
           queue: queue
         )
+        redis.sadd(self.class.key, id)
       end
 
       #
