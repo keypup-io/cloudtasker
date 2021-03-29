@@ -1,8 +1,8 @@
 # Changelog
 
-## Latest RC [v0.12.rc1](https://github.com/keypup-io/cloudtasker/tree/v0.12.rc1) (2021-03-11)
+## Latest RC [v0.12.rc4](https://github.com/keypup-io/cloudtasker/tree/v0.12.rc4) (2021-03-29)
 
-[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.11.0...v0.12.rc1)
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.11.0...v0.12.rc4)
 
 **Improvements:**
 - ActiveJob: do not double log errors (ActiveJob has its own error logging)

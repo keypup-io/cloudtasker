@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module Cloudtasker
-  VERSION = '0.12.rc3'
+  VERSION = '0.12.rc4'
 end
