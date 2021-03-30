@@ -84,8 +84,29 @@ You can access progression statistics in callback using `batch.progress`. See th
 E.g.
 ```ruby
 def on_batch_node_complete(_child_job)
-  logger.info("Total: #{batch.progress.total}")
-  logger.info("Completed: #{batch.progress.completed}")
-  logger.info("Progress: #{batch.progress.percent.to_i}%")
+  progress = batch.progress
+  logger.info("Total: #{progress.total}")
+  logger.info("Completed: #{progress.completed}")
+  logger.info("Progress: #{progress.percent.to_i}%")
+end
+```
+
+**Since:** `v0.12.rc5`  
+By default the `progress` method only considers the direct child jobs to evaluate the batch progress. You can pass `depth: somenumber` to the `progress` method to calculate the actual batch progress in a more granular way. Be careful however that this method recursively calculates progress on the sub-batches and is therefore expensive.
+
+E.g.
+```ruby
+def on_batch_node_complete(_child_job)
+  # Considers the children for batch progress calculation
+  progress_0 = batch.progress # same as batch.progress(depth: 0)
+
+  # Considers the children and grand-children for batch progress calculation
+  progress_1 = batch.progress(depth: 1)
+
+  # Considers the children, grand-children and grand-grand-children for batch progress calculation
+  progress_2 = batch.progress(depth: 3)
+
+  logger.info("Progress: #{progress_1.percent.to_i}%")
+  logger.info("Progress: #{progress_2.percent.to_i}%")
 end
 ```

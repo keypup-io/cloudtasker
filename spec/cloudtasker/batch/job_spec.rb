@@ -489,7 +489,9 @@ RSpec.describe Cloudtasker::Batch::Job do
   end
 
   describe '#progress' do
-    subject { batch.progress }
+    subject { batch.progress(depth: depth) }
+
+    let(:depth) { 0 }
 
     before do
       child_batch.jobs.push(worker.new_instance)
@@ -503,8 +505,24 @@ RSpec.describe Cloudtasker::Batch::Job do
       batch.save
     end
 
-    it { is_expected.to be_a(Cloudtasker::Batch::BatchProgress) }
-    it { is_expected.to have_attributes(total: 4, completed: 1, scheduled: 2, processing: 1) }
+    context 'with depth = 0' do
+      it { is_expected.to be_a(Cloudtasker::Batch::BatchProgress) }
+      it { is_expected.to have_attributes(total: 1, completed: 0, scheduled: 1, processing: 0) }
+    end
+
+    context 'with depth = 1' do
+      let(:depth) { 1 }
+
+      it { is_expected.to be_a(Cloudtasker::Batch::BatchProgress) }
+      it { is_expected.to have_attributes(total: 4, completed: 1, scheduled: 2, processing: 1) }
+    end
+
+    context 'with nil depth' do
+      let(:depth) { nil }
+
+      it { is_expected.to be_a(Cloudtasker::Batch::BatchProgress) }
+      it { is_expected.to have_attributes(total: 1, completed: 0, scheduled: 1, processing: 0) }
+    end
   end
 
   describe '#complete' do

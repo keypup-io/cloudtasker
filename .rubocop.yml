@@ -6,7 +6,7 @@ AllCops:
     - 'vendor/**/*'
 
 Metrics/ClassLength:
-  Max: 150
+  Max: 200
 
 Metrics/ModuleLength:
   Max: 150

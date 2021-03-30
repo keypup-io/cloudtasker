@@ -347,13 +347,20 @@ module Cloudtasker
       #
       # @return [Cloudtasker::Batch::BatchProgress] The batch progress.
       #
-      def progress
+      def progress(depth: 0)
+        depth = depth.to_i
+
         # Capture batch state
         state = batch_state
 
-        # Sum batch progress of current batch and all sub-batches
+        # Return immediately if we do not need to go down the tree
+        return BatchProgress.new(state) if depth <= 0
+
+        # Sum batch progress of current batch and sub-batches up to the specified
+        # depth
         state.to_h.reduce(BatchProgress.new(state)) do |memo, (child_id, child_status)|
-          memo + (self.class.find(child_id)&.progress || BatchProgress.new(child_id => child_status))
+          memo + (self.class.find(child_id)&.progress(depth: depth - 1) ||
+            BatchProgress.new(child_id => child_status))
         end
       end
 
