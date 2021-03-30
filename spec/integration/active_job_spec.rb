@@ -59,9 +59,10 @@ RSpec.describe 'ActiveJob integration' do
     end
 
     context 'with a custom execution wait time' do
-      let!(:expected_calculated_datetime) { 1.week.from_now }
+      let(:wait_time) { 1.week }
+      let(:expected_calculated_datetime) { wait_time.from_now }
 
-      let :expected_cloud_task_create_argument do
+      let(:expected_cloud_task_create_argument) do
         a_hash_including(
           http_request: expected_cloud_task_http_request_data,
           queue: 'default',
@@ -69,12 +70,14 @@ RSpec.describe 'ActiveJob integration' do
         )
       end
 
+      around { |e| Timecop.freeze { e.run } }
+
       it 'enqueues the job to run at the calculated datetime' do
         expect(Cloudtasker::CloudTask).to receive(:create)
           .with(expected_cloud_task_create_argument)
 
         example_job_class
-          .set(wait: 1.week)
+          .set(wait: wait_time)
           .perform_later(*example_job_arguments)
       end
     end
