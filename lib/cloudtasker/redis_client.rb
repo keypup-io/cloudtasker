@@ -75,14 +75,18 @@ module Cloudtasker
     #   end
     #
     # @param [String] cache_key The cache key to access.
+    # @param [Integer] max_wait The number of seconds after which the lock will be cleared anyway.
     #
-    def with_lock(cache_key)
+    def with_lock(cache_key, max_wait: nil)
       return nil unless cache_key
+
+      # Set max wait
+      max_wait = (max_wait || LOCK_DURATION).to_i
 
       # Wait to acquire lock
       lock_key = [LOCK_KEY_PREFIX, cache_key].join('/')
       client.with do |conn|
-        sleep(LOCK_WAIT_DURATION) until conn.set(lock_key, true, nx: true, ex: LOCK_DURATION)
+        sleep(LOCK_WAIT_DURATION) until conn.set(lock_key, true, nx: true, ex: max_wait)
       end
 
       # yield content

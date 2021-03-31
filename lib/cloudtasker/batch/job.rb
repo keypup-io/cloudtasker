@@ -17,6 +17,10 @@ module Cloudtasker
       # because the jobs will be either retried or dropped
       IGNORED_ERRORED_CALLBACKS = %i[on_child_error on_child_dead].freeze
 
+      # The maximum number of seconds to wait for a batch state lock
+      # to be acquired.
+      BATCH_MAX_LOCK_WAIT = 60
+
       #
       # Return the cloudtasker redis client
       #
@@ -228,10 +232,8 @@ module Cloudtasker
       # @param [String] job_id The batch id.
       # @param [String] status The status of the sub-batch.
       #
-      # @return [<Type>] <description>
-      #
       def update_state(batch_id, status)
-        redis.with_lock(batch_state_gid) do
+        redis.with_lock(batch_state_gid, max_wait: BATCH_MAX_LOCK_WAIT) do
           state = batch_state
           state[batch_id.to_sym] = status.to_s if state.key?(batch_id.to_sym)
           redis.write(batch_state_gid, state)
@@ -241,10 +243,10 @@ module Cloudtasker
       #
       # Return true if all the child workers have completed.
       #
-      # @return [<Type>] <description>
+      # @return [Boolean] True if the batch is complete.
       #
       def complete?
-        redis.with_lock(batch_state_gid) do
+        redis.with_lock(batch_state_gid, max_wait: BATCH_MAX_LOCK_WAIT) do
           state = redis.fetch(batch_state_gid)
           return true unless state
 
@@ -402,7 +404,7 @@ module Cloudtasker
         # Perform job
         yield
 
-        # Save batch (if child worker has been enqueued)
+        # Save batch (if child workers have been enqueued)
         setup
 
         # Complete batch
