@@ -3,6 +3,7 @@
 require 'cloudtasker/batch/middleware'
 
 RSpec.describe Cloudtasker::Batch::Job do
+  let(:redis) { described_class.redis }
   let(:worker_queue) { 'critical' }
   let(:worker) { TestWorker.new(job_args: [1, 2], job_queue: worker_queue) }
   let(:batch) { described_class.new(worker) }
@@ -17,7 +18,7 @@ RSpec.describe Cloudtasker::Batch::Job do
   end
 
   describe '.redis' do
-    subject { described_class.redis }
+    subject { redis }
 
     it { is_expected.to be_a(Cloudtasker::RedisClient) }
   end
@@ -177,14 +178,16 @@ RSpec.describe Cloudtasker::Batch::Job do
   describe '#batch_state' do
     subject { batch.batch_state }
 
+    before { expect(batch).to receive(:migrate_batch_state_to_redis_hash).and_call_original }
+
     describe 'with state' do
       before { batch.add(child_worker.class, *child_worker.job_args) }
       before { batch.save }
-      it { is_expected.to eq(batch.jobs[0].job_id.to_sym => 'scheduled') }
+      it { is_expected.to eq(batch.jobs[0].job_id => 'scheduled') }
     end
 
     describe 'with no state' do
-      it { is_expected.to be_nil }
+      it { is_expected.to be_blank }
     end
   end
 
@@ -211,15 +214,39 @@ RSpec.describe Cloudtasker::Batch::Job do
     it { expect(meta_batch_id).to eq(batch.batch_id) }
   end
 
+  describe '#migrate_batch_state_to_redis_hash' do
+    subject { batch.batch_state }
+
+    let(:state) { { 'foo1' => 'bar1', 'foo2' => 'bar2' } }
+
+    before do
+      redis.write(batch.batch_state_gid, state)
+      batch.migrate_batch_state_to_redis_hash
+    end
+
+    context 'with state' do
+      after { expect(redis.type(batch.batch_state_gid)).to eq('hash') }
+
+      it { is_expected.to eq(state) }
+    end
+
+    context 'with blank state' do
+      let(:state) { {} }
+
+      after { expect(redis.type(batch.batch_state_gid)).to eq('none') }
+      it { is_expected.to eq(state) }
+    end
+  end
+
   describe '#save' do
-    let(:batch_content) { described_class.redis.fetch(batch.batch_gid) }
-    let(:batch_state) { described_class.redis.fetch(batch.batch_state_gid) }
+    let(:batch_content) { redis.fetch(batch.batch_gid) }
+    let(:batch_state) { redis.hgetall(batch.batch_state_gid) }
 
     before { batch.add(child_worker.class, *child_worker.job_args) }
     before { batch.save }
 
     it { expect(batch_content).to eq(worker.to_h) }
-    it { expect(batch_state).to eq(batch.jobs[0].job_id.to_sym => 'scheduled') }
+    it { expect(batch_state).to eq(batch.jobs[0].job_id => 'scheduled') }
   end
 
   describe '#setup' do
@@ -243,14 +270,17 @@ RSpec.describe Cloudtasker::Batch::Job do
   end
 
   describe '#update_state' do
-    subject { batch.batch_state&.dig(child_id.to_sym) }
+    subject { batch.batch_state&.dig(child_id) }
 
     let(:child_id) { child_batch.batch_id }
     let(:status) { 'processing' }
 
-    before { batch.jobs.push(child_worker) }
-    before { batch.save }
-    before { batch.update_state(child_id, status) }
+    before do
+      batch.jobs.push(child_worker)
+      batch.save
+      batch.update_state(child_id, status)
+      expect(batch).to receive(:migrate_batch_state_to_redis_hash).and_call_original
+    end
 
     context 'with existing child batch' do
       it { is_expected.to eq(status) }
@@ -266,9 +296,12 @@ RSpec.describe Cloudtasker::Batch::Job do
   describe '#complete?' do
     subject { batch }
 
-    before { batch.jobs.push(child_worker) }
-    before { batch.save }
-    before { batch.update_state(child_batch.batch_id, status) }
+    before do
+      batch.jobs.push(child_worker)
+      batch.save
+      batch.update_state(child_batch.batch_id, status)
+      expect(batch).to receive(:migrate_batch_state_to_redis_hash).and_call_original
+    end
 
     context 'with all jobs completed' do
       let(:status) { 'completed' }
@@ -462,7 +495,7 @@ RSpec.describe Cloudtasker::Batch::Job do
   end
 
   describe '#cleanup' do
-    subject { described_class.redis.keys.sort }
+    subject { redis.keys.sort }
 
     let(:side_batch) { described_class.new(worker.new_instance) }
     let(:expected_keys) { [side_batch.batch_gid, side_batch.batch_state_gid].sort }
@@ -482,6 +515,7 @@ RSpec.describe Cloudtasker::Batch::Job do
       batch.jobs.push(child_worker)
       batch.save
 
+      expect(batch).to receive(:migrate_batch_state_to_redis_hash).and_call_original
       batch.cleanup
     end
 

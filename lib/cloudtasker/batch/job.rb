@@ -180,7 +180,9 @@ module Cloudtasker
       # @return [Hash] The state  of each child worker.
       #
       def batch_state
-        redis.fetch(batch_state_gid)
+        migrate_batch_state_to_redis_hash
+
+        redis.hgetall(batch_state_gid)
       end
 
       #
@@ -213,6 +215,24 @@ module Cloudtasker
       end
 
       #
+      # This method migrates the batch state to be a Redis hash instead
+      # of a hash stored in a string key.
+      #
+      def migrate_batch_state_to_redis_hash
+        return unless redis.type(batch_state_gid) == 'string'
+
+        # Migrate batch state to Redis hash if it is still using a legacy string key
+        # We acquire a lock then check again
+        redis.with_lock(batch_state_gid, max_wait: BATCH_MAX_LOCK_WAIT) do
+          if redis.type(batch_state_gid) == 'string'
+            state = redis.fetch(batch_state_gid)
+            redis.del(batch_state_gid)
+            redis.hset(batch_state_gid, state) if state.any?
+          end
+        end
+      end
+
+      #
       # Save the batch.
       #
       def save
@@ -222,8 +242,11 @@ module Cloudtasker
         # complete (success or failure).
         redis.write(batch_gid, worker.to_h)
 
+        # Stop there if no jobs to save
+        return if jobs.empty?
+
         # Save list of child workers
-        redis.write(batch_state_gid, jobs.map { |e| [e.job_id, 'scheduled'] }.to_h)
+        redis.hset(batch_state_gid, jobs.map { |e| [e.job_id, 'scheduled'] }.to_h)
       end
 
       #
@@ -233,10 +256,11 @@ module Cloudtasker
       # @param [String] status The status of the sub-batch.
       #
       def update_state(batch_id, status)
-        redis.with_lock(batch_state_gid, max_wait: BATCH_MAX_LOCK_WAIT) do
-          state = batch_state
-          state[batch_id.to_sym] = status.to_s if state.key?(batch_id.to_sym)
-          redis.write(batch_state_gid, state)
+        migrate_batch_state_to_redis_hash
+
+        # Update the batch state batch_id entry with the new status
+        redis.with_lock("#{batch_state_gid}/#{batch_id}", max_wait: BATCH_MAX_LOCK_WAIT) do
+          redis.hset(batch_state_gid, batch_id, status) if redis.hexists(batch_state_gid, batch_id)
         end
       end
 
@@ -246,12 +270,12 @@ module Cloudtasker
       # @return [Boolean] True if the batch is complete.
       #
       def complete?
-        redis.with_lock(batch_state_gid, max_wait: BATCH_MAX_LOCK_WAIT) do
-          state = redis.fetch(batch_state_gid)
-          return true unless state
+        migrate_batch_state_to_redis_hash
 
+        # Check that all child jobs have completed
+        redis.with_lock(batch_state_gid, max_wait: BATCH_MAX_LOCK_WAIT) do
           # Check that all children are complete
-          state.values.all? { |e| COMPLETION_STATUSES.include?(e) }
+          redis.hvals(batch_state_gid).all? { |e| COMPLETION_STATUSES.include?(e) }
         end
       end
 
@@ -333,11 +357,10 @@ module Cloudtasker
       # Remove all batch and sub-batch keys from Redis.
       #
       def cleanup
-        # Capture batch state
-        state = batch_state
+        migrate_batch_state_to_redis_hash
 
         # Delete child batches recursively
-        state.to_h.keys.each { |id| self.class.find(id)&.cleanup }
+        redis.hkeys(batch_state_gid).each { |id| self.class.find(id)&.cleanup }
 
         # Delete batch redis entries
         redis.del(batch_gid)
