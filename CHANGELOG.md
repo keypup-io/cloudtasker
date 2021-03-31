@@ -1,8 +1,8 @@
 # Changelog
 
-## Latest RC [v0.12.rc5](https://github.com/keypup-io/cloudtasker/tree/v0.12.rc5) (2021-03-30)
+## Latest RC [v0.12.rc6](https://github.com/keypup-io/cloudtasker/tree/v0.12.rc6) (2021-03-31)
 
-[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.11.0...v0.12.rc5)
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.11.0...v0.12.rc6)
 
 **Improvements:**
 - ActiveJob: do not double log errors (ActiveJob has its own error logging)
@@ -11,6 +11,7 @@
 - Batch callbacks: Retry jobs when completion callback fails
 - Redis: Use Redis Sets instead of key pattern matching for listing methods (Cron jobs and Local Server)
 - Batch progress: restrict calculation to direct children by default. Allow depth to be specified. Calculating progress using all tree jobs created significant delays on large batches.
+- Worker: raise DeadWorkerError instead of MissingWorkerArgumentsError when arguments are missing. This is more consistent with what middlewares expect.
 
 **Fixed bugs:**
 - Retries: Enforce job retry limit on job processing. There was an edge case where jobs could be retried indefinitely on batch callback errors.
