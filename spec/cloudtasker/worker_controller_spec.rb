@@ -79,16 +79,6 @@ RSpec.describe Cloudtasker::WorkerController, type: :controller do
       it { is_expected.to have_http_status(:reset_content) }
     end
 
-    context 'with invalid worker arguments' do
-      before do
-        request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"
-        allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
-          .with(expected_payload)
-          .and_raise(Cloudtasker::MissingWorkerArgumentsError)
-      end
-      it { is_expected.to have_http_status(:reset_content) }
-    end
-
     context 'with invalid worker' do
       before do
         request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"

@@ -391,7 +391,7 @@ RSpec.describe Cloudtasker::Worker do
     context 'with missing worker arguments' do
       let(:args) { [] }
 
-      it { expect { execute }.to raise_error(Cloudtasker::MissingWorkerArgumentsError) }
+      it { expect { execute }.to raise_error(Cloudtasker::DeadWorkerError) }
     end
   end
 
@@ -536,6 +536,38 @@ RSpec.describe Cloudtasker::Worker do
       let(:max_retries) { 5 }
 
       it { is_expected.not_to be_job_dead }
+    end
+  end
+
+  describe '#arguments_missing?' do
+    subject { worker }
+
+    let(:job_args) { [1, 2, 3] }
+    let(:worker) { worker_class.new(job_args: job_args) }
+
+    context 'with job arguments' do
+      it { is_expected.not_to be_arguments_missing }
+    end
+
+    context 'with no job arguments required' do
+      let(:job_args) { [] }
+
+      before { def worker.perform; end }
+      it { is_expected.not_to be_arguments_missing }
+    end
+
+    context 'with perform method accepting any arg' do
+      let(:job_args) { [] }
+
+      before { def worker.perform(*_args); end }
+      it { is_expected.not_to be_arguments_missing }
+    end
+
+    context 'with job arguments missing' do
+      let(:job_args) { [] }
+
+      before { def worker.perform(_arg1, arg2); end }
+      it { is_expected.to be_arguments_missing }
     end
   end
 

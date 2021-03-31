@@ -19,7 +19,7 @@ module Cloudtasker
       # Process payload
       WorkerHandler.execute_from_payload!(payload)
       head :no_content
-    rescue DeadWorkerError, MissingWorkerArgumentsError
+    rescue DeadWorkerError
       # 205: job will NOT be retried
       head :reset_content
     rescue InvalidWorkerError

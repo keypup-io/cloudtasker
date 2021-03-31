@@ -107,7 +107,7 @@ module Cloudtasker
       redis.expire(args_payload_key, ARGS_PAYLOAD_CLEANUP_TTL) if args_payload_key && !worker.job_reenqueued
 
       resp
-    rescue DeadWorkerError, MissingWorkerArgumentsError => e
+    rescue DeadWorkerError => e
       # Delete stored args payload if job is dead
       redis.expire(args_payload_key, ARGS_PAYLOAD_CLEANUP_TTL) if args_payload_key
       log_execution_error(worker, e)

@@ -156,15 +156,14 @@ RSpec.describe Cloudtasker::WorkerHandler do
       it { subject_block.to raise_error(job_error) }
     end
 
-    [Cloudtasker::DeadWorkerError, Cloudtasker::MissingWorkerArgumentsError].each do |job_error|
-      context "with redis payload and #{job_error}" do
-        let(:block) { ->(_) { raise(job_error) } }
+    context 'with redis payload and Cloudtasker::DeadWorkerError' do
+      let(:job_error) { Cloudtasker::DeadWorkerError }
+      let(:block) { ->(_) { raise(job_error) } }
 
-        before { described_class.redis.write(args_payload_key, args_payload) }
-        after { expect(args_key_ttl).to be > 0 }
-        after { expect(args_key_ttl).to be <= described_class::ARGS_PAYLOAD_CLEANUP_TTL }
-        it { subject_block.to raise_error(job_error) }
-      end
+      before { described_class.redis.write(args_payload_key, args_payload) }
+      after { expect(args_key_ttl).to be > 0 }
+      after { expect(args_key_ttl).to be <= described_class::ARGS_PAYLOAD_CLEANUP_TTL }
+      it { subject_block.to raise_error(job_error) }
     end
 
     context 'with native payload' do

@@ -333,6 +333,22 @@ module Cloudtasker
     end
 
     #
+    # Return true if the job arguments are missing.
+    #
+    # This may happen if a job
+    # was successfully run but retried due to Cloud Task dispatch deadline
+    # exceeded. If the arguments were stored in Redis then they may have
+    # been flushed already after the successful completion.
+    #
+    # If job arguments are missing then the job will simply be declared dead.
+    #
+    # @return [Boolean] True if the arguments are missing.
+    #
+    def arguments_missing?
+      job_args.empty? && [0, -1].exclude?(method(:perform).arity)
+    end
+
+    #
     # Return the time taken (in seconds) to perform the job. This duration
     # includes the middlewares and the actual perform method.
     #
@@ -384,14 +400,9 @@ module Cloudtasker
       Cloudtasker.config.server_middleware.invoke(self) do
         # Immediately abort the job if it is already dead
         flag_as_dead if job_dead?
+        flag_as_dead(MissingWorkerArgumentsError.new('worker arguments are missing')) if arguments_missing?
 
         begin
-          # Abort if arguments are missing. This may happen with redis arguments storage
-          # if Cloud Tasks times out on a job but the job still succeeds
-          if job_args.empty? && [0, -1].exclude?(method(:perform).arity)
-            raise(MissingWorkerArgumentsError, 'worker arguments are missing')
-          end
-
           # Perform the job
           perform(*job_args)
         rescue StandardError => e
