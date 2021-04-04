@@ -113,7 +113,7 @@ module Cloudtasker
       # @param [Hash] http_request The HTTP request content.
       # @param [Integer] schedule_time When to run the task (Unix timestamp)
       #
-      def initialize(id:, http_request:, schedule_time: nil, queue: nil, job_retries: 0)
+      def initialize(id:, http_request:, schedule_time: nil, queue: nil, job_retries: 0, **_xargs)
         @id = id
         @http_request = http_request
         @schedule_time = Time.at(schedule_time || 0)

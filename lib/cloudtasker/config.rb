@@ -7,7 +7,7 @@ module Cloudtasker
   class Config
     attr_accessor :redis, :store_payloads_in_redis
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
-                :gcp_queue_prefix, :processor_path, :logger, :mode, :max_retries
+                :gcp_queue_prefix, :processor_path, :logger, :mode, :max_retries, :dispatch_deadline
 
     # Max Cloud Task size in bytes
     MAX_TASK_SIZE = 100 * 1024 # 100 KB
@@ -45,6 +45,11 @@ module Cloudtasker
     DEFAULT_JOB_QUEUE = 'default'
     DEFAULT_QUEUE_CONCURRENCY = 10
     DEFAULT_QUEUE_RETRIES = -1 # unlimited
+
+    # Job timeout configuration for Cloud Tasks
+    DEFAULT_DISPATCH_DEADLINE = 10 * 60 # 10 minutes
+    MIN_DISPATCH_DEADLINE = 15 # seconds
+    MAX_DISPATCH_DEADLINE = 30 * 60 # 30 minutes
 
     # The number of times jobs will be attempted before declaring them dead.
     #
@@ -205,6 +210,16 @@ module Cloudtasker
     #
     def gcp_location_id
       @gcp_location_id || DEFAULT_LOCATION_ID
+    end
+
+    #
+    # Return the Dispatch deadline duration. Cloud Tasks will timeout the job after
+    # this duration is elapsed.
+    #
+    # @return [Integer] The value in seconds.
+    #
+    def dispatch_deadline
+      @dispatch_deadline ||= DEFAULT_DISPATCH_DEADLINE
     end
 
     #

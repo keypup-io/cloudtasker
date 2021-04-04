@@ -168,6 +168,22 @@ module Cloudtasker
     end
 
     #
+    # Return the Dispatch deadline duration. Cloud Tasks will timeout the job after
+    # this duration is elapsed.
+    #
+    # @return [Integer] The value in seconds.
+    #
+    def dispatch_deadline
+      @dispatch_deadline ||= [
+        [
+          Config::MIN_DISPATCH_DEADLINE,
+          (self.class.cloudtasker_options_hash[:dispatch_deadline] || Cloudtasker.config.dispatch_deadline).to_i
+        ].max,
+        Config::MAX_DISPATCH_DEADLINE
+      ].min
+    end
+
+    #
     # Return the Cloudtasker logger instance.
     #
     # @return [Logger, any] The cloudtasker logger.

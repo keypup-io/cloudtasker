@@ -165,6 +165,7 @@ module Cloudtasker
           },
           body: worker_payload.to_json
         },
+        dispatch_deadline: worker.dispatch_deadline.to_i,
         queue: worker.job_queue
       }
     end

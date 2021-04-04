@@ -3,7 +3,7 @@
 module Cloudtasker
   # An interface class to manage tasks on the backend (Cloud Task or Redis)
   class CloudTask
-    attr_accessor :id, :http_request, :schedule_time, :retries, :queue
+    attr_accessor :id, :http_request, :schedule_time, :retries, :queue, :dispatch_deadline
 
     #
     # The backend to use for cloud tasks.
@@ -73,12 +73,13 @@ module Cloudtasker
     # @param [Integer] retries The number of times the job failed.
     # @param [String] queue The queue the task is in.
     #
-    def initialize(id:, http_request:, schedule_time: nil, retries: 0, queue: nil)
+    def initialize(id:, http_request:, schedule_time: nil, retries: 0, queue: nil, dispatch_deadline: nil)
       @id = id
       @http_request = http_request
       @schedule_time = schedule_time
       @retries = retries || 0
       @queue = queue
+      @dispatch_deadline = dispatch_deadline
     end
 
     #
