@@ -11,6 +11,7 @@ RSpec.describe Cloudtasker::Config do
   let(:mode) { :production }
   let(:max_retries) { 10 }
   let(:store_payloads_in_redis) { 10 }
+  let(:dispatch_deadline) { 15 * 60 }
 
   let(:rails_hosts) { [] }
   let(:rails_secret) { 'rails_secret' }
@@ -38,6 +39,7 @@ RSpec.describe Cloudtasker::Config do
       c.processor_path = processor_path
       c.max_retries = max_retries
       c.store_payloads_in_redis = store_payloads_in_redis
+      c.dispatch_deadline = dispatch_deadline
     end
 
     Cloudtasker.config
@@ -219,6 +221,20 @@ RSpec.describe Cloudtasker::Config do
       let(:gcp_queue_prefix) { nil }
 
       it { expect { method }.to raise_error(StandardError, described_class::QUEUE_PREFIX_MISSING_ERROR) }
+    end
+  end
+
+  describe '#dispatch_deadline' do
+    subject { config.dispatch_deadline }
+
+    context 'with value specified via config' do
+      it { is_expected.to eq(dispatch_deadline) }
+    end
+
+    context 'with no value' do
+      let(:dispatch_deadline) { nil }
+
+      it { is_expected.to eq(described_class::DEFAULT_DISPATCH_DEADLINE) }
     end
   end
 

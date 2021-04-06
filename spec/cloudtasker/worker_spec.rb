@@ -260,6 +260,45 @@ RSpec.describe Cloudtasker::Worker do
     end
   end
 
+  describe '#dispatch_deadline' do
+    subject { worker.dispatch_deadline }
+
+    let(:worker) { worker_class.new }
+
+    context 'with no value configured' do
+      it { is_expected.to eq(Cloudtasker.config.dispatch_deadline) }
+    end
+
+    context 'with global value' do
+      let(:dispatch_deadline) { 16 * 60 }
+
+      before { allow(Cloudtasker.config).to receive(:dispatch_deadline).and_return(dispatch_deadline) }
+      it { is_expected.to eq(dispatch_deadline) }
+    end
+
+    context 'with worker-specific value' do
+      let(:dispatch_deadline) { 16 * 60 }
+      let(:opts_hash) { { dispatch_deadline: dispatch_deadline } }
+
+      before { allow(worker_class).to receive(:cloudtasker_options_hash).and_return(opts_hash) }
+      it { is_expected.to eq(dispatch_deadline) }
+    end
+
+    context 'with configured value too low' do
+      let(:dispatch_deadline) { Cloudtasker::Config::MIN_DISPATCH_DEADLINE - 5 }
+
+      before { allow(Cloudtasker.config).to receive(:dispatch_deadline).and_return(dispatch_deadline) }
+      it { is_expected.to eq(Cloudtasker::Config::MIN_DISPATCH_DEADLINE) }
+    end
+
+    context 'with configured value too high' do
+      let(:dispatch_deadline) { Cloudtasker::Config::MAX_DISPATCH_DEADLINE + 5 }
+
+      before { allow(Cloudtasker.config).to receive(:dispatch_deadline).and_return(dispatch_deadline) }
+      it { is_expected.to eq(Cloudtasker::Config::MAX_DISPATCH_DEADLINE) }
+    end
+  end
+
   describe '#logger' do
     subject { worker.logger }
 

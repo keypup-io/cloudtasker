@@ -203,7 +203,8 @@ RSpec.describe Cloudtasker::WorkerHandler do
           },
           body: task.worker_payload.to_json
         },
-        queue: task.worker.job_queue
+        queue: task.worker.job_queue,
+        dispatch_deadline: task.worker.dispatch_deadline
       }
     end
 

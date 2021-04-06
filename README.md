@@ -37,6 +37,7 @@ A local processing server is also available for development. This local server p
     1. [HTTP Error codes](#http-error-codes)
     2. [Error callbacks](#error-callbacks)
     3. [Max retries](#max-retries)
+    4. [Dispatch deadline](#dispatch-deadline)
 10. [Testing](#testing)
     1. [Test helper setup](#test-helper-setup)
     2. [In-memory queues](#in-memory-queues)
@@ -351,6 +352,23 @@ Cloudtasker.configure do |config|
   #
   # Store all job payloads in Redis exceeding 50 KB:
   # config.store_payloads_in_redis = 50
+
+  #
+  # Specify the dispatch deadline for jobs in Cloud Tasks, in seconds.
+  # Jobs taking longer will be retried by Cloud Tasks, even if they eventually
+  # complete on the server side.
+  #
+  # Note that this option is applied when jobs are enqueued job. Changing this value
+  # will not impact already enqueued jobs.
+  #
+  # This option can also be configured on a per worker basis via
+  # the cloudtasker_options directive.
+  #
+  # Supported since: v0.12.rc8
+  #
+  # Default: 600 seconds (10 minutes)
+  #
+  # config.dispatch_deadline = 600
 end
 ```
 
@@ -717,6 +735,48 @@ class SomeErrorWorker
 
   def perform(arg1, arg2)
     raise(ArgumentError)
+  end
+end
+```
+
+### Dispatch deadline
+**Supported since**: `0.12.rc8`  
+
+By default Cloud Tasks will automatically timeout your jobs after 10 minutes, independently of your server HTTP timeout configuration.
+
+You can modify the dispatch deadline for jobs at a global level or on a per job basis.
+
+E.g. Set the default dispatch deadline to 20 minutes.
+```ruby
+# config/initializers/cloudtasker.rb
+
+Cloudtasker.configure do |config|
+  #
+  # Specify the dispatch deadline for jobs in Cloud Tasks, in seconds. 
+  # Jobs taking longer will be retried by Cloud Tasks, even if they eventually
+  # complete on the server side.
+  #
+  # Note that this option is applied when jobs are enqueued job. Changing this value
+  # will not impact already enqueued jobs.
+  #
+  # Default: 600 (10 minutes)
+  #
+  config.dispatch_deadline = 20 * 60 # 20 minutes
+end
+```
+
+E.g. Set a dispatch deadline of 5 minutes on a specific worker
+```ruby
+# app/workers/some_error_worker.rb
+
+class SomeFasterWorker
+  include Cloudtasker::Worker
+
+  # This will override the global setting
+  cloudtasker_options dispatch_deadline: 5 * 60
+
+  def perform
+    # ... do things ...
   end
 end
 ```

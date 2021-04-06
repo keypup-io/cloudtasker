@@ -7,7 +7,7 @@ module Cloudtasker
   module Backend
     # Manage local tasks pushed to Redis
     class RedisTask
-      attr_reader :id, :http_request, :schedule_time, :retries, :queue
+      attr_reader :id, :http_request, :schedule_time, :retries, :queue, :dispatch_deadline
 
       RETRY_INTERVAL = 20 # seconds
 
@@ -123,13 +123,15 @@ module Cloudtasker
       # @param [Hash] http_request The HTTP request content.
       # @param [Integer] schedule_time When to run the task (Unix timestamp)
       # @param [Integer] retries The number of times the job failed.
+      # @param [Integer] dispatch_deadline The dispatch_deadline in seconds.
       #
-      def initialize(id:, http_request:, schedule_time: nil, retries: 0, queue: nil)
+      def initialize(id:, http_request:, schedule_time: nil, retries: 0, queue: nil, dispatch_deadline: nil)
         @id = id
         @http_request = http_request
         @schedule_time = Time.at(schedule_time || 0)
         @retries = retries || 0
-        @queue = queue || Cloudtasker::Config::DEFAULT_JOB_QUEUE
+        @queue = queue || Config::DEFAULT_JOB_QUEUE
+        @dispatch_deadline = dispatch_deadline || Config::DEFAULT_DISPATCH_DEADLINE
       end
 
       #
@@ -152,7 +154,8 @@ module Cloudtasker
           http_request: http_request,
           schedule_time: schedule_time.to_i,
           retries: retries,
-          queue: queue
+          queue: queue,
+          dispatch_deadline: dispatch_deadline
         }
       end
 
@@ -176,7 +179,8 @@ module Cloudtasker
           retries: is_error ? retries + 1 : retries,
           http_request: http_request,
           schedule_time: (Time.now + interval).to_i,
-          queue: queue
+          queue: queue,
+          dispatch_deadline: dispatch_deadline
         )
         redis.sadd(self.class.key, id)
       end
@@ -207,6 +211,13 @@ module Cloudtasker
         end
 
         resp
+      rescue Net::ReadTimeout
+        retry_later(RETRY_INTERVAL)
+        Cloudtasker.logger.info(
+          format_log_message(
+            "Task deadline exceeded (#{dispatch_deadline}s) - Retry in #{RETRY_INTERVAL} seconds..."
+          )
+        )
       end
 
       #
@@ -242,7 +253,7 @@ module Cloudtasker
         @http_client ||=
           begin
             uri = URI(http_request[:url])
-            Net::HTTP.new(uri.host, uri.port).tap { |e| e.read_timeout = 60 * 10 }
+            Net::HTTP.new(uri.host, uri.port).tap { |e| e.read_timeout = dispatch_deadline }
           end
       end
 

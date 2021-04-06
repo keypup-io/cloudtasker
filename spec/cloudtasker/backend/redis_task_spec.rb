@@ -15,6 +15,7 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
         },
         body: { foo: 'bar' }.to_json
       },
+      dispatch_deadline: 500,
       schedule_time: 2,
       retries: 3,
       queue: 'critical'
@@ -186,7 +187,8 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
         http_request: task.http_request,
         schedule_time: task.schedule_time.to_i,
         retries: task.retries,
-        queue: task.queue
+        queue: task.queue,
+        dispatch_deadline: task.dispatch_deadline
       }
     end
 
@@ -206,7 +208,9 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
     let(:task) { described_class.create(job_payload).tap(&:destroy) }
     let(:retries) { job_payload[:retries] + 1 }
     let(:opts) { {} }
-    let(:expected_attrs) { { queue: task.queue, retries: retries, schedule_time: Time.at(Time.now.to_i + delay) } }
+    let(:expected_attrs) do
+      job_payload.merge(retries: retries, schedule_time: Time.at(Time.now.to_i + delay))
+    end
 
     before do
       Timecop.freeze
