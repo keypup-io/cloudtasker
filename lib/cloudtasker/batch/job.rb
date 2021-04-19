@@ -311,8 +311,8 @@ module Cloudtasker
         # Propagate event
         parent_batch&.on_child_complete(self, status)
 
-        # The batch tree is complete. Cleanup the tree.
-        cleanup unless parent_batch
+        # The batch tree is complete. Cleanup the downstream tree.
+        cleanup
       end
 
       #
