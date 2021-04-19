@@ -6,15 +6,17 @@
 
 **Improvements:**
 - ActiveJob: do not double log errors (ActiveJob has its own error logging)
+- Batch callbacks: Retry jobs when completion callback fails
+- Batch state: use native Redis hashes to store batch state instead of a serialized hash in a string key
+- Batch progress: restrict calculation to direct children by default. Allow depth to be specified. Calculating progress using all tree jobs created significant delays on large batches.
+- Batch redis usage: cleanup batches as they get completed or become dead to avoid excessive redis usage with large batches.
 - Configuration: allow configuration of Cloud Tasks `dispatch deadline` at global and worker level
 - Cron jobs: Use Redis Sets instead of key pattern matching for resource listing
 - Error logging: Use worker logger so as to include context (job args etc.)
 - Error logging: Do not log exception and stack trace separately, combine them instead.
-- Batch callbacks: Retry jobs when completion callback fails
-- Batch state: use native Redis hashes to store batch state instead of a serialized hash in a string key
-- Batch progress: restrict calculation to direct children by default. Allow depth to be specified. Calculating progress using all tree jobs created significant delays on large batches.
 - Local server: Use Redis Sets instead of key pattern matching for resource listing
 - Worker: raise DeadWorkerError instead of MissingWorkerArgumentsError when arguments are missing. This is more consistent with what middlewares expect.
+- Worker redis usage: delete redis payload storage once the job is successful or dead instead of expiring the key.
 
 **Fixed bugs:**
 - Retries: Enforce job retry limit on job processing. There was an edge case where jobs could be retried indefinitely on batch callback errors.
