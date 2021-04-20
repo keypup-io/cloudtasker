@@ -259,9 +259,7 @@ module Cloudtasker
         migrate_batch_state_to_redis_hash
 
         # Update the batch state batch_id entry with the new status
-        redis.with_lock("#{batch_state_gid}/#{batch_id}", max_wait: BATCH_MAX_LOCK_WAIT) do
-          redis.hset(batch_state_gid, batch_id, status) if redis.hexists(batch_state_gid, batch_id)
-        end
+        redis.hset(batch_state_gid, batch_id, status) if redis.hexists(batch_state_gid, batch_id)
       end
 
       #
@@ -273,10 +271,7 @@ module Cloudtasker
         migrate_batch_state_to_redis_hash
 
         # Check that all child jobs have completed
-        redis.with_lock(batch_state_gid, max_wait: BATCH_MAX_LOCK_WAIT) do
-          # Check that all children are complete
-          redis.hvals(batch_state_gid).all? { |e| COMPLETION_STATUSES.include?(e) }
-        end
+        redis.hvals(batch_state_gid).all? { |e| COMPLETION_STATUSES.include?(e) }
       end
 
       #
