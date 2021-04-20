@@ -149,25 +149,18 @@ module Cloudtasker
       # if taken by another job.
       #
       def lock!
-        redis.with_lock(unique_gid) do
-          locked_id = redis.get(unique_gid)
+        lock_acquired = redis.set(unique_gid, id, nx: true, ex: lock_ttl)
+        lock_already_acquired = !lock_acquired && redis.get(unique_gid) == id
 
-          # Abort job lock process if lock is already taken by another job
-          raise(LockError, locked_id) if locked_id && locked_id != id
-
-          # Take job lock if the lock is currently free
-          redis.set(unique_gid, id, ex: lock_ttl) unless locked_id
-        end
+        raise(LockError) unless lock_acquired || lock_already_acquired
       end
 
       #
       # Delete the job lock.
       #
       def unlock!
-        redis.with_lock(unique_gid) do
-          locked_id = redis.get(unique_gid)
-          redis.del(unique_gid) if locked_id == id
-        end
+        locked_id = redis.get(unique_gid)
+        redis.del(unique_gid) if locked_id == id
       end
     end
   end
