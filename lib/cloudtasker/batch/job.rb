@@ -73,8 +73,12 @@ module Cloudtasker
         # Load extension if not loaded already on the worker class
         worker.class.include(Extension::Worker) unless worker.class <= Extension::Worker
 
-        # Add batch capability
+        # Add batch and parent batch to worker
         worker.batch = new(worker)
+        worker.parent_batch = worker.batch.parent_batch
+
+        # Return the batch
+        worker.batch
       end
 
       #
@@ -422,8 +426,11 @@ module Cloudtasker
         # Perform job
         yield
 
-        # Save batch (if child workers have been enqueued)
-        setup
+        # Save batch if child jobs added
+        setup if jobs.any?
+
+        # Save parent batch if batch expanded
+        parent_batch&.setup if parent_batch&.jobs&.any?
 
         # Complete batch
         complete(:completed)

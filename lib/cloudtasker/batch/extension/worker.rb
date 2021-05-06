@@ -6,7 +6,7 @@ module Cloudtasker
       # Include batch related methods onto Cloudtasker::Worker
       # See: Cloudtasker::Batch::Middleware#configure
       module Worker
-        attr_accessor :batch
+        attr_accessor :batch, :parent_batch
       end
     end
   end

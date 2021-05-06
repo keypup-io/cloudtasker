@@ -11,12 +11,14 @@ RSpec.describe 'Batch Worker' do
     let(:worker_class) { TestBatchWorker }
     let(:expected_callback_counts) do
       {
-        # (1 level 0 succeed)
+        # 1 level 0
         0 => 1,
-        # (2 level 1 success) + (2 level 0 retries)
-        1 => 4,
-        # (4 level 0 success) + (4 level 1 retries) + (2 level 0 retries)
-        2 => 10
+        # 1 (level 0) * 2 (level 1)
+        1 => 2,
+        # 1 (level 0) * 2 (level 1) * 2 (level 2)
+        2 => 4,
+        # 1 (level 0) * 2 (level 1) * 2 (level 2) * 2 (level 3 / batch expansion) *
+        3 => 8
       }
     end
 

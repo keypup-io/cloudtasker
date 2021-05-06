@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 class TestNonWorker
-  attr_accessor :job_id
+  attr_accessor :job_id, :job_meta
 
-  def initialize(*args); end
+  def initialize(*_args)
+    @job_meta = Cloudtasker::MetaStore.new
+  end
 end

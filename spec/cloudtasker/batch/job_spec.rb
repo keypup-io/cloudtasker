@@ -37,6 +37,7 @@ RSpec.describe Cloudtasker::Batch::Job do
 
       before { batch }
       after { expect(worker.batch).to eq(batch) }
+
       it { is_expected.to be_a(described_class) }
       it { is_expected.to have_attributes(worker: worker) }
       it { expect(worker.class).to be < Cloudtasker::Batch::Extension::Worker }
@@ -604,25 +605,62 @@ RSpec.describe Cloudtasker::Batch::Job do
   describe '#execute' do
     subject { batch.execute }
 
-    let(:parent_batch) { instance_double(described_class.to_s) }
+    let(:batch_jobs) { [1, 2] }
+    let(:parent_batch_jobs) { [] }
 
-    before { allow(batch).to receive(:parent_batch).and_return(parent_batch) }
-    before { parent_batch && allow(parent_batch).to(receive(:update_state).with(any_args)) }
-    before { allow(batch).to receive(:setup) }
-    before { allow(batch).to receive(:complete).with(any_args) }
+    let(:parent_batch) { instance_double(described_class, jobs: parent_batch_jobs) }
 
-    context 'with parent_batch' do
-      after { expect(parent_batch).to have_received(:update_state).with(batch.batch_id, :processing) }
-      after { expect(batch).to have_received(:setup) }
-      after { expect(batch).to have_received(:complete).with(:completed) }
+    before do
+      allow(batch).to receive(:parent_batch).and_return(parent_batch)
+      allow(batch).to receive(:jobs).and_return(batch_jobs)
+    end
+
+    context 'with parent_batch and child jobs added' do
+      before do
+        expect(parent_batch).to receive(:update_state).with(batch.batch_id, :processing)
+        expect(batch).to receive(:setup)
+        expect(batch).to receive(:complete).with(:completed)
+      end
+
       it { expect { |b| batch.execute(&b) }.to yield_control }
     end
 
-    context 'with no parent batch' do
+    context 'with parent_batch and parent jobs added' do
+      let(:batch_jobs) { [] }
+      let(:parent_batch_jobs) { [1, 2] }
+
+      before do
+        expect(parent_batch).to receive(:update_state).with(batch.batch_id, :processing)
+        expect(batch).not_to receive(:setup)
+        expect(parent_batch).to receive(:setup)
+        expect(batch).to receive(:complete).with(:completed)
+      end
+
+      it { expect { |b| batch.execute(&b) }.to yield_control }
+    end
+
+    context 'with parent_batch and child + parent jobs added' do
+      let(:batch_jobs) { [1, 2] }
+      let(:parent_batch_jobs) { [1, 2] }
+
+      before do
+        expect(parent_batch).to receive(:update_state).with(batch.batch_id, :processing)
+        expect(batch).to receive(:setup)
+        expect(parent_batch).to receive(:setup)
+        expect(batch).to receive(:complete).with(:completed)
+      end
+
+      it { expect { |b| batch.execute(&b) }.to yield_control }
+    end
+
+    context 'with no parent batch and child jobs added' do
       let(:parent_batch) { nil }
 
-      after { expect(batch).to have_received(:setup) }
-      after { expect(batch).to have_received(:complete).with(:completed) }
+      before do
+        expect(batch).to receive(:setup)
+        expect(batch).to receive(:complete).with(:completed)
+      end
+
       it { expect { |b| batch.execute(&b) }.to yield_control }
     end
 
@@ -630,8 +668,12 @@ RSpec.describe Cloudtasker::Batch::Job do
       let(:error) { ArgumentError.new }
       let(:block) { proc { raise(error) } }
 
-      after { expect(batch).not_to have_received(:setup) }
-      after { expect(batch).to have_received(:complete).with(:errored) }
+      before do
+        expect(parent_batch).to receive(:update_state).with(batch.batch_id, :processing)
+        expect(batch).not_to receive(:setup)
+        expect(batch).to receive(:complete).with(:errored)
+      end
+
       it { expect { batch.execute(&block) }.to raise_error(error) }
     end
 
@@ -639,8 +681,12 @@ RSpec.describe Cloudtasker::Batch::Job do
       let(:error) { Cloudtasker::DeadWorkerError.new }
       let(:block) { proc { raise(error) } }
 
-      after { expect(batch).not_to have_received(:setup) }
-      after { expect(batch).to have_received(:complete).with(:dead) }
+      before do
+        expect(parent_batch).to receive(:update_state).with(batch.batch_id, :processing)
+        expect(batch).not_to receive(:setup)
+        expect(batch).to receive(:complete).with(:dead)
+      end
+
       it { expect { batch.execute(&block) }.to raise_error(error) }
     end
   end
