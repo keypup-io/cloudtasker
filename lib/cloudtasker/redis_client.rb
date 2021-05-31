@@ -132,22 +132,47 @@ module Cloudtasker
       list
     end
 
-    #
-    # Delegate all methods to the redis client.
-    #
-    # @param [String, Symbol] name The method to delegate.
-    # @param [Array<any>] *args The list of method arguments.
-    # @param [Proc] &block Block passed to the method.
-    #
-    # @return [Any] The method return value
-    #
-    def method_missing(name, *args, &block)
-      if Redis.method_defined?(name)
-        client.with { |c| c.send(name, *args, &block) }
-      else
-        super
+    # rubocop:disable Style/MissingRespondToMissing
+    if RUBY_VERSION < '3'
+      #
+      # Delegate all methods to the redis client.
+      # Old delegation method.
+      #
+      # @param [String, Symbol] name The method to delegate.
+      # @param [Array<any>] *args The list of method positional arguments.
+      # @param [Hash<any>] *kwargs The list of method keyword arguments.
+      # @param [Proc] &block Block passed to the method.
+      #
+      # @return [Any] The method return value
+      #
+      def method_missing(name, *args, &block)
+        if Redis.method_defined?(name)
+          client.with { |c| c.send(name, *args, &block) }
+        else
+          super
+        end
+      end
+    else
+      #
+      # Delegate all methods to the redis client.
+      # Ruby 3 delegation method style.
+      #
+      # @param [String, Symbol] name The method to delegate.
+      # @param [Array<any>] *args The list of method positional arguments.
+      # @param [Hash<any>] *kwargs The list of method keyword arguments.
+      # @param [Proc] &block Block passed to the method.
+      #
+      # @return [Any] The method return value
+      #
+      def method_missing(name, *args, **kwargs, &block)
+        if Redis.method_defined?(name)
+          client.with { |c| c.send(name, *args, **kwargs, &block) }
+        else
+          super
+        end
       end
     end
+    # rubocop:enable Style/MissingRespondToMissing
 
     #
     # Check if the class respond to a certain method.

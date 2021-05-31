@@ -37,7 +37,7 @@ module Cloudtasker
     #
     def self.find(id)
       payload = backend.find(id)&.to_h
-      payload ? new(payload) : nil
+      payload ? new(**payload) : nil
     end
 
     #
@@ -51,7 +51,7 @@ module Cloudtasker
       raise MaxTaskSizeExceededError if payload.to_json.bytesize > Config::MAX_TASK_SIZE
 
       resp = backend.create(payload)&.to_h
-      resp ? new(resp) : nil
+      resp ? new(**resp) : nil
     end
 
     #

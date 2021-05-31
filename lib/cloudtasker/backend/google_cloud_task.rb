@@ -12,28 +12,30 @@ module Cloudtasker
       #
       # Create the queue configured in Cloudtasker if it does not already exist.
       #
-      # @param [String] queue_name The relative name of the queue.
+      # @param [String] :name The queue name
+      # @param [Integer] :concurrency The queue concurrency
+      # @param [Integer] :retries The number of retries for the queue
       #
       # @return [Google::Cloud::Tasks::V2beta3::Queue] The queue
       #
-      def self.setup_queue(**opts)
+      def self.setup_queue(name: nil, concurrency: nil, retries: nil)
         # Build full queue path
-        queue_name = opts[:name] || Cloudtasker::Config::DEFAULT_JOB_QUEUE
+        queue_name = name || Cloudtasker::Config::DEFAULT_JOB_QUEUE
         full_queue_name = queue_path(queue_name)
 
         # Try to get existing queue
         client.get_queue(full_queue_name)
       rescue Google::Gax::RetryError
         # Extract options
-        concurrency = (opts[:concurrency] || Cloudtasker::Config::DEFAULT_QUEUE_CONCURRENCY).to_i
-        retries = (opts[:retries] || Cloudtasker::Config::DEFAULT_QUEUE_RETRIES).to_i
+        queue_concurrency = (concurrency || Cloudtasker::Config::DEFAULT_QUEUE_CONCURRENCY).to_i
+        queue_retries = (retries || Cloudtasker::Config::DEFAULT_QUEUE_RETRIES).to_i
 
         # Create queue on 'not found' error
         client.create_queue(
           client.location_path(config.gcp_project_id, config.gcp_location_id),
           name: full_queue_name,
-          retry_config: { max_attempts: retries },
-          rate_limits: { max_concurrent_dispatches: concurrency }
+          retry_config: { max_attempts: queue_retries },
+          rate_limits: { max_concurrent_dispatches: queue_concurrency }
         )
       end
 

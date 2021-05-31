@@ -27,7 +27,7 @@ module Cloudtasker
     #
     def initialize(worker_name:, **opts)
       @worker_name = worker_name
-      super(opts)
+      super(**opts)
     end
 
     #
