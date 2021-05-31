@@ -39,7 +39,7 @@ module Cloudtasker
       def self.all
         if redis.exists?(key)
           # Use Schedule Set if available
-          redis.smembers(key).map { |id| find(id) }
+          redis.smembers(key).map { |id| find(id) }.compact
         else
           # Fallback to redis key matching and migrate tasks
           # to use Task Set instead.
