@@ -1,8 +1,8 @@
 # Changelog
 
-## Latest RC [v0.12.rc8](https://github.com/keypup-io/cloudtasker/tree/v0.12.rc8) (2021-04-06)
+## Latest RC [v0.12.rc10](https://github.com/keypup-io/cloudtasker/tree/v0.12.rc10) (2021-05-31)
 
-[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.11.0...v0.12.rc8)
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.11.0...v0.12.rc10)
 
 **Improvements:**
 - ActiveJob: do not double log errors (ActiveJob has its own error logging)
@@ -10,11 +10,14 @@
 - Batch state: use native Redis hashes to store batch state instead of a serialized hash in a string key
 - Batch progress: restrict calculation to direct children by default. Allow depth to be specified. Calculating progress using all tree jobs created significant delays on large batches.
 - Batch redis usage: cleanup batches as they get completed or become dead to avoid excessive redis usage with large batches.
+- Batch expansion: Inject `parent_batch` in jobs. Can be used to expand the parent batch the job is in.
 - Configuration: allow configuration of Cloud Tasks `dispatch deadline` at global and worker level
 - Cron jobs: Use Redis Sets instead of key pattern matching for resource listing
 - Error logging: Use worker logger so as to include context (job args etc.)
 - Error logging: Do not log exception and stack trace separately, combine them instead.
 - Local server: Use Redis Sets instead of key pattern matching for resource listing
+- Local server: Guard against nil tasks to prevent job daemon failures
+- Performance: remove use of redis locks and rely on atomic transactions instead for Batch and Unique Job.
 - Worker: raise DeadWorkerError instead of MissingWorkerArgumentsError when arguments are missing. This is more consistent with what middlewares expect.
 - Worker redis usage: delete redis payload storage once the job is successful or dead instead of expiring the key.
 

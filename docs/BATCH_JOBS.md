@@ -18,7 +18,7 @@ Cloudtasker.configure do |config|
 end
 ```
 
-## Example
+## Example: Creating a new batch
 
 The following example defines a worker that adds itself to the batch with different arguments then monitors the success of the batch.
 
@@ -28,6 +28,38 @@ class BatchWorker
 
   def perform(level, instance)
     3.times { |n| batch.add(self.class, level + 1, n) } if level < 2
+  end
+
+  # Invoked when any descendant (e.g. sub-sub job) is complete
+  def on_batch_node_complete(child)
+    logger.info("Direct or Indirect child complete: #{child.job_id}")
+  end
+
+  # Invoked when a direct descendant is complete
+  def on_child_complete(child)
+    logger.info("Direct child complete: #{child.job_id}")
+  end
+
+  # Invoked when all chidren have finished
+  def on_batch_complete
+    Rails.logger.info("Batch complete")
+  end
+end
+```
+
+## Example: Expanding the parent batch
+**Note**: `parent_batch` is available since `0.12.rc10`
+
+```ruby
+# All the jobs will be attached to the top parent batch.
+class BatchWorker
+  include Cloudtasker::Worker
+
+  def perform(level, instance)
+    # Use existing parent_batch or create a new one
+    current_batch = parent_batch || batch
+
+    3.times { |n| current_batch.add(self.class, level + 1, n) } if level < 2
   end
 
   # Invoked when any descendant (e.g. sub-sub job) is complete
