@@ -12,6 +12,8 @@ RSpec.describe Cloudtasker::Config do
   let(:max_retries) { 10 }
   let(:store_payloads_in_redis) { 10 }
   let(:dispatch_deadline) { 15 * 60 }
+  let(:on_error) { ->(e, w) {} }
+  let(:on_dead) { ->(e, w) {} }
 
   let(:rails_hosts) { [] }
   let(:rails_secret) { 'rails_secret' }
@@ -40,6 +42,8 @@ RSpec.describe Cloudtasker::Config do
       c.max_retries = max_retries
       c.store_payloads_in_redis = store_payloads_in_redis
       c.dispatch_deadline = dispatch_deadline
+      c.on_error = on_error
+      c.on_dead = on_dead
     end
 
     Cloudtasker.config
@@ -308,6 +312,25 @@ RSpec.describe Cloudtasker::Config do
 
     it { is_expected.to be_a(Cloudtasker::Middleware::Chain) }
     it { expect(middlewares).to be_exists(TestMiddleware) }
+  end
+
+  # Error hooks
+  %i[on_error on_dead].each do |hook|
+    describe "##{hook}" do
+      subject { config.send(hook) }
+
+      context 'with value specified via config' do
+        let(hook.to_sym) { ->(e, w) {} }
+
+        it { is_expected.to eq(send(hook)) }
+      end
+
+      context 'with no value' do
+        let(hook.to_sym) { nil }
+
+        it { is_expected.to eq(described_class::DEFAULT_ON_ERROR) }
+      end
+    end
   end
 
   describe '#server_middleware' do

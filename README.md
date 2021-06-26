@@ -35,9 +35,10 @@ A local processing server is also available for development. This local server p
     2. [Logging context](#logging-context)
 9. [Error Handling](#error-handling)
     1. [HTTP Error codes](#http-error-codes)
-    2. [Error callbacks](#error-callbacks)
-    3. [Max retries](#max-retries)
-    4. [Dispatch deadline](#dispatch-deadline)
+    2. [Worker callbacks](#worker-callbacks)
+    3. [Global callbacks](#global-callbacks)
+    4. [Max retries](#max-retries)
+    5. [Dispatch deadline](#dispatch-deadline)
 10. [Testing](#testing)
     1. [Test helper setup](#test-helper-setup)
     2. [In-memory queues](#in-memory-queues)
@@ -369,6 +370,36 @@ Cloudtasker.configure do |config|
   # Default: 600 seconds (10 minutes)
   #
   # config.dispatch_deadline = 600
+
+  #
+  # Specify a proc to be invoked every time a job fails due to a runtime
+  # error.
+  #
+  # This hook is not invoked for DeadWorkerError. See on_dead instead.
+  #
+  # This is useful when you need to apply general exception handling, such
+  # as reporting errors to a third-party service like Rollbar or Bugsnag.
+  #
+  # Note: the worker argument might be nil, such as when InvalidWorkerError is raised.
+  #
+  # Supported since: v0.12.rc11
+  # 
+  # Default: no operation
+  #
+  # config.on_error = ->(error, worker) { Rollbar.error(error) }
+
+  #
+  # Specify a proc to be invoked every time a job dies due to too many
+  # retries.
+  #
+  # This is useful when you need to apply general exception handling, such
+  # logging specific messages/context when a job dies.
+  #
+  # Supported since: v0.12.rc11
+  # 
+  # Default: no operation
+  #
+  # config.on_dead = ->(error, worker) { Rollbar.error(error) }
 end
 ```
 
@@ -649,7 +680,7 @@ Jobs failing will automatically return the following HTTP error code to Cloud Ta
 | 404 | The job has specified an incorrect worker class.  |
 | 422 | An error happened during the execution of the worker (`perform` method) |
 
-### Error callbacks
+### Worker callbacks
 
 Workers can implement the `on_error(error)` and `on_dead(error)` callbacks to do things when a job fails during its execution:
 
@@ -674,6 +705,25 @@ class HandleErrorWorker
   def on_dead(error)
     logger.error("The job died with the following error: #{error}")
   end
+end
+```
+
+### Global callbacks
+**Supported since**: `0.12.rc11`  
+
+If you need to apply general exception handling logic to your workers you can specify `on_error` and `on_dead` hooks in the Cloudtasker configuration.
+
+This is useful if you need to report errors to third-party services such as Rollbar or Bugsnag.
+
+```ruby
+# config/initializers/cloudtasker.rb
+
+Cloudtasker.configure do |config|
+  #
+  # Report runtime and dead worker errors to Rollbar
+  #
+  config.on_error = -> (error, _worker) { Rollbar.error(error) }
+  config.on_dead = -> (error, _worker) { Rollbar.error(error) }
 end
 ```
 

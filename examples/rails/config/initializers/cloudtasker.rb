@@ -24,6 +24,14 @@ Cloudtasker.configure do |config|
   # Requires a ngrok tunnel.
   #
   # config.mode = :production
+
+  #
+  # Global error Hooks
+  #
+  config.on_error = lambda { |error, worker|
+    Rails.logger.error("Uh oh... worker #{worker&.job_id} had the following error: #{error}")
+  }
+  config.on_dead = ->(error, worker) { Rails.logger.error("Damn... worker #{worker&.job_id} died with: #{error}") }
 end
 
 #

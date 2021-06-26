@@ -7,7 +7,8 @@ module Cloudtasker
   class Config
     attr_accessor :redis, :store_payloads_in_redis
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
-                :gcp_queue_prefix, :processor_path, :logger, :mode, :max_retries, :dispatch_deadline
+                :gcp_queue_prefix, :processor_path, :logger, :mode, :max_retries,
+                :dispatch_deadline, :on_error, :on_dead
 
     # Max Cloud Task size in bytes
     MAX_TASK_SIZE = 100 * 1024 # 100 KB
@@ -50,6 +51,9 @@ module Cloudtasker
     DEFAULT_DISPATCH_DEADLINE = 10 * 60 # 10 minutes
     MIN_DISPATCH_DEADLINE = 15 # seconds
     MAX_DISPATCH_DEADLINE = 30 * 60 # 30 minutes
+
+    # Default on_error Proc
+    DEFAULT_ON_ERROR = ->(error, worker) {}
 
     # The number of times jobs will be attempted before declaring them dead.
     #
@@ -229,9 +233,29 @@ module Cloudtasker
     # @return [String] The cloudtasker secret
     #
     def secret
-      @secret || (
+      @secret ||= (
         defined?(Rails) && Rails.application.credentials&.dig(:secret_key_base)
       ) || raise(StandardError, SECRET_MISSING_ERROR)
+    end
+
+    #
+    # Return a Proc invoked whenever a worker runtime error is raised.
+    # See Cloudtasker::WorkerHandler.with_worker_handling
+    #
+    # @return [Proc] A Proc handler
+    #
+    def on_error
+      @on_error || DEFAULT_ON_ERROR
+    end
+
+    #
+    # Return a Proc invoked whenever a worker DeadWorkerError is raised.
+    # See Cloudtasker::WorkerHandler.with_worker_handling
+    #
+    # @return [Proc] A Proc handler
+    #
+    def on_dead
+      @on_dead || DEFAULT_ON_ERROR
     end
 
     #

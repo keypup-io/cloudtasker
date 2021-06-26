@@ -74,4 +74,8 @@ Cloudtasker.configure do |config|
 
   # Logger
   config.logger = Logger.new(nil)
+
+  # Hooks
+  config.on_error = ->(w, e) {}
+  config.on_dead = ->(w, e) {}
 end

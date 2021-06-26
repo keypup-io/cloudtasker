@@ -1,8 +1,8 @@
 # Changelog
 
-## Latest RC [v0.12.rc10](https://github.com/keypup-io/cloudtasker/tree/v0.12.rc10) (2021-05-31)
+## Latest RC [v0.12.rc11](https://github.com/keypup-io/cloudtasker/tree/v0.12.rc11) (2021-06-26)
 
-[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.11.0...v0.12.rc10)
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.11.0...v0.12.rc11)
 
 **Improvements:**
 - ActiveJob: do not double log errors (ActiveJob has its own error logging)
@@ -12,6 +12,7 @@
 - Batch redis usage: cleanup batches as they get completed or become dead to avoid excessive redis usage with large batches.
 - Batch expansion: Inject `parent_batch` in jobs. Can be used to expand the parent batch the job is in.
 - Configuration: allow configuration of Cloud Tasks `dispatch deadline` at global and worker level
+- Configuration: allow specifying global `on_error` and `on_dead` callbacks for error reporting
 - Cron jobs: Use Redis Sets instead of key pattern matching for resource listing
 - Error logging: Use worker logger so as to include context (job args etc.)
 - Error logging: Do not log exception and stack trace separately, combine them instead.

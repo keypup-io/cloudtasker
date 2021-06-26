@@ -141,8 +141,12 @@ RSpec.describe Cloudtasker::WorkerHandler do
       let(:job_error) { StandardError }
       let(:block) { ->(_) { raise(job_error) } }
 
-      before { described_class.redis.write(args_payload_key, args_payload) }
+      before do
+        described_class.redis.write(args_payload_key, args_payload)
+        expect(Cloudtasker.config.on_error).to receive(:call).with(job_error, be_a(Cloudtasker::Worker))
+      end
       after { expect(args_key_content).to be_present }
+
       it { subject_block.to raise_error(job_error) }
     end
 
@@ -150,7 +154,10 @@ RSpec.describe Cloudtasker::WorkerHandler do
       let(:job_error) { Cloudtasker::InvalidWorkerError }
       let(:block) { ->(_) { raise(job_error) } }
 
-      before { described_class.redis.write(args_payload_key, args_payload) }
+      before do
+        described_class.redis.write(args_payload_key, args_payload)
+        expect(Cloudtasker.config.on_error).to receive(:call).with(job_error, be_a(Cloudtasker::Worker))
+      end
       after { expect(args_key_content).to be_present }
       it { subject_block.to raise_error(job_error) }
     end
@@ -159,7 +166,10 @@ RSpec.describe Cloudtasker::WorkerHandler do
       let(:job_error) { Cloudtasker::DeadWorkerError }
       let(:block) { ->(_) { raise(job_error) } }
 
-      before { described_class.redis.write(args_payload_key, args_payload) }
+      before do
+        described_class.redis.write(args_payload_key, args_payload)
+        expect(Cloudtasker.config.on_dead).to receive(:call).with(job_error, be_a(Cloudtasker::Worker))
+      end
       after { expect(args_key_content).to be_blank }
       it { subject_block.to raise_error(job_error) }
     end

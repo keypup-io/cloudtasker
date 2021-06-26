@@ -102,9 +102,11 @@ module Cloudtasker
       # Delete stored args payload if job is dead
       redis.del(args_payload_key) if args_payload_key
       log_execution_error(worker, e)
+      Cloudtasker.config.on_dead.call(e, worker)
       raise(e)
     rescue StandardError => e
       log_execution_error(worker, e)
+      Cloudtasker.config.on_error.call(e, worker)
       raise(e)
     end
 
