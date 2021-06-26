@@ -47,7 +47,7 @@ module Cloudtasker
       return nil unless worker_klass.include?(self)
 
       # Return instantiated worker
-      worker_klass.new(payload.slice(:job_queue, :job_args, :job_id, :job_meta, :job_retries, :task_id))
+      worker_klass.new(**payload.slice(:job_queue, :job_args, :job_id, :job_meta, :job_retries, :task_id))
     rescue NameError
       nil
     end
@@ -121,7 +121,7 @@ module Cloudtasker
       # @return [Cloudtasker::CloudTask] The Google Task response
       #
       def schedule(args: nil, time_in: nil, time_at: nil, queue: nil)
-        new(job_args: args, job_queue: queue).schedule({ interval: time_in, time_at: time_at }.compact)
+        new(job_args: args, job_queue: queue).schedule(**{ interval: time_in, time_at: time_at }.compact)
       end
 
       #
@@ -239,7 +239,7 @@ module Cloudtasker
     #
     def schedule(**args)
       # Evaluate when to schedule the job
-      time_at = schedule_time(args)
+      time_at = schedule_time(**args)
 
       # Schedule job through client middlewares
       Cloudtasker.config.client_middleware.invoke(self, time_at: time_at) do

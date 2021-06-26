@@ -93,7 +93,7 @@ module Cloudtasker
       def self.find(id)
         return nil unless (schedule_config = redis.fetch(key(id)))
 
-        new(schedule_config)
+        new(**schedule_config)
       end
 
       #
@@ -251,9 +251,9 @@ module Cloudtasker
       #
       # Buld edit the object attributes.
       #
-      # @param [Hash] **opts The attributes to edit.
+      # @param [Hash] opts The attributes to edit.
       #
-      def assign_attributes(**opts)
+      def assign_attributes(opts)
         opts
           .select { |k, _| instance_variables.include?("@#{k}".to_sym) }
           .each { |k, v| instance_variable_set("@#{k}", v) }
@@ -262,9 +262,9 @@ module Cloudtasker
       #
       # Edit the object attributes and save the object in Redis.
       #
-      # @param [Hash] **opts The attributes to edit.
+      # @param [Hash] opts The attributes to edit.
       #
-      def update(**opts)
+      def update(opts)
         assign_attributes(opts)
         save
       end

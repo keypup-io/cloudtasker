@@ -89,7 +89,7 @@ module Cloudtasker
         # Save job
         redis.write(key(id), payload)
         redis.sadd(key, id)
-        new(payload.merge(id: id))
+        new(**payload.merge(id: id))
       end
 
       #
@@ -103,7 +103,7 @@ module Cloudtasker
         gid = key(id)
         return nil unless (payload = redis.fetch(gid))
 
-        new(payload.merge(id: id))
+        new(**payload.merge(id: id))
       end
 
       #
@@ -172,8 +172,12 @@ module Cloudtasker
       # Retry the task later.
       #
       # @param [Integer] interval The delay in seconds before retrying the task
+      # @param [Hash] opts Additional options
+      # @option opts [Boolean] :is_error Increase number of retries. Default to true.
       #
-      def retry_later(interval, is_error: true)
+      def retry_later(interval, opts = {})
+        is_error = opts.to_h.fetch(:is_error, true)
+
         redis.write(
           gid,
           retries: is_error ? retries + 1 : retries,

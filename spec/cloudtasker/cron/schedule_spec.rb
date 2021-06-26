@@ -149,7 +149,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
   end
 
   describe '.new' do
-    subject { described_class.new(attrs) }
+    subject { described_class.new(**attrs) }
 
     let(:attrs) do
       {
