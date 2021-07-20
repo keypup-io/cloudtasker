@@ -3,6 +3,8 @@
 module Cloudtasker
   # Handle execution of workers
   class WorkerController < ApplicationController
+    skip_before_action :verify_authenticity_token, raise: false
+
     # Authenticate all requests.
     before_action :authenticate!
 
