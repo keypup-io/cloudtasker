@@ -48,7 +48,7 @@ end
 ```
 
 ## Example: Expanding the parent batch
-**Note**: `parent_batch` is available since `0.12.rc10`
+**Note**: `parent_batch` is available since `0.12.0`
 
 ```ruby
 # All the jobs will be attached to the top parent batch.
@@ -123,7 +123,7 @@ def on_batch_node_complete(_child_job)
 end
 ```
 
-**Since:** `v0.12.rc5`  
+**Since:** `v0.12.0`  
 By default the `progress` method only considers the direct child jobs to evaluate the batch progress. You can pass `depth: somenumber` to the `progress` method to calculate the actual batch progress in a more granular way. Be careful however that this method recursively calculates progress on the sub-batches and is therefore expensive.
 
 E.g.

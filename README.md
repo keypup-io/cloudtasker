@@ -365,7 +365,7 @@ Cloudtasker.configure do |config|
   # This option can also be configured on a per worker basis via
   # the cloudtasker_options directive.
   #
-  # Supported since: v0.12.rc8
+  # Supported since: v0.12.0
   #
   # Default: 600 seconds (10 minutes)
   #
@@ -382,7 +382,7 @@ Cloudtasker.configure do |config|
   #
   # Note: the worker argument might be nil, such as when InvalidWorkerError is raised.
   #
-  # Supported since: v0.12.rc11
+  # Supported since: v0.12.0
   # 
   # Default: no operation
   #
@@ -395,7 +395,7 @@ Cloudtasker.configure do |config|
   # This is useful when you need to apply general exception handling, such
   # logging specific messages/context when a job dies.
   #
-  # Supported since: v0.12.rc11
+  # Supported since: v0.12.0
   # 
   # Default: no operation
   #
@@ -709,7 +709,7 @@ end
 ```
 
 ### Global callbacks
-**Supported since**: `0.12.rc11`  
+**Supported since**: `0.12.0`  
 
 If you need to apply general exception handling logic to your workers you can specify `on_error` and `on_dead` hooks in the Cloudtasker configuration.
 
@@ -790,7 +790,7 @@ end
 ```
 
 ### Dispatch deadline
-**Supported since**: `0.12.rc8`  
+**Supported since**: `0.12.0`  
 
 By default Cloud Tasks will automatically timeout your jobs after 10 minutes, independently of your server HTTP timeout configuration.
 
