@@ -40,9 +40,9 @@ post '/cloudtasker/run' do
     # 404: Job will be retried
     return 404
   rescue StandardError => e
-    # 404: Job will be retried
+    # 422: Job will be retried
     Cloudtasker.logger.error(e)
     Cloudtasker.logger.error(e.backtrace.join("\n"))
-    head :unprocessable_entity
+    return 422
   end
 end
