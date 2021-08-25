@@ -1,5 +1,29 @@
 # Changelog
 
+## [v0.11.1](https://github.com/keypup-io/cloudtasker/tree/v0.11.1) (2021-08-25)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.11.0...v0.11.1)
+
+**Fixed bugs:**
+- Dependencies: Require `try` from `activesupport`. This was preventing non-Rails projects from properly running Cloudtasker jobs.
+- WorkerController: remove useless inheritance from local ApplicationController. The parent controller was not always loaded on Rails 5 which in turn created issues with authenticity token. Fixes [#40](https://github.com/keypup-io/cloudtasker/issues/40)
+
+## [v0.10.2](https://github.com/keypup-io/cloudtasker/tree/v0.10.2) (2021-08-25)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.10.1...v0.10.2)
+
+**Fixed bugs:**
+- Dependencies: Require `try` from `activesupport`. This was preventing non-Rails projects from properly running Cloudtasker jobs.
+- WorkerController: remove useless inheritance from local ApplicationController. The parent controller was not always loaded on Rails 5 which in turn created issues with authenticity token. Fixes [#40](https://github.com/keypup-io/cloudtasker/issues/40)
+
+## [v0.9.5](https://github.com/keypup-io/cloudtasker/tree/v0.9.5) (2021-08-25)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.9.4...v0.9.5)
+
+**Fixed bugs:**
+- Dependencies: Require `try` from `activesupport`. This was preventing non-Rails projects from properly running Cloudtasker jobs.
+- WorkerController: remove useless inheritance from local ApplicationController. The parent controller was not always loaded on Rails 5 which in turn created issues with authenticity token. Fixes [#40](https://github.com/keypup-io/cloudtasker/issues/40)
+
 ## [v0.12.0](https://github.com/keypup-io/cloudtasker/tree/v0.12.0) (2021-08-19)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.11.0...v0.12.0)
@@ -25,7 +49,7 @@
 **Fixed bugs:**
 - Retries: Enforce job retry limit on job processing. There was an edge case where jobs could be retried indefinitely on batch callback errors.
 
-## [v0.11.0](https://github.com/keypup-io/cloudtasker/tree/v0.11.0) (2021-03-11)
+## [v0.11.0](https://github.com/keypup-io/cloudtasker/tree/v0.11.0) (2020-11-23)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.10.0...v0.11.0)
 
