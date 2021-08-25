@@ -1,7 +1,7 @@
 PATH
   remote: ../..
   specs:
-    cloudtasker (0.11.0)
+    cloudtasker (0.11.1)
       activesupport
       connection_pool
       fugit
