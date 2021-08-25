@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    cloudtasker (0.12.0)
+    cloudtasker (0.12.1)
       activesupport
       connection_pool
       fugit
@@ -338,4 +338,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   2.2.9
+   2.2.26
