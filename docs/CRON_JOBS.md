@@ -65,3 +65,42 @@ if File.exist?(schedule_file) && !Rails.env.test?
 end
 ```
 
+## Limitations
+GCP Cloud Tasks does not allow tasks to be scheduled more than 30 days (720h) in the future. Cron schedules should therefore be limited to 30 days intervals at most.
+
+If you need to schedule a job to run on a monthly basis (e.g. on the first of the month), schedule this job to run every day then add the following logic in your job:
+```ruby
+#
+# Cron schedule (8am UTC every day): 0 8 * * *
+#
+class MyMonthlyWorker
+  include Cloudtasker::Worker
+
+  def perform(*args)
+    # Abort unless we're the first of the month
+    return unless Time.current.day == 1
+
+    # ... job logic
+  end
+end
+```
+
+The same approach can be used to schedule a job every quarter.
+```ruby
+#
+# Cron schedule (8am UTC every day): 0 8 * * *
+#
+class MyQuarterlyWorker
+  include Cloudtasker::Worker
+
+  def perform(*args)
+    # Abort unless we're the first month of a quarter (Jan, Apr, Jul, Oct)
+    return unless Time.current.month == 1
+    
+    # Abort unless we're the first of the month
+    return unless Time.current.day == 1
+
+    # ... job logic
+  end
+end
+```
