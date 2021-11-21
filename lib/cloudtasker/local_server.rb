@@ -69,7 +69,7 @@ module Cloudtasker
 
       # Process tasks
       while @threads[queue].count < max_threads && (task = Cloudtasker::Backend::RedisTask.pop(queue))
-        @threads[queue] << Thread.new { process_task(task) }
+        @threads[queue] << Thread.new(task) {|task| process_task(task) }
       end
     end
 
