@@ -361,7 +361,7 @@ module Cloudtasker
     # @return [Boolean] True if the arguments are missing.
     #
     def arguments_missing?
-      job_args.empty? && [0, -1].exclude?(method(:perform).arity)
+      job_args.empty? && ![0, -1].include?(method(:perform).arity)
     end
 
     #
