@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.12.2](https://github.com/keypup-io/cloudtasker/tree/v0.12.2) (2021-12-31)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.12.1...v0.12.2)
+
+**Fixed bugs:**
+- Local server: Fix race condition on thread processing. See [#46](https://github.com/keypup-io/cloudtasker/pull/46)
+- Non-Rails: Fix `arguments_missing?` check for non-rails projects.
+
 ## [v0.12.1](https://github.com/keypup-io/cloudtasker/tree/v0.12.1) (2021-08-25)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.12.0...v0.12.1)
