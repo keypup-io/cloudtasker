@@ -19,7 +19,7 @@ RSpec.describe Cloudtasker::Config do
   let(:rails_secret) { 'rails_secret' }
   let(:rails_credentials) { { secret_key_base: rails_secret } }
   let(:rails_config) do
-    if Rails.application.config.respond_to?(:hosts)
+    if defined?(Rails) && Rails.application.config.respond_to?(:hosts)
       instance_double('Rails::Application::Configuration', hosts: rails_hosts)
     else
       instance_double('Rails::Application::Configuration')
@@ -245,7 +245,7 @@ RSpec.describe Cloudtasker::Config do
   describe '#processor_host' do
     subject(:method) { config.processor_host }
 
-    if Rails.application.config.respond_to?(:hosts)
+    if defined?(Rails) && Rails.application.config.respond_to?(:hosts)
       context 'with rails hosts' do
         subject { rails_klass.application.config.hosts }
 

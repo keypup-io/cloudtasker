@@ -59,7 +59,7 @@ RSpec.describe Cloudtasker::Batch::BatchProgress do
   describe '#pending' do
     subject { batch_progress.pending }
 
-    it { is_expected.to eq(batch_state.values.count { |e| %w[dead completed].exclude?(e) }) }
+    it { is_expected.to eq(batch_state.values.count { |e| !%w[dead completed].include?(e) }) }
   end
 
   describe '#done' do

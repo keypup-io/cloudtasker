@@ -36,15 +36,17 @@ RSpec.describe Cloudtasker::WorkerHandler do
     let(:worker) { instance_double('TestWorker') }
     let(:error) { instance_double('ArgumentError', backtrace: %w[1 2 3]) }
 
-    context 'with ActiveJob worker' do
-      let(:worker) { ActiveJob::QueueAdapters::CloudtaskerAdapter::JobWrapper.new }
+    if defined?(Rails)
+      context 'with ActiveJob worker' do
+        let(:worker) { ActiveJob::QueueAdapters::CloudtaskerAdapter::JobWrapper.new }
 
-      before do
-        expect(worker).not_to receive(:logger)
-        expect(Cloudtasker).not_to receive(:logger)
+        before do
+          expect(worker).not_to receive(:logger)
+          expect(Cloudtasker).not_to receive(:logger)
+        end
+
+        it { is_expected.to be_nil }
       end
-
-      it { is_expected.to be_nil }
     end
 
     context 'with no worker' do
@@ -124,7 +126,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
 
     context 'with redis payload and successful yield' do
       before { described_class.redis.write(args_payload_key, args_payload) }
-      after { expect(args_key_content).to be_blank }
+      after { expect(args_key_content).to be_nil }
       it { subject_block.to yield_with_args(be_a(Cloudtasker::Worker)) }
       it { subject_block.to yield_with_args(have_attributes(extracted_payload)) }
     end
@@ -133,7 +135,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
       let(:block) { ->(worker) { worker.job_reenqueued = true } }
 
       before { described_class.redis.write(args_payload_key, args_payload) }
-      after { expect(args_key_content).to be_present }
+      after { expect(args_key_content).to be_truthy }
       it { subject_block.not_to raise_error }
     end
 
@@ -145,7 +147,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
         described_class.redis.write(args_payload_key, args_payload)
         expect(Cloudtasker.config.on_error).to receive(:call).with(job_error, be_a(Cloudtasker::Worker))
       end
-      after { expect(args_key_content).to be_present }
+      after { expect(args_key_content).to be_truthy }
 
       it { subject_block.to raise_error(job_error) }
     end
@@ -158,7 +160,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
         described_class.redis.write(args_payload_key, args_payload)
         expect(Cloudtasker.config.on_error).to receive(:call).with(job_error, be_a(Cloudtasker::Worker))
       end
-      after { expect(args_key_content).to be_present }
+      after { expect(args_key_content).to be_truthy }
       it { subject_block.to raise_error(job_error) }
     end
 
@@ -170,7 +172,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
         described_class.redis.write(args_payload_key, args_payload)
         expect(Cloudtasker.config.on_dead).to receive(:call).with(job_error, be_a(Cloudtasker::Worker))
       end
-      after { expect(args_key_content).to be_blank }
+      after { expect(args_key_content).to be_nil }
       it { subject_block.to raise_error(job_error) }
     end
 

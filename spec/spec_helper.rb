@@ -4,12 +4,14 @@ require 'bundler/setup'
 require 'timecop'
 require 'webmock/rspec'
 require 'semantic_logger'
-
-# Configure Rails dummary app
-ENV['RAILS_ENV'] ||= 'test'
-require File.expand_path('dummy/config/environment.rb', __dir__)
-require 'rspec/rails'
 require 'rspec/json_expectations'
+
+# Configure Rails dummary app if Rails is in context
+if Gem.loaded_specs.key?(:rails)
+  ENV['RAILS_ENV'] ||= 'test'
+  require File.expand_path('dummy/config/environment.rb', __dir__)
+  require 'rspec/rails'
+end
 
 # Require main library (after Rails has done so)
 require 'cloudtasker'

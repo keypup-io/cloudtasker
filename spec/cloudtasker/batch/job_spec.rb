@@ -188,7 +188,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     end
 
     describe 'with no state' do
-      it { is_expected.to be_blank }
+      it { is_expected.to be_empty }
     end
   end
 

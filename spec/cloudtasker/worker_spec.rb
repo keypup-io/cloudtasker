@@ -193,7 +193,7 @@ RSpec.describe Cloudtasker::Worker do
         {
           job_queue: 'default',
           job_args: [],
-          job_id: be_present,
+          job_id: be_a(String),
           job_retries: 0,
           task_id: nil
         }
