@@ -23,8 +23,6 @@ jobs:
           - 'semantic_logger-4.7.0'
           - 'semantic_logger-4.7.2'
     steps:
-      - name: Setup System
-        run: sudo apt-get install libsqlite3-dev
       - uses: actions/checkout@v2
       - uses: zhulik/redis-action@1.1.0
       - name: Set up Ruby
