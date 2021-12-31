@@ -28,6 +28,10 @@ appraise 'rails-6.1' do
   gem 'rails', '6.1'
 end
 
+appraise 'rails-7.0' do
+  gem 'rails', '7.0'
+end
+
 appraise 'semantic_logger-3.4' do
   gem 'semantic_logger', '3.4.1'
 end
