@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.13.rc1](https://github.com/keypup-io/cloudtasker/tree/v0.13.rc1) (2022-01-03)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.12.2...v0.13.rc1)
+
+**Improvements:**
+- Ruby 3: Rework method arguments to be compatible with Ruby 3
+- Tests: Separate test environment for Ruby 2 and Ruby 3
+- Tests: Do not load Rails by default and skip Rails-specific tests in non-Rails appraisals
+
 ## [v0.12.2](https://github.com/keypup-io/cloudtasker/tree/v0.12.2) (2021-12-31)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.12.1...v0.12.2)
