@@ -7,7 +7,7 @@ require 'semantic_logger'
 require 'rspec/json_expectations'
 
 # Configure Rails dummary app if Rails is in context
-if Gem.loaded_specs.key?(:rails)
+if Gem.loaded_specs.key?('rails')
   ENV['RAILS_ENV'] ||= 'test'
   require File.expand_path('dummy/config/environment.rb', __dir__)
   require 'rspec/rails'
