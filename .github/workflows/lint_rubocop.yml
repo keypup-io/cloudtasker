@@ -1,0 +1,20 @@
+name: Rubocop
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: zhulik/redis-action@1.1.0
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.0.1'
+          bundler-cache: true
+      - name: Lint codebase
+        run: |
+          gem install bundler
+          bundle install --jobs 4 --retry 3
+          bundle exec rubocop

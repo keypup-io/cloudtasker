@@ -35,7 +35,7 @@ RSpec.describe Cloudtasker::Backend::GoogleCloudTask do
   let(:client) { instance_double('Google::Cloud::Tasks::V2beta3::Task') }
 
   describe '.setup_queue' do
-    subject { described_class.setup_queue(opts) }
+    subject { described_class.setup_queue(**opts) }
 
     let(:opts) { { name: relative_queue, concurrency: 20, retries: 100 } }
     let(:queue) { instance_double('Google::Cloud::Tasks::V2beta3::Queue') }

@@ -46,7 +46,7 @@ RSpec.describe Cloudtasker::CloudTask do
     before { allow(backend).to receive(:find).with(id).and_return(call_resp) }
 
     context 'with response' do
-      it { is_expected.to eq(described_class.new(payload)) }
+      it { is_expected.to eq(described_class.new(**payload)) }
     end
 
     context 'with no response' do
@@ -65,7 +65,7 @@ RSpec.describe Cloudtasker::CloudTask do
     before { allow(backend).to receive(:create).with(payload).and_return(call_resp) }
 
     context 'with response' do
-      it { is_expected.to eq(described_class.new(payload)) }
+      it { is_expected.to eq(described_class.new(**payload)) }
     end
 
     context 'with no response' do
@@ -93,20 +93,20 @@ RSpec.describe Cloudtasker::CloudTask do
   end
 
   describe '.new' do
-    subject { described_class.new(payload) }
+    subject { described_class.new(**payload) }
 
     it { is_expected.to have_attributes(payload) }
   end
 
   describe '#==' do
-    subject { described_class.new(payload) }
+    subject { described_class.new(**payload) }
 
     context 'with same id' do
-      it { is_expected.to eq(described_class.new(payload)) }
+      it { is_expected.to eq(described_class.new(**payload)) }
     end
 
     context 'with different id' do
-      it { is_expected.not_to eq(described_class.new(payload.merge(id: payload[:id] + 'a'))) }
+      it { is_expected.not_to eq(described_class.new(**payload.merge(id: payload[:id] + 'a'))) }
     end
 
     context 'with different object' do

@@ -62,7 +62,7 @@ module Cloudtasker
       def self.load_from_hash!(hash)
         schedules = hash.map do |id, config|
           schedule_config = JSON.parse(config.to_json, symbolize_names: true).merge(id: id.to_s)
-          create(schedule_config)
+          create(**schedule_config)
         end
 
         # Remove existing schedules which are not part of the list
@@ -79,7 +79,7 @@ module Cloudtasker
       def self.create(**opts)
         redis.with_lock(key(opts[:id])) do
           config = find(opts[:id]).to_h.merge(opts)
-          new(config).tap(&:save)
+          new(**config).tap(&:save)
         end
       end
 
@@ -93,7 +93,7 @@ module Cloudtasker
       def self.find(id)
         return nil unless (schedule_config = redis.fetch(key(id)))
 
-        new(schedule_config)
+        new(**schedule_config)
       end
 
       #
@@ -251,9 +251,9 @@ module Cloudtasker
       #
       # Buld edit the object attributes.
       #
-      # @param [Hash] **opts The attributes to edit.
+      # @param [Hash] opts The attributes to edit.
       #
-      def assign_attributes(**opts)
+      def assign_attributes(opts)
         opts
           .select { |k, _| instance_variables.include?("@#{k}".to_sym) }
           .each { |k, v| instance_variable_set("@#{k}", v) }
@@ -262,9 +262,9 @@ module Cloudtasker
       #
       # Edit the object attributes and save the object in Redis.
       #
-      # @param [Hash] **opts The attributes to edit.
+      # @param [Hash] opts The attributes to edit.
       #
-      def update(**opts)
+      def update(opts)
         assign_attributes(opts)
         save
       end

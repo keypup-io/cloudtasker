@@ -75,29 +75,9 @@ GEM
       rake
       thor (>= 0.14.0)
     ast (2.4.2)
-    async (1.30.1)
-      console (~> 1.10)
-      nio4r (~> 2.3)
-      timers (~> 4.1)
-    async-http (0.56.5)
-      async (>= 1.25)
-      async-io (>= 1.28)
-      async-pool (>= 0.2)
-      protocol-http (~> 0.22.0)
-      protocol-http1 (~> 0.14.0)
-      protocol-http2 (~> 0.14.0)
-    async-http-faraday (0.11.0)
-      async-http (~> 0.42)
-      faraday
-    async-io (1.32.2)
-      async
-    async-pool (0.3.9)
-      async (>= 1.25)
     builder (3.2.4)
     concurrent-ruby (1.1.9)
     connection_pool (2.2.5)
-    console (1.14.0)
-      fiber-local
     crack (0.4.5)
       rexml
     crass (1.0.6)
@@ -119,26 +99,14 @@ GEM
     faraday-em_http (1.0.0)
     faraday-em_synchrony (1.0.0)
     faraday-excon (1.1.0)
-    faraday-http-cache (2.2.0)
-      faraday (>= 0.8)
     faraday-httpclient (1.0.1)
     faraday-net_http (1.0.1)
     faraday-net_http_persistent (1.2.0)
     faraday-patron (1.0.0)
     faraday-rack (1.0.0)
-    fiber-local (1.0.0)
     fugit (1.5.2)
       et-orbi (~> 1.1, >= 1.1.8)
       raabro (~> 1.4)
-    github_changelog_generator (1.16.4)
-      activesupport
-      async (>= 1.25.0)
-      async-http-faraday
-      faraday-http-cache
-      multi_json
-      octokit (~> 4.6)
-      rainbow (>= 2.2.1)
-      rake (>= 10.0)
     globalid (1.0.0)
       activesupport (>= 5.0)
     google-cloud-tasks (1.5.1)
@@ -200,20 +168,10 @@ GEM
     nokogiri (1.12.5)
       mini_portile2 (~> 2.6.1)
       racc (~> 1.4)
-    octokit (4.21.0)
-      faraday (>= 0.9)
-      sawyer (~> 0.8.0, >= 0.5.3)
     os (1.1.4)
     parallel (1.21.0)
     parser (3.0.3.2)
       ast (~> 2.4.1)
-    protocol-hpack (1.4.2)
-    protocol-http (0.22.5)
-    protocol-http1 (0.14.2)
-      protocol-http (~> 0.22)
-    protocol-http2 (0.14.2)
-      protocol-hpack (~> 1.4)
-      protocol-http (~> 0.18)
     public_suffix (4.0.6)
     raabro (1.4.0)
     racc (1.6.0)
@@ -285,9 +243,6 @@ GEM
       rubocop (>= 0.68.1)
     ruby-progressbar (1.11.0)
     ruby2_keywords (0.0.5)
-    sawyer (0.8.2)
-      addressable (>= 2.3.5)
-      faraday (> 0.8, < 2.0)
     semantic_logger (4.9.0)
       concurrent-ruby (~> 1.0)
     signet (0.16.0)
@@ -306,7 +261,6 @@ GEM
     thor (1.1.0)
     thread_safe (0.3.6)
     timecop (0.9.4)
-    timers (4.3.3)
     tzinfo (1.2.9)
       thread_safe (~> 0.1)
     unicode-display_width (1.6.1)
@@ -326,7 +280,6 @@ DEPENDENCIES
   appraisal
   bundler (~> 2.0)
   cloudtasker!
-  github_changelog_generator
   rails (= 6.0)
   rake (>= 12.3.3)
   rspec (~> 3.0)
@@ -340,4 +293,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   2.2.26
+   2.3.4

@@ -31,13 +31,13 @@ RSpec.describe 'Batch Worker' do
         # Limit the number of iterations to 50 to prevent unexpected infinite loops
         50.times do
           Cloudtasker::Worker.drain_all
-          break if worker_class.jobs.blank?
+          break if worker_class.jobs.to_a.empty?
         end
       end
     end
 
     it 'completes the batch' do
-      expect(TestBatchWorker.jobs).to be_blank
+      expect(TestBatchWorker.jobs).to be_empty
       expect(TestBatchWorker.callback_counts).to eq(expected_callback_counts)
     end
   end
@@ -65,13 +65,13 @@ RSpec.describe 'Batch Worker' do
         # The batch
         50.times do
           Cloudtasker::Worker.drain_all
-          break if worker_class.jobs.blank?
+          break if worker_class.jobs.to_a.empty?
         end
       end
     end
 
     it 'completes the batch' do
-      expect(worker_class.jobs).to be_blank
+      expect(worker_class.jobs.to_a).to be_empty
       expect(worker_class.callback_counts).to eq(expected_callback_counts)
     end
   end

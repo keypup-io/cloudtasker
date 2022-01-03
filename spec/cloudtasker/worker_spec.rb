@@ -118,7 +118,7 @@ RSpec.describe Cloudtasker::Worker do
   end
 
   describe '.schedule' do
-    subject { worker_class.schedule(opts) }
+    subject { worker_class.schedule(**opts) }
 
     let(:queue) { 'some-queue' }
     let(:delay) { 10 }
@@ -178,7 +178,7 @@ RSpec.describe Cloudtasker::Worker do
   end
 
   describe '.new' do
-    subject { worker_class.new(worker_args) }
+    subject { worker_class.new(**worker_args) }
 
     let(:task_id) { SecureRandom.uuid }
     let(:id) { SecureRandom.uuid }
@@ -193,7 +193,7 @@ RSpec.describe Cloudtasker::Worker do
         {
           job_queue: 'default',
           job_args: [],
-          job_id: be_present,
+          job_id: be_a(String),
           job_retries: 0,
           task_id: nil
         }

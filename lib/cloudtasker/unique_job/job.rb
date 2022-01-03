@@ -14,10 +14,11 @@ module Cloudtasker
       # Build a new instance of the class.
       #
       # @param [Cloudtasker::Worker] worker The worker at hand
+      # @param [Hash] worker The worker options
       #
-      def initialize(worker, **kwargs)
+      def initialize(worker, opts = {})
         @worker = worker
-        @call_opts = kwargs
+        @call_opts = opts
       end
 
       #

@@ -41,9 +41,9 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
   let(:worker_name) { 'TestWorker' }
   let(:worker_name2) { 'TestWorker2' }
   let(:task_id) { '1234' }
-  let(:task) { described_class.new(job_payload.merge(id: task_id)) }
+  let(:task) { described_class.new(**job_payload.merge(id: task_id)) }
   let(:task_id2) { '2434' }
-  let(:task2) { described_class.new(job_payload2.merge(id: task_id2)) }
+  let(:task2) { described_class.new(**job_payload2.merge(id: task_id2)) }
 
   before { described_class.clear }
 
@@ -160,7 +160,7 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
   end
 
   describe '.new' do
-    subject { described_class.new(job_payload.merge(id: id)) }
+    subject { described_class.new(**job_payload.merge(id: id)) }
 
     let(:id) { '123' }
     let(:expected_attrs) do
@@ -251,11 +251,11 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
     subject { task }
 
     context 'with same id' do
-      it { is_expected.to eq(described_class.new(job_payload.merge(id: task_id))) }
+      it { is_expected.to eq(described_class.new(**job_payload.merge(id: task_id))) }
     end
 
     context 'with different id' do
-      it { is_expected.not_to eq(described_class.new(job_payload.merge(id: task_id + 'a'))) }
+      it { is_expected.not_to eq(described_class.new(**job_payload.merge(id: task_id + 'a'))) }
     end
 
     context 'with different object' do

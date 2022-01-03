@@ -32,17 +32,19 @@ RSpec.shared_examples 'a log appender' do |level|
     it { is_expected.to be_truthy }
   end
 
-  context 'with ActiveSupport::Logger' do
-    let(:as_logger) { ActiveSupport::Logger.new(nil) }
+  if defined?(Rails)
+    context 'with ActiveSupport::Logger' do
+      let(:as_logger) { ActiveSupport::Logger.new(nil) }
 
-    before do
-      allow(logger).to receive(:logger).and_return(as_logger)
-      allow(as_logger).to receive(level) do |*_args, &block|
-        expect(block.call).to eq("#{log_msg} -- #{log_block.call}")
+      before do
+        allow(logger).to receive(:logger).and_return(as_logger)
+        allow(as_logger).to receive(level) do |*_args, &block|
+          expect(block.call).to eq("#{log_msg} -- #{log_block.call}")
+        end
       end
+      after { expect(as_logger).to have_received(level) }
+      it { is_expected.to be_truthy }
     end
-    after { expect(as_logger).to have_received(level) }
-    it { is_expected.to be_truthy }
   end
 
   describe 'end to end' do
@@ -56,10 +58,12 @@ RSpec.shared_examples 'a log appender' do |level|
       it { expect { log_action }.not_to raise_error }
     end
 
-    context 'with ActiveSupport::Logger' do
-      let(:logger_adapter) { ActiveSupport::Logger.new(nil) }
+    if defined?(Rails)
+      context 'with ActiveSupport::Logger' do
+        let(:logger_adapter) { ActiveSupport::Logger.new(nil) }
 
-      it { expect { log_action }.not_to raise_error }
+        it { expect { log_action }.not_to raise_error }
+      end
     end
 
     context 'with SemanticLogger' do
