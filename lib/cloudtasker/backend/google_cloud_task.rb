@@ -33,9 +33,11 @@ module Cloudtasker
         # Create queue on 'not found' error
         client.create_queue(
           client.location_path(config.gcp_project_id, config.gcp_location_id),
-          name: full_queue_name,
-          retry_config: { max_attempts: queue_retries },
-          rate_limits: { max_concurrent_dispatches: queue_concurrency }
+          {
+            name: full_queue_name,
+            retry_config: { max_attempts: queue_retries },
+            rate_limits: { max_concurrent_dispatches: queue_concurrency }
+          }
         )
       end
 

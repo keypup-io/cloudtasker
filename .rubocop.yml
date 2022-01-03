@@ -5,6 +5,11 @@ AllCops:
     - 'gemfiles/**/*'
     - 'vendor/**/*'
 
+# Ruby 3.0: curly braces around last argument has meaning
+# See: https://github.com/rubocop/rubocop/issues/7641
+Style/BracesAroundHashParameters:
+  Enabled: false
+
 Metrics/ClassLength:
   Max: 200
 
