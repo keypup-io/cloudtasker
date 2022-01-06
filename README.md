@@ -51,6 +51,9 @@ Add this line to your application's Gemfile:
 
 ```ruby
 gem 'cloudtasker'
+
+# For Ruby 3 support, please use v0.13.rc1
+gem 'cloudtasker, '~> 0.13.rc1'
 ```
 
 And then execute:
