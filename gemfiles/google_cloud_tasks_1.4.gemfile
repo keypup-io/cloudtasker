@@ -2,6 +2,7 @@
 
 source "https://rubygems.org"
 
-gem "semantic_logger", "4.7.2"
+gem "activesupport", "6.1"
+gem "google-cloud-tasks", "~> 1.4.0"
 
 gemspec path: "../"

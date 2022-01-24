@@ -2,22 +2,42 @@
 
 appraise 'google-cloud-tasks-1.0' do
   gem 'activesupport', '6.1' # ruby 2.5 / 2.6 compatibility
-  gem 'google-cloud-tasks', '1.0'
+  gem 'google-cloud-tasks', '~> 1.0.0'
 end
 
 appraise 'google-cloud-tasks-1.1' do
   gem 'activesupport', '6.1' # ruby 2.5 / 2.6 compatibility
-  gem 'google-cloud-tasks', '1.1'
+  gem 'google-cloud-tasks', '~> 1.1.0'
 end
 
 appraise 'google-cloud-tasks-1.2' do
   gem 'activesupport', '6.1' # ruby 2.5 / 2.6 compatibility
-  gem 'google-cloud-tasks', '1.2'
+  gem 'google-cloud-tasks', '~> 1.2.0'
 end
 
 appraise 'google-cloud-tasks-1.3' do
   gem 'activesupport', '6.1' # ruby 2.5 / 2.6 compatibility
-  gem 'google-cloud-tasks', '1.3'
+  gem 'google-cloud-tasks', '~> 1.3.0'
+end
+
+appraise 'google-cloud-tasks-1.4' do
+  gem 'activesupport', '6.1' # ruby 2.5 / 2.6 compatibility
+  gem 'google-cloud-tasks', '~> 1.4.0'
+end
+
+appraise 'google-cloud-tasks-1.5' do
+  gem 'activesupport', '6.1' # ruby 2.5 / 2.6 compatibility
+  gem 'google-cloud-tasks', '~> 1.5.0'
+end
+
+appraise 'google-cloud-tasks-2.0' do
+  gem 'activesupport', '6.1' # ruby 2.5 / 2.6 compatibility
+  gem 'google-cloud-tasks', '~> 2.0.0'
+end
+
+appraise 'google-cloud-tasks-2.1' do
+  gem 'activesupport', '6.1' # ruby 2.5 / 2.6 compatibility
+  gem 'google-cloud-tasks', '~> 2.1.0'
 end
 
 if RUBY_VERSION < '3'

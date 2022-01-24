@@ -5,6 +5,7 @@
 /doc/
 /examples/rails/log/*.log
 /examples/rails/tmp/
+/gemfiles/*.gemfile.lock
 /log/
 /pkg/
 /spec/reports/
