@@ -8,7 +8,12 @@ module Cloudtasker
     #
     # The backend to use for cloud tasks.
     #
-    # @return [Cloudtasker::Backend::GoogleCloudTask, Cloudtasker::Backend::RedisTask] The cloud task backend.
+    # @return [
+    #   Backend::MemoryTask,
+    #   Cloudtasker::Backend::GoogleCloudTaskV1,
+    #   Cloudtasker::Backend::GoogleCloudTaskV2,
+    #   Cloudtasker::Backend::RedisTask
+    # ] The cloud task backend.
     #
     def self.backend
       # Re-evaluate backend every time if testing mode enabled
@@ -22,10 +27,43 @@ module Cloudtasker
           require 'cloudtasker/backend/redis_task'
           Backend::RedisTask
         else
-          require 'cloudtasker/backend/google_cloud_task'
-          Backend::GoogleCloudTask
+          gct_backend
         end
       end
+    end
+
+    #
+    # Return the GoogleCloudTaskV* backend to use based on the version
+    # of the currently installed google-cloud-tasks gem
+    #
+    # @return [
+    #   Cloudtasker::Backend::GoogleCloudTaskV1,
+    #   Cloudtasker::Backend::GoogleCloudTaskV2
+    # ] The google cloud task backend.
+    #
+    def self.gct_backend
+      @gct_backend ||= begin
+        if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '2'
+          require 'cloudtasker/backend/google_cloud_task_v1'
+          Backend::GoogleCloudTaskV1
+        else
+          require 'cloudtasker/backend/google_cloud_task_v2'
+          Backend::GoogleCloudTaskV2
+        end
+      end
+    end
+
+    #
+    # Create the google cloud task queue based on provided parameters if it does not exist already.
+    #
+    # @param [String] :name The queue name
+    # @param [Integer] :concurrency The queue concurrency
+    # @param [Integer] :retries The number of retries for the queue
+    #
+    # @return [Google::Cloud::Tasks::V2::Queue, Google::Cloud::Tasks::V2beta3::Queue] The queue
+    #
+    def self.setup_production_queue(**kwargs)
+      gct_backend.setup_queue(**kwargs)
     end
 
     #
