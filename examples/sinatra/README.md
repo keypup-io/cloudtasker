@@ -21,7 +21,13 @@ DummyWorker.perform_async
     * Set `config.mode` to `:production`
 5. Launch the server: `foreman start web`
 6. Open a Sinatra console: `./bin/console`
-7. Enqueue workers:
+7. Setup your queues on Google Cloud Tasks:
+```ruby
+# Default and critical queues
+Cloudtasker::CloudTask.setup_production_queue
+Cloudtasker::CloudTask.setup_production_queue(name: 'critical')
+```
+8. Enqueue workers:
 ```ruby
 DummyWorker.perform_async
 ```

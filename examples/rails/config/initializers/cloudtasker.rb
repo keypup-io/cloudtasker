@@ -8,8 +8,8 @@ Cloudtasker.configure do |config|
   #
   # GCP Configuration
   #
-  config.gcp_location_id = 'us-east1'
   config.gcp_project_id = 'some-project'
+  config.gcp_location_id = 'us-east1'
   config.gcp_queue_prefix = 'my-app'
 
   #

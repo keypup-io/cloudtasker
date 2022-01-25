@@ -6,7 +6,7 @@ require 'retriable'
 module Cloudtasker
   module Backend
     # Manage tasks pushed to GCP Cloud Task
-    class GoogleCloudTask
+    class GoogleCloudTaskV1
       attr_accessor :gcp_task
 
       #
@@ -117,7 +117,7 @@ module Cloudtasker
       #
       # @param [String] id The task id.
       #
-      # @return [Cloudtasker::Backend::GoogleCloudTask, nil] The retrieved task.
+      # @return [Cloudtasker::Backend::GoogleCloudTaskV1, nil] The retrieved task.
       #
       def self.find(id)
         resp = with_gax_retries { client.get_task(id) }
@@ -132,7 +132,7 @@ module Cloudtasker
       #
       # @param [Hash] payload The task payload.
       #
-      # @return [Cloudtasker::Backend::GoogleCloudTask, nil] The created task.
+      # @return [Cloudtasker::Backend::GoogleCloudTaskV1, nil] The created task.
       #
       def self.create(payload)
         payload = format_task_payload(payload)

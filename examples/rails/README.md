@@ -19,9 +19,15 @@ DummyWorker.perform_async
     * Add the configuration of your GCP queue
     * Set `config.processor_host` to the ngrok http or https url
     * Set `config.mode` to `:production`
-5. Launch the server: `foreman start web`
-6. Open a Rails console: `rails c`
-7. Enqueue workers:
+5. Setup your queues on Google Cloud Tasks:
+```
+# Default and critical queues
+rake cloudtasker:setup_queue
+rake cloudtasker:setup_queue name=critical
+```
+6. Launch the server: `foreman start web`
+7. Open a Rails console: `rails c`
+8. Enqueue workers:
 ```ruby
 DummyWorker.perform_async
 ```

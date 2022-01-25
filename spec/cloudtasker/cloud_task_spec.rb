@@ -1,10 +1,26 @@
 # frozen_string_literal: true
 
 require 'cloudtasker/backend/redis_task'
-require 'cloudtasker/backend/google_cloud_task'
 
 RSpec.describe Cloudtasker::CloudTask do
-  let(:backend) { class_double(Cloudtasker::Backend::GoogleCloudTask) }
+  let(:gct_klass) do
+    if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '2'
+      require 'cloudtasker/backend/google_cloud_task_v1'
+      Cloudtasker::Backend::GoogleCloudTaskV1
+    else
+      require 'cloudtasker/backend/google_cloud_task_v2'
+      Cloudtasker::Backend::GoogleCloudTaskV2
+    end
+  end
+  let(:task_class) do
+    if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '2'
+      'Google::Cloud::Tasks::V2beta3::Task'
+    else
+      'Google::Cloud::Tasks::V2::Task'
+    end
+  end
+
+  let(:backend) { class_double(gct_klass) }
   let(:payload) do
     {
       id: '123',
@@ -15,7 +31,7 @@ RSpec.describe Cloudtasker::CloudTask do
       dispatch_deadline: 500
     }
   end
-  let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task', to_h: payload) }
+  let(:resp) { instance_double(task_class, to_h: payload) }
 
   describe '.backend' do
     subject { described_class.backend }
@@ -32,8 +48,24 @@ RSpec.describe Cloudtasker::CloudTask do
     context 'with production mode' do
       let(:environment) { 'production' }
 
-      it { is_expected.to eq(Cloudtasker::Backend::GoogleCloudTask) }
+      it { is_expected.to eq(gct_klass) }
     end
+  end
+
+  describe '.gct_backend' do
+    subject { described_class.gct_backend }
+
+    it { is_expected.to eq(gct_klass) }
+  end
+
+  describe '.setup_production_queue' do
+    subject { described_class.setup_production_queue(**args) }
+
+    let(:args) { { name: 'critical', concurrency: 20, retries: 100 } }
+    let(:queue) { instance_double('Google::Cloud::Tasks::V2::Queue') }
+
+    before { expect(gct_klass).to receive(:setup_queue).with(**args).and_return(queue) }
+    it { is_expected.to eq(queue) }
   end
 
   describe '.find' do
