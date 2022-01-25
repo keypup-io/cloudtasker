@@ -1,10 +1,11 @@
 # Changelog
 
-## [v0.13.rc1](https://github.com/keypup-io/cloudtasker/tree/v0.13.rc1) (2022-01-03)
+## [v0.13.rc2](https://github.com/keypup-io/cloudtasker/tree/v0.13.rc2) (2022-01-25)
 
-[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.12.2...v0.13.rc1)
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.12.2...v0.13.rc2)
 
 **Improvements:**
+- Dependencies: add support for google-cloud-tasks v2 and while keeping backward compatibility with v1. For existing projects, you may need to run `bundle update google-cloud-tasks` after upgrading cloudtasker to update google-cloud-tasks to the latest version.
 - Ruby 3: Rework method arguments to be compatible with Ruby 3
 - Tests: Separate test environment for Ruby 2 and Ruby 3
 - Tests: Do not load Rails by default and skip Rails-specific tests in non-Rails appraisals
