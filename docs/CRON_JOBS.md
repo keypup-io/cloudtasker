@@ -45,12 +45,12 @@ You can maintain the list of cron jobs in a YAML file inside your config folder 
 # Run job every minute
 some_schedule_name:
   worker: 'SomeCronWorker'
-  cron: => '* * * * *'
+  cron: '* * * * *'
   
 # Run job every hour on the fifteenth minute 
 other_cron_schedule:
   worker: 'OtherCronWorker'
-  cron: => '15 * * * *'
+  cron: '15 * * * *'
 ```
 
 Then register the jobs inside your Cloudtasker initializer this way:
