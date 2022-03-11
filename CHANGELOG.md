@@ -1,8 +1,8 @@
 # Changelog
 
-## [v0.13.rc2](https://github.com/keypup-io/cloudtasker/tree/v0.13.rc2) (2022-01-25)
+## [v0.13.0](https://github.com/keypup-io/cloudtasker/tree/v0.13.0) (2022-03-11)
 
-[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.12.2...v0.13.rc2)
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.12.2...v0.13.0)
 
 **Improvements:**
 - Dependencies: add support for google-cloud-tasks v2 and while keeping backward compatibility with v1. For existing projects, you may need to run `bundle update google-cloud-tasks` after upgrading cloudtasker to update google-cloud-tasks to the latest version.
