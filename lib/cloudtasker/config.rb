@@ -279,15 +279,15 @@ module Cloudtasker
       yield @server_middleware if block_given?
       @server_middleware
     end
-  end
-  
-  #
-  # Return if oidc is enabled. This can be enable to allow cloud tasker to work with google cloud run services that
-  # require authentication. Defaults to false.
-  #
-  # @return [Boolean] Flag to enable oidc.
-  #
-  def oidc_enabled
-    @oidc_enabled || false
+    
+    #
+    # Return if oidc is enabled. This can be enable to allow cloud tasker to work with google cloud run services that
+    # require authentication. Defaults to false.
+    #
+    # @return [Boolean] Flag to enable oidc.
+    #
+    def oidc_enabled
+      @oidc_enabled || false
+    end
   end
 end
