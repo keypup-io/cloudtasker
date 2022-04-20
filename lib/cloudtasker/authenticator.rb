@@ -53,15 +53,16 @@ module Cloudtasker
     def verify!(bearer_token)
       verify(bearer_token) || raise(AuthenticationError)
     end
-  end
-  
-  def oidc_token
-    google_metadata_server_url = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity'
+    
+    def oidc_token
+      google_metadata_server_url = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity'
 
-    res = Faraday.get(google_metadata_server_url, { audience: config.processor_host }, { 'Metadata-Flavor' => 'Google' })
+      res = Faraday.get(google_metadata_server_url, { audience: config.processor_host }, { 'Metadata-Flavor' => 'Google' })
 
-    raise(StandardError,OIDC_FETCH_ERROR) if res.status >= 400
+      raise(StandardError,OIDC_FETCH_ERROR) if res.status >= 400
 
-    res.body.to_s
+      res.body.to_s
+    end
+    
   end
 end
