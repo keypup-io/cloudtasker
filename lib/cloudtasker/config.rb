@@ -160,9 +160,9 @@ module Cloudtasker
 
       # Check if Rails supports host filtering
       return unless val &&
-                    defined?(Rails) &&
-                    Rails.application.config.respond_to?(:hosts) &&
-                    Rails.application.config.hosts&.any?
+        defined?(Rails) &&
+        Rails.application.config.respond_to?(:hosts) &&
+        Rails.application.config.hosts&.any?
 
       # Add processor host to the list of authorized hosts
       Rails.application.config.hosts << val.gsub(%r{https?://}, '')
@@ -279,7 +279,7 @@ module Cloudtasker
       yield @server_middleware if block_given?
       @server_middleware
     end
-    
+
     #
     # Return if oidc is enabled. This can be enable to allow cloud tasker to work with google cloud run services that
     # require authentication. Defaults to false.
