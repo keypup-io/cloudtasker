@@ -9,8 +9,7 @@ module Cloudtasker
     JWT_ALG = 'HS256'
 
     OIDC_FETCH_ERROR = <<~DOC
-      Missing host for processing.
-      Please specify a processor hostname in form of `https://some-public-dns.example.com`'
+      Unable to retrieve oidc token from google's metadata server.
     DOC
 
     #
