@@ -5,10 +5,10 @@ require 'logger'
 module Cloudtasker
   # Holds cloudtasker configuration. See Cloudtasker#configure
   class Config
-    attr_accessor :redis, :store_payloads_in_redis
+    attr_accessor :redis, :store_payloads_in_redis, :oidc_enabled
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
                 :gcp_queue_prefix, :processor_path, :logger, :mode, :max_retries,
-                :dispatch_deadline, :on_error, :on_dead, :oidc_enabled
+                :dispatch_deadline, :on_error, :on_dead
 
     # Max Cloud Task size in bytes
     MAX_TASK_SIZE = 100 * 1024 # 100 KB
@@ -278,16 +278,6 @@ module Cloudtasker
       @server_middleware ||= Middleware::Chain.new
       yield @server_middleware if block_given?
       @server_middleware
-    end
-
-    #
-    # Return if oidc is enabled. This can be enable to allow cloud tasker to work with google cloud run services that
-    # require authentication. Defaults to false.
-    #
-    # @return [Boolean] Flag to enable oidc.
-    #
-    def oidc_enabled
-      @oidc_enabled || false
     end
   end
 end
