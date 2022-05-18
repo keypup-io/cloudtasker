@@ -239,7 +239,7 @@ In order to function properly Cloudtasker requires the authenticated account to 
 - `cloudtasks.tasks.create`
 - `cloudtasks.tasks.delete`
 
-To get started quickly you can add the `roles/cloudtasks.queueAdmin` role to your account via the [IAM Console](https://console.cloud.google.com/iam-admin/iam). This is not required if your account is a project admin account.
+To get started quickly you can add the `roles/cloudtasks.admin` role to your account via the [IAM Console](https://console.cloud.google.com/iam-admin/iam). This is not required if your account is a project admin account.
 
 
 ### Cloudtasker initializer
