@@ -232,7 +232,7 @@ Open a Rails console and enqueue some jobs
 
 The Google Cloud library authenticates via the Google Cloud SDK by default. If you do not have it setup then we recommend you [install it](https://cloud.google.com/sdk/docs/quickstarts).
 
-Other options are available such as using a service account. You can see all authentication options in the [Google Cloud Authentication guide](https://github.com/googleapis/google-cloud-ruby/blob/master/google-cloud-bigquery/AUTHENTICATION.md).
+Other options are available such as using a service account. You can see all authentication options in the [Google Cloud Authentication guide](https://github.com/googleapis/google-cloud-ruby/blob/main/AUTHENTICATION.md).
 
 In order to function properly Cloudtasker requires the authenticated account to have the following IAM permissions:
 - `cloudtasks.tasks.get`
