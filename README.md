@@ -241,6 +241,7 @@ In order to function properly Cloudtasker requires the authenticated account to 
 
 To get started quickly you can add the `roles/cloudtasks.admin` role to your account via the [IAM Console](https://console.cloud.google.com/iam-admin/iam). This is not required if your account is a project admin account.
 
+The GCP project ID and region values are not loaded automatically by the Google Cloud library, and must be explicitly defined in the initializer when using Google Cloud Tasks.
 
 ### Cloudtasker initializer
 
@@ -260,10 +261,10 @@ Cloudtasker.configure do |config|
   # config.secret = 'some-long-token'
 
   #
-  # Specify the details of your Google Cloud Task location.
-  #
-  # This not required in development using the Cloudtasker local server.
-  #
+  # Specify the details of your Google Cloud Task location. 
+  # 
+  # This is required when the mode of operation is set to :production
+  # 
   config.gcp_location_id = 'us-central1' # defaults to 'us-east1'
   config.gcp_project_id = 'my-gcp-project'
 
