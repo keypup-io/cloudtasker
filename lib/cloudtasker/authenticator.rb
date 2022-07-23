@@ -8,10 +8,6 @@ module Cloudtasker
     # Algorithm used to sign the verification token
     JWT_ALG = 'HS256'
 
-    OIDC_FETCH_ERROR = <<~DOC
-      Unable to retrieve oidc token from google's metadata server.
-    DOC
-
     #
     # Return the cloudtasker configuration. See Cloudtasker#configure.
     #
@@ -28,8 +24,6 @@ module Cloudtasker
     # @return [String] The jwt token
     #
     def verification_token
-      return oidc_token if config.oidc_enabled
-
       JWT.encode({ iat: Time.now.to_i }, config.secret, JWT_ALG)
     end
 
@@ -57,19 +51,5 @@ module Cloudtasker
     def verify!(bearer_token)
       verify(bearer_token) || raise(AuthenticationError)
     end
-
-    def oidc_token
-      google_metadata_server_url = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity'
-
-      res = Faraday.get(
-        google_metadata_server_url,
-        { audience: config.processor_host }, { 'Metadata-Flavor' => 'Google' }
-      )
-
-      raise(StandardError, OIDC_FETCH_ERROR) if res.status >= 400
-
-      res.body.to_s
-    end
-
   end
 end

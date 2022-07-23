@@ -5,7 +5,7 @@ require 'logger'
 module Cloudtasker
   # Holds cloudtasker configuration. See Cloudtasker#configure
   class Config
-    attr_accessor :redis, :store_payloads_in_redis, :oidc_enabled
+    attr_accessor :redis, :store_payloads_in_redis, :oidc
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
                 :gcp_queue_prefix, :processor_path, :logger, :mode, :max_retries,
                 :dispatch_deadline, :on_error, :on_dead
