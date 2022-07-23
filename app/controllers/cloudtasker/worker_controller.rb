@@ -80,6 +80,8 @@ module Cloudtasker
     # See Cloudtasker::Authenticator#verification_token
     #
     def authenticate!
+      return if Cloudtasker.config.oidc
+
       Authenticator.verify!(request.headers['Authorization'].to_s.split(' ').last)
     end
   end
