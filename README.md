@@ -12,8 +12,6 @@ Cloudtasker also provides optional modules for running [cron jobs](docs/CRON_JOB
 
 A local processing server is also available for development. This local server processes jobs in lieu of Cloud Tasks and allows you to work offline.
 
-**Maturity**: This gem is production-ready. We at Keypup have already processed millions of jobs using Cloudtasker and all related extensions (cron, batch and unique jobs). We are planning to release the official `v1.0.0` somewhere in 2022, in case we've missed any edge-case bug.
-
 ## Summary
 
 1. [Installation](#installation)
@@ -232,15 +230,16 @@ Open a Rails console and enqueue some jobs
 
 The Google Cloud library authenticates via the Google Cloud SDK by default. If you do not have it setup then we recommend you [install it](https://cloud.google.com/sdk/docs/quickstarts).
 
-Other options are available such as using a service account. You can see all authentication options in the [Google Cloud Authentication guide](https://github.com/googleapis/google-cloud-ruby/blob/master/google-cloud-bigquery/AUTHENTICATION.md).
+Other options are available such as using a service account. You can see all authentication options in the [Google Cloud Authentication guide](https://github.com/googleapis/google-cloud-ruby/blob/main/AUTHENTICATION.md).
 
 In order to function properly Cloudtasker requires the authenticated account to have the following IAM permissions:
 - `cloudtasks.tasks.get`
 - `cloudtasks.tasks.create`
 - `cloudtasks.tasks.delete`
 
-To get started quickly you can add the `roles/cloudtasks.queueAdmin` role to your account via the [IAM Console](https://console.cloud.google.com/iam-admin/iam). This is not required if your account is a project admin account.
+To get started quickly you can add the `roles/cloudtasks.admin` role to your account via the [IAM Console](https://console.cloud.google.com/iam-admin/iam). This is not required if your account is a project admin account.
 
+The GCP project ID and region values are not loaded automatically by the Google Cloud library, and must be explicitly defined in the initializer when using Google Cloud Tasks.
 
 ### Cloudtasker initializer
 
@@ -260,10 +259,10 @@ Cloudtasker.configure do |config|
   # config.secret = 'some-long-token'
 
   #
-  # Specify the details of your Google Cloud Task location.
-  #
-  # This not required in development using the Cloudtasker local server.
-  #
+  # Specify the details of your Google Cloud Task location. 
+  # 
+  # This is required when the mode of operation is set to :production
+  # 
   config.gcp_location_id = 'us-central1' # defaults to 'us-east1'
   config.gcp_project_id = 'my-gcp-project'
 
