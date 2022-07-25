@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'google/cloud/tasks/v2'
+require 'google/cloud/tasks'
 require 'google/protobuf/timestamp_pb'
 require 'retriable'
 
