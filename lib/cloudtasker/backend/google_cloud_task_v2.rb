@@ -113,7 +113,7 @@ module Cloudtasker
         if config.oidc
           payload[:http_request][:oidc_token] = {
             service_account_email: config.oidc[:service_account_email],
-            audience: config.oidc[:audience]
+            audience: config.oidc[:audience] || config.processor_host
           }
         end
 
