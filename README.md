@@ -409,13 +409,16 @@ Cloudtasker.configure do |config|
   # For the oidcs hash, the service_account_email can be found 
   # under the security details of the cloud run service.
   # The audience is usually the publicly accessible host for the cloud run service 
-  # (which is the same value configured as the processor_host).
+  # (which is the same value configured as the processor_host). If no audience is provided
+  # it will be inferred as the processor_host.
+  # Note: If the oidc token is used for a google cloud run service make sure to include
+  # the iam.serviceAccounts.actAs permission for the service account. 
   #
   # See https://openid.net/connect for more information on OpenID Connect tokens.
   #
   # Default: nil 
   #
-  # config.oidc = { service_account_email: 'example@gserviceaccount.com', audience: config.processor_host }
+  # config.oidc = { service_account_email: 'example@gserviceaccount.com' }
 end
 ```
 
