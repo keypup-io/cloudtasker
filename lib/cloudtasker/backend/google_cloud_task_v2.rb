@@ -111,10 +111,10 @@ module Cloudtasker
         payload[:http_request][:body] = Base64.encode64(payload[:http_request][:body])
 
         if config.oidc
-          payload[:http_request][:oidc_token] = ::Google::Cloud::Tasks::OidcToken.new(
+          payload[:http_request][:oidc_token] = {
             service_account_email: config.oidc[:service_account_email],
             audience: config.oidc[:audience]
-          )
+          }
         end
 
         payload
