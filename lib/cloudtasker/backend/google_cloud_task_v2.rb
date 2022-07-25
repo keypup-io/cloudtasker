@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'google/cloud/tasks'
+require 'google/cloud/tasks/v2'
 require 'google/protobuf/timestamp_pb'
 require 'retriable'
 
@@ -111,7 +111,7 @@ module Cloudtasker
         payload[:http_request][:body] = Base64.encode64(payload[:http_request][:body])
 
         if config.oidc
-          payload[:http_request][:oidc_token] = ::Google::Cloud::Tasks::V2::OidcToken.new(
+          payload[:http_request][:oidc_token] = ::Google::Cloud::Tasks::OidcToken.new(
             service_account_email: config.oidc[:service_account_email],
             audience: config.oidc[:audience]
           )
