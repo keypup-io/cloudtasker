@@ -162,7 +162,7 @@ module Cloudtasker
       }
 
       unless Cloudtasker.config.oidc
-        payload[:http_request][Cloudtasker::Config::AUTHORIZATION_HEADER] = "Bearer #{Authenticator.verification_token}"
+        payload[:http_request][:headers][Cloudtasker::Config::AUTHORIZATION_HEADER] = "Bearer #{Authenticator.verification_token}"
       end
 
       payload
