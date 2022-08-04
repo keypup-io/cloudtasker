@@ -188,9 +188,6 @@ module Cloudtasker
         # Abort and reject job if this cron instance is not expected.
         return true unless expected_instance?
 
-        # Schedule the next instance of the job
-        schedule! unless retry_instance?
-
         # Flag the cron instance as processing.
         flag(:processing)
 
@@ -199,6 +196,9 @@ module Cloudtasker
 
         # Flag the cron instance as done
         flag(:done)
+
+        # Schedule the next instance of the job
+        schedule! unless retry_instance?
       end
     end
   end
