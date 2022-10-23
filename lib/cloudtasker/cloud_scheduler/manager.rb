@@ -69,6 +69,7 @@ module Cloudtasker
         {
           name: job_name(name),
           schedule: job_config["cron"],
+          time_zone: job_config["time_zone"] || 'UTC',
           http_target: {
             uri: request[:url],
             http_method: request[:http_method],
