@@ -369,6 +369,9 @@ module Cloudtasker
       #
       # Calculate the progress of the batch.
       #
+      # @param [Integer] depth The depth of calculation. Zero (default) means only immediate
+      #   children will be taken into account.
+      #
       # @return [Cloudtasker::Batch::BatchProgress] The batch progress.
       #
       def progress(depth: 0)
