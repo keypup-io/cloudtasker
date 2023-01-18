@@ -269,6 +269,9 @@ Cloudtasker.configure do |config|
   #
   # Specify the namespace for your Cloud Task queues.
   #
+  # Specifying a namespace is optional but strongly recommended to keep
+  # queues organised, especially in a micro-service environment.
+  #
   # The gem assumes that a least a default queue named 'my-app-default'
   # exists in Cloud Tasks. You can create this default queue using the
   # gcloud SDK or via the `rake cloudtasker:setup_queue` task if you use Rails.

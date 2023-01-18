@@ -70,7 +70,7 @@ module Cloudtasker
         client.queue_path(
           config.gcp_project_id,
           config.gcp_location_id,
-          [config.gcp_queue_prefix, queue_name].join('-')
+          [config.gcp_queue_prefix, queue_name].map(&:presence).compact.join('-')
         )
       end
 
@@ -186,7 +186,7 @@ module Cloudtasker
           .match(%r{/queues/([^/]+)})
           &.captures
           &.first
-          &.sub("#{self.class.config.gcp_queue_prefix}-", '')
+          &.sub(/^#{self.class.config.gcp_queue_prefix}-/, '')
       end
 
       #
