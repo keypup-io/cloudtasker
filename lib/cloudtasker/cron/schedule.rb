@@ -108,7 +108,7 @@ module Cloudtasker
 
           # Delete task and stored schedule
           CloudTask.delete(schedule.task_id) if schedule.task_id
-          redis.srem(key, schedule.id)
+          redis.srem(key, [schedule.id])
           redis.del(schedule.gid)
         end
       end

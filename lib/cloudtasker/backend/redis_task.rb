@@ -112,7 +112,7 @@ module Cloudtasker
       # @param [String] id The task id.
       #
       def self.delete(id)
-        redis.srem(key, id)
+        redis.srem(key, [id])
         redis.del(key(id))
       end
 
