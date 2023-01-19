@@ -43,7 +43,7 @@ module Cloudtasker
           # to use Schedule Set instead.
           redis.search(key('*')).map do |gid|
             schedule_id = gid.sub(key(''), '')
-            redis.sadd(key, schedule_id)
+            redis.sadd(key, [schedule_id])
             find(schedule_id)
           end
         end
@@ -278,7 +278,7 @@ module Cloudtasker
 
         # Save schedule
         config_was_changed = config_changed?
-        redis.sadd(self.class.key, id)
+        redis.sadd(self.class.key, [id])
         redis.write(gid, to_h)
 
         # Stop there if backend does not need update
