@@ -38,7 +38,7 @@ jobs:
         env:
             APPRAISAL_CONTEXT: ${{ matrix.appraisal }}
         run: |
-          gem install bundler
+          gem install bundler -v 2.3.26
           bundle install --jobs 4 --retry 3
           bundle exec appraisal ${APPRAISAL_CONTEXT} bundle
           bundle exec appraisal ${APPRAISAL_CONTEXT} rspec
