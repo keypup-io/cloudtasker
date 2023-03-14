@@ -69,10 +69,30 @@ RSpec.describe Cloudtasker::Batch::BatchProgress do
   end
 
   describe '#percent' do
-    subject { batch_progress.percent }
+    subject { batch_progress.percent(**opts) }
+
+    let(:opts) { {} }
 
     context 'with batch' do
       it { is_expected.to eq((batch_progress.done.to_f / batch_progress.total) * 100) }
+    end
+
+    context 'with min_total > total' do
+      let(:opts) { { min_total: 1000 } }
+
+      it { is_expected.to eq((batch_progress.done.to_f / opts[:min_total]) * 100) }
+    end
+
+    context 'with min_total < total' do
+      let(:opts) { { min_total: batch_progress.total / 2 } }
+
+      it { is_expected.to eq((batch_progress.done.to_f / batch_progress.total) * 100) }
+    end
+
+    context 'with additive smoothing' do
+      let(:opts) { { smoothing: 10 } }
+
+      it { is_expected.to eq((batch_progress.done.to_f / (batch_progress.total + opts[:smoothing])) * 100) }
     end
 
     context 'with empty elements' do

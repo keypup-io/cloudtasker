@@ -45,7 +45,7 @@ module Cloudtasker
           # to use Task Set instead.
           redis.search(key('*')).map do |gid|
             task_id = gid.sub(key(''), '')
-            redis.sadd(key, task_id)
+            redis.sadd(key, [task_id])
             find(task_id)
           end
         end
@@ -88,7 +88,7 @@ module Cloudtasker
 
         # Save job
         redis.write(key(id), payload)
-        redis.sadd(key, id)
+        redis.sadd(key, [id])
         new(**payload.merge(id: id))
       end
 
@@ -112,7 +112,7 @@ module Cloudtasker
       # @param [String] id The task id.
       #
       def self.delete(id)
-        redis.srem(key, id)
+        redis.srem(key, [id])
         redis.del(key(id))
       end
 
@@ -186,7 +186,7 @@ module Cloudtasker
           queue: queue,
           dispatch_deadline: dispatch_deadline
         )
-        redis.sadd(self.class.key, id)
+        redis.sadd(self.class.key, [id])
       end
 
       #

@@ -214,20 +214,6 @@ RSpec.describe Cloudtasker::Config do
     end
   end
 
-  describe '#gcp_queue_prefix' do
-    subject(:method) { config.gcp_queue_prefix }
-
-    context 'with value specified via config' do
-      it { is_expected.to eq(gcp_queue_prefix) }
-    end
-
-    context 'with no value' do
-      let(:gcp_queue_prefix) { nil }
-
-      it { expect { method }.to raise_error(StandardError, described_class::QUEUE_PREFIX_MISSING_ERROR) }
-    end
-  end
-
   describe '#dispatch_deadline' do
     subject { config.dispatch_deadline }
 

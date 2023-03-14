@@ -5,9 +5,9 @@ require 'logger'
 module Cloudtasker
   # Holds cloudtasker configuration. See Cloudtasker#configure
   class Config
-    attr_accessor :redis, :store_payloads_in_redis, :oidc
+    attr_accessor :redis, :store_payloads_in_redis, :gcp_queue_prefix, :oidc
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
-                :gcp_queue_prefix, :processor_path, :logger, :mode, :max_retries,
+                :processor_path, :logger, :mode, :max_retries,
                 :dispatch_deadline, :on_error, :on_dead
 
     # Max Cloud Task size in bytes
@@ -69,11 +69,6 @@ module Cloudtasker
     PROCESSOR_HOST_MISSING = <<~DOC
       Missing host for processing.
       Please specify a processor hostname in form of `https://some-public-dns.example.com`'
-    DOC
-    QUEUE_PREFIX_MISSING_ERROR = <<~DOC
-      Missing GCP queue prefix.
-      Please specify a queue prefix in the form of `my-app`.
-      You can create a default queue using the Google SDK via `gcloud tasks queues create my-app-default`
     DOC
     PROJECT_ID_MISSING_ERROR = <<~DOC
       Missing GCP project ID.
@@ -187,15 +182,6 @@ module Cloudtasker
     #
     def processor_path
       @processor_path || DEFAULT_PROCESSOR_PATH
-    end
-
-    #
-    # Return the prefix used for queues.
-    #
-    # @return [String] The prefix of the processing queues.
-    #
-    def gcp_queue_prefix
-      @gcp_queue_prefix || raise(StandardError, QUEUE_PREFIX_MISSING_ERROR)
     end
 
     #

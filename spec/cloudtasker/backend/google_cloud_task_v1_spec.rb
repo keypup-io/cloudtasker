@@ -6,7 +6,7 @@ if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '
   require 'cloudtasker/backend/google_cloud_task_v1'
 
   RSpec.describe Cloudtasker::Backend::GoogleCloudTaskV1 do
-    let(:relative_queue) { 'critical' }
+    let(:relative_queue) { 'highly-critical' }
     let(:task_name) do
       [
         'projects',
@@ -14,7 +14,7 @@ if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '
         'locations',
         config.gcp_location_id,
         'queues',
-        "#{config.gcp_queue_prefix}-#{relative_queue}",
+        [config.gcp_queue_prefix, relative_queue].map(&:presence).compact.join('-'),
         'tasks',
         '111-222'
       ].join('/')
@@ -116,17 +116,35 @@ if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '
       subject { described_class.queue_path(relative_queue) }
 
       let(:queue) { 'some-queue' }
-      let(:expected_args) do
-        [
-          config.gcp_project_id,
-          config.gcp_location_id,
-          [config.gcp_queue_prefix, relative_queue].join('-')
-        ]
-      end
 
       before { allow(described_class).to receive(:client).and_return(client) }
       before { allow(client).to receive(:queue_path).with(*expected_args).and_return(queue) }
-      it { is_expected.to eq(queue) }
+
+      context 'with gcp_queue_prefix' do
+        let(:expected_args) do
+          [
+            config.gcp_project_id,
+            config.gcp_location_id,
+            "#{config.gcp_queue_prefix}-#{relative_queue}"
+          ]
+        end
+
+        it { is_expected.to eq(queue) }
+      end
+
+      context 'with nil gcp_queue_prefix' do
+        let(:expected_args) { [config.gcp_project_id, config.gcp_location_id, relative_queue] }
+
+        before { allow(config).to receive(:gcp_queue_prefix).and_return(nil) }
+        it { is_expected.to eq(queue) }
+      end
+
+      context 'with empty gcp_queue_prefix' do
+        let(:expected_args) { [config.gcp_project_id, config.gcp_location_id, relative_queue] }
+
+        before { allow(config).to receive(:gcp_queue_prefix).and_return('') }
+        it { is_expected.to eq(queue) }
+      end
     end
 
     describe '.format_schedule_time' do
@@ -304,7 +322,19 @@ if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '
       let(:resp) { instance_double('Google::Cloud::Tasks::V2beta3::Task', name: task_name, to_h: resp_payload) }
       let(:resp_payload) { job_payload.merge(schedule_time: { seconds: job_payload[:schedule_time] }) }
 
-      it { is_expected.to eq(relative_queue) }
+      context 'with gcp_queue_prefix' do
+        it { is_expected.to eq(relative_queue) }
+      end
+
+      context 'with nil gcp_queue_prefix' do
+        before { allow(Cloudtasker.config).to receive(:gcp_queue_prefix).and_return(nil) }
+        it { is_expected.to eq(relative_queue) }
+      end
+
+      context 'with blank gcp_queue_prefix' do
+        before { allow(Cloudtasker.config).to receive(:gcp_queue_prefix).and_return('') }
+        it { is_expected.to eq(relative_queue) }
+      end
     end
 
     describe '#to_h' do

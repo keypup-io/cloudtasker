@@ -92,12 +92,26 @@ module Cloudtasker
       #
       # Return the batch progress percentage.
       #
+      # A `min_total` can be specified to linearize the calculation, while jobs get added at
+      # the start of the batch.
+      #
+      # Similarly a `smoothing` parameter can be specified to add a constant to the total
+      # and linearize the calculation, which becomes: `done / (total + smoothing)`
+      #
+      # @param [Integer] min_total The minimum for the total number of jobs
+      # @param [Integer] smoothing An additive smoothing for the total number of jobs
+      #
       # @return [Float] The progress percentage.
       #
-      def percent
-        return 0 if total.zero?
+      def percent(min_total: 0, smoothing: 0)
+        # Get the total value to use
+        actual_total = [min_total, total + smoothing].max
 
-        (done.to_f / total) * 100
+        # Abort if we cannot divide
+        return 0 if actual_total.zero?
+
+        # Calculate progress
+        (done.to_f / actual_total) * 100
       end
 
       #
