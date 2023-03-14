@@ -10,8 +10,31 @@ module Cloudtasker
       JOBS_NAMESPACE = 'jobs'
       STATES_NAMESPACE = 'states'
 
-      # List of statuses triggering a completion callback
-      COMPLETION_STATUSES = %w[completed dead].freeze
+      # List of sub-job statuses taken into account when evaluating
+      # if the batch is complete.
+      #
+      # Batch jobs go through the following states:
+      # - pending: the parent batch is about to enqueue a worker for the child job
+      # - scheduled: the parent batch has enqueued a worker for the child job
+      # - processing: the child job is running
+      # - completed: the child job has completed successfully
+      # - errored: the child job has encountered an error and must retry
+      # - dead: the child job has exceeded its max number of retries
+      #
+      # The 'dead' status is considered to be a completion status as it
+      # means that the job will never succeed. There is no point in blocking
+      # the batch forever so we proceed forward eventually.
+      #
+      # The 'pending' status is purely informational and does not aim at blocking
+      # the completion of the batch. It is only used while enqueuing child jobs and
+      # indicates that the child job is about to be enqueued. Once enqueued the child
+      # job will have the 'scheduled' status.
+      #
+      # If the batch job crashes while enqueuing child jobs (e.g. Out Of Memory error)
+      # the batch job will be retried and another series of child jobs will be enqueued.
+      # Some child jobs from the original crashed batch may remain in pending status (they never
+      # got scheduled) but they will be ignored when evaluating the completion of the batch.
+      COMPLETION_STATUSES = %w[completed dead pending].freeze
 
       # These callbacks do not need to raise errors on their own
       # because the jobs will be either retried or dropped
@@ -237,20 +260,14 @@ module Cloudtasker
       end
 
       #
-      # Save the batch.
+      # Save serialized version of the worker.
+      #
+      # This is required to be able to invoke callback methods in the
+      # context of the worker (= instantiated worker) when child workers
+      # complete (success or failure).
       #
       def save
-        # Save serialized version of the worker. This is required to
-        # be able to invoke callback methods in the context of
-        # the worker (= instantiated worker) when child workers
-        # complete (success or failure).
         redis.write(batch_gid, worker.to_h)
-
-        # Stop there if no jobs to save
-        return if jobs.empty?
-
-        # Save list of child workers
-        redis.hset(batch_state_gid, jobs.map { |e| [e.job_id, 'scheduled'] }.to_h)
       end
 
       #
@@ -400,7 +417,9 @@ module Cloudtasker
         save
 
         # Enqueue all child workers
+        redis.hset(batch_state_gid, jobs.map { |e| [e.job_id, 'pending'] }.to_h)
         jobs.map(&:schedule)
+        redis.hset(batch_state_gid, jobs.map { |e| [e.job_id, 'scheduled'] }.to_h)
       end
 
       #

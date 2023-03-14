@@ -182,9 +182,10 @@ RSpec.describe Cloudtasker::Batch::Job do
     before { expect(batch).to receive(:migrate_batch_state_to_redis_hash).and_call_original }
 
     describe 'with state' do
-      before { batch.add(child_worker.class, *child_worker.job_args) }
-      before { batch.save }
-      it { is_expected.to eq(batch.jobs[0].job_id => 'scheduled') }
+      let(:state) { { 'some' => 'state' } }
+
+      before { redis.hset(batch.batch_state_gid, state) }
+      it { is_expected.to eq(state) }
     end
 
     describe 'with no state' do
@@ -241,32 +242,49 @@ RSpec.describe Cloudtasker::Batch::Job do
 
   describe '#save' do
     let(:batch_content) { redis.fetch(batch.batch_gid) }
-    let(:batch_state) { redis.hgetall(batch.batch_state_gid) }
 
-    before { batch.add(child_worker.class, *child_worker.job_args) }
     before { batch.save }
-
     it { expect(batch_content).to eq(worker.to_h) }
-    it { expect(batch_state).to eq(batch.jobs[0].job_id => 'scheduled') }
   end
 
   describe '#setup' do
-    subject { batch.setup }
+    subject(:setup) { batch.setup }
 
-    before { allow(batch).to receive(:save) }
-    before { allow(child_worker).to receive(:schedule).and_return(true) }
+    let(:batch_state) { redis.hgetall(batch.batch_state_gid) }
 
     context 'with no jobs' do
-      after { expect(batch).not_to have_received(:save) }
-      after { expect(child_worker).not_to have_received(:schedule) }
+      before do
+        expect(batch).not_to receive(:save)
+        expect(child_worker).not_to receive(:schedule)
+      end
+
       it { is_expected.to be_truthy }
     end
 
     context 'with jobs on the batch' do
-      before { batch.jobs.push(child_worker) }
-      after { expect(batch).to have_received(:save) }
-      after { expect(child_worker).to have_received(:schedule) }
+      before do
+        batch.jobs.push(child_worker)
+
+        expect(batch).to receive(:save)
+        expect(child_worker).to receive(:schedule).and_return(true)
+      end
+      after { expect(batch_state).to eq(batch.jobs[0].job_id => 'scheduled') }
+
       it { is_expected.to be_truthy }
+    end
+
+    context 'with exception while scheduling jobs' do
+      let(:error) { StandardError.new }
+
+      before do
+        batch.jobs.push(child_worker)
+
+        expect(batch).to receive(:save)
+        expect(child_worker).to receive(:schedule).and_raise(error)
+      end
+      after { expect(batch_state).to eq(batch.jobs[0].job_id => 'pending') }
+
+      it { expect { setup }.to raise_error(error) }
     end
   end
 
@@ -275,20 +293,20 @@ RSpec.describe Cloudtasker::Batch::Job do
 
     let(:child_id) { child_batch.batch_id }
     let(:status) { 'processing' }
+    let(:initial_state) { { child_id => 'scheduled' } }
 
     before do
-      batch.jobs.push(child_worker)
-      batch.save
+      redis.hset(batch.batch_state_gid, initial_state) if initial_state.present?
       batch.update_state(child_id, status)
       expect(batch).to receive(:migrate_batch_state_to_redis_hash).and_call_original
     end
 
-    context 'with existing child batch' do
+    context 'with existing child id in batch state' do
       it { is_expected.to eq(status) }
     end
 
-    context 'with child batch not attached to the batch' do
-      let(:child_id) { 'some-non-existing-id' }
+    context 'with unknown child id' do
+      let(:initial_state) { {} }
 
       it { is_expected.to be_nil }
     end
@@ -298,28 +316,24 @@ RSpec.describe Cloudtasker::Batch::Job do
     subject { batch }
 
     before do
-      batch.jobs.push(child_worker)
-      batch.save
-      batch.update_state(child_batch.batch_id, status)
+      redis.hset(batch.batch_state_gid, 'some_child_id' => status)
       expect(batch).to receive(:migrate_batch_state_to_redis_hash).and_call_original
     end
 
-    context 'with all jobs completed' do
-      let(:status) { 'completed' }
+    %w[completed dead pending].each do |tested_status|
+      context "with all jobs #{tested_status}" do
+        let(:status) { tested_status }
 
-      it { is_expected.to be_complete }
+        it { is_expected.to be_complete }
+      end
     end
 
-    context 'with some jobs dead' do
-      let(:status) { 'dead' }
+    %w[scheduled processing].each do |tested_status|
+      context "with some jobs #{tested_status}" do
+        let(:status) { tested_status }
 
-      it { is_expected.to be_complete }
-    end
-
-    context 'with some jobs pending' do
-      let(:status) { 'processing' }
-
-      it { is_expected.not_to be_complete }
+        it { is_expected.not_to be_complete }
+      end
     end
   end
 
@@ -493,19 +507,22 @@ RSpec.describe Cloudtasker::Batch::Job do
     let(:expected_keys) { [side_batch.batch_gid, side_batch.batch_state_gid].sort }
 
     before do
+      # Do not enqueue jobs
+      allow_any_instance_of(Cloudtasker::Worker).to receive(:schedule)
+
       # Create un-related batch
       side_batch.jobs.push(worker.new_instance)
-      side_batch.save
+      side_batch.setup
 
       # Create child batch
       child_batch.jobs.push(worker.new_instance)
       child_batch.jobs.push(worker.new_instance)
       child_batch.jobs.push(worker.new_instance)
-      child_batch.save
+      child_batch.setup
 
       # Attach child batch to main batch
       batch.jobs.push(child_worker)
-      batch.save
+      batch.setup
 
       expect(batch).to receive(:migrate_batch_state_to_redis_hash).and_call_original
       batch.cleanup
@@ -520,15 +537,22 @@ RSpec.describe Cloudtasker::Batch::Job do
     let(:depth) { 0 }
 
     before do
+      # Stub job enqueuing
+      allow_any_instance_of(Cloudtasker::Worker).to receive(:schedule)
+
+      # Add child jobs
       child_batch.jobs.push(worker.new_instance)
       child_batch.jobs.push(worker.new_instance)
       child_batch.jobs.push(worker.new_instance)
-      child_batch.save
+      child_batch.setup
+
+      # Update progress status on children
       child_batch.update_state(child_batch.jobs[0].job_id, 'completed')
       child_batch.update_state(child_batch.jobs[1].job_id, 'processing')
 
+      # Expand batch with new child job
       batch.jobs.push(child_worker)
-      batch.save
+      batch.setup
     end
 
     context 'with depth = 0' do
