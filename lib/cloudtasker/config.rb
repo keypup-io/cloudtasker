@@ -5,7 +5,7 @@ require 'logger'
 module Cloudtasker
   # Holds cloudtasker configuration. See Cloudtasker#configure
   class Config
-    attr_accessor :redis, :store_payloads_in_redis, :gcp_queue_prefix
+    attr_accessor :redis, :store_payloads_in_redis, :gcp_queue_prefix, :oidc
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
                 :processor_path, :logger, :mode, :max_retries,
                 :dispatch_deadline, :on_error, :on_dead
@@ -155,9 +155,9 @@ module Cloudtasker
 
       # Check if Rails supports host filtering
       return unless val &&
-                    defined?(Rails) &&
-                    Rails.application.config.respond_to?(:hosts) &&
-                    Rails.application.config.hosts&.any?
+        defined?(Rails) &&
+        Rails.application.config.respond_to?(:hosts) &&
+        Rails.application.config.hosts&.any?
 
       # Add processor host to the list of authorized hosts
       Rails.application.config.hosts << val.gsub(%r{https?://}, '')
