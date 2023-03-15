@@ -16,8 +16,10 @@ end
 
 post '/cloudtasker/run' do
   begin
-    # Authenticate request
-    Cloudtasker::Authenticator.verify!(request.env['HTTP_AUTHORIZATION'].to_s.split(' ').last)
+    # Authenticate request unless OpenID Connect is enabled
+    unless Cloudtasker.config.oidc
+      Cloudtasker::Authenticator.verify!(request.env['HTTP_AUTHORIZATION'].to_s.split(' ').last)
+    end
 
     # Capture content and decode content
     content = request.body.read
