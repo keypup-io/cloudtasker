@@ -15,7 +15,7 @@ class BatchWorker
 
   def on_child_complete(child)
     msg = [
-      "#{self.class} level=#{job_args[0]} instance=#{job_args[1]}",
+      "#{self.class} level=#{job_args[0].to_i} instance=#{job_args[1].to_i}",
       "on_child_complete level=#{child.job_args[0]} instance=#{child.job_args[1]}"
     ].join(' | ')
     Rails.logger.info(msg)
@@ -23,15 +23,15 @@ class BatchWorker
 
   def on_batch_node_complete(child)
     msg = [
-      "#{self.class} level=#{job_args[0]} instance=#{job_args[1]}",
-      "on_batch_node_complete level=#{child.job_args[0]} instance=#{child.job_args[1]}"
+      "#{self.class} level=#{job_args[0].to_i} instance=#{job_args[1].to_i}",
+      "on_batch_node_complete level=#{child.job_args[0].to_i} instance=#{child.job_args[1].to_i}"
     ].join(' | ')
     Rails.logger.info(msg)
   end
 
   def on_batch_complete
     msg = [
-      "#{self.class} level=#{job_args[0]} instance=#{job_args[1]}",
+      "#{self.class} level=#{job_args[0].to_i} instance=#{job_args[1].to_i}",
       'on_batch_complete'
     ].join(' | ')
     Rails.logger.info(msg)

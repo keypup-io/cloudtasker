@@ -60,3 +60,6 @@ RSpec/MultipleExpectations:
   Exclude:
     - 'examples/**/*'
     - 'spec/integration/**/*'
+
+RSpec/AnyInstance:
+  Enabled: false
