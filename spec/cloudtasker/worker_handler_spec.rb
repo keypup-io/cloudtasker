@@ -202,24 +202,50 @@ RSpec.describe Cloudtasker::WorkerHandler do
   describe '#task_payload' do
     subject { task.task_payload }
 
-    let(:expected_payload) do
-      {
-        http_request: {
-          http_method: 'POST',
-          url: config.processor_url,
-          headers: {
-            'Content-Type' => 'application/json',
-            'Authorization' => "Bearer #{Cloudtasker::Authenticator.verification_token}"
+    let(:oidc_token) { nil }
+
+    before { allow(config).to receive(:oidc).and_return(oidc_token) }
+
+    context 'with HTTP authentication' do
+      let(:bearer_token) { 'Bearer 12345' }
+      let(:expected_payload) do
+        {
+          http_request: {
+            http_method: 'POST',
+            url: config.processor_url,
+            headers: {
+              'Content-Type' => 'application/json',
+              'Authorization' => bearer_token
+            },
+            body: task.worker_payload.to_json
           },
-          body: task.worker_payload.to_json
-        },
-        queue: task.worker.job_queue,
-        dispatch_deadline: task.worker.dispatch_deadline
-      }
+          queue: task.worker.job_queue,
+          dispatch_deadline: task.worker.dispatch_deadline
+        }
+      end
+
+      before { expect(Cloudtasker::Authenticator).to receive(:bearer_token).and_return(bearer_token) }
+      it { is_expected.to eq(expected_payload) }
     end
 
-    around { |e| Timecop.freeze { e.run } }
-    it { is_expected.to eq(expected_payload) }
+    context 'with OIDC authentication' do
+      let(:oidc_token) { { service_account_email: 'foo@bar.com', audience: 'https://foo.bar' } }
+      let(:expected_payload) do
+        {
+          http_request: {
+            http_method: 'POST',
+            url: config.processor_url,
+            headers: { 'Content-Type' => 'application/json' },
+            oidc_token: oidc_token,
+            body: task.worker_payload.to_json
+          },
+          queue: task.worker.job_queue,
+          dispatch_deadline: task.worker.dispatch_deadline
+        }
+      end
+
+      it { is_expected.to eq(expected_payload) }
+    end
   end
 
   describe '#store_payload_in_redis?' do

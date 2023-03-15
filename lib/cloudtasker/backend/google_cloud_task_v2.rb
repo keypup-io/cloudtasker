@@ -110,13 +110,6 @@ module Cloudtasker
         payload[:http_request][:headers][Cloudtasker::Config::ENCODING_HEADER] = 'Base64'
         payload[:http_request][:body] = Base64.encode64(payload[:http_request][:body])
 
-        if config.oidc
-          payload[:http_request][:oidc_token] = {
-            service_account_email: config.oidc[:service_account_email],
-            audience: config.oidc[:audience] || config.processor_host
-          }
-        end
-
         payload
       end
 

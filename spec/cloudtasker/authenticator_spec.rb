@@ -13,6 +13,15 @@ RSpec.describe Cloudtasker::Authenticator do
     it { is_expected.to eq(expected_token) }
   end
 
+  describe '.bearer_token' do
+    subject { described_class.bearer_token }
+
+    let(:verification_token) { '123456789' }
+
+    before { expect(described_class).to receive(:verification_token).and_return(verification_token) }
+    it { is_expected.to eq("Bearer #{verification_token}") }
+  end
+
   describe '.verify' do
     subject { described_class.verify(token) }
 

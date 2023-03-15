@@ -28,6 +28,15 @@ module Cloudtasker
     end
 
     #
+    # The Authorization header content
+    #
+    # @return [String] The Bearer authorization header
+    #
+    def bearer_token
+      "Bearer #{verification_token}"
+    end
+
+    #
     # Verify a bearer token (jwt token)
     #
     # @param [String] bearer_token The token to verify.

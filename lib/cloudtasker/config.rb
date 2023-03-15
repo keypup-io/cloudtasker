@@ -5,10 +5,10 @@ require 'logger'
 module Cloudtasker
   # Holds cloudtasker configuration. See Cloudtasker#configure
   class Config
-    attr_accessor :redis, :store_payloads_in_redis, :gcp_queue_prefix, :oidc
+    attr_accessor :redis, :store_payloads_in_redis, :gcp_queue_prefix
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
                 :processor_path, :logger, :mode, :max_retries,
-                :dispatch_deadline, :on_error, :on_dead
+                :dispatch_deadline, :on_error, :on_dead, :oidc
 
     # Max Cloud Task size in bytes
     MAX_TASK_SIZE = 100 * 1024 # 100 KB
@@ -77,6 +77,10 @@ module Cloudtasker
     SECRET_MISSING_ERROR = <<~DOC
       Missing cloudtasker secret.
       Please specify a secret in the cloudtasker initializer or add Rails secret_key_base in your credentials
+    DOC
+    OIDC_EMAIL_MISSING_ERROR = <<~DOC
+      Missing OpenID Connect (OIDC) service account email.
+      You specified an OIDC configuration hash but the :service_account_email property is missing.
     DOC
 
     #
@@ -155,9 +159,9 @@ module Cloudtasker
 
       # Check if Rails supports host filtering
       return unless val &&
-        defined?(Rails) &&
-        Rails.application.config.respond_to?(:hosts) &&
-        Rails.application.config.hosts&.any?
+                    defined?(Rails) &&
+                    Rails.application.config.respond_to?(:hosts) &&
+                    Rails.application.config.hosts&.any?
 
       # Add processor host to the list of authorized hosts
       Rails.application.config.hosts << val.gsub(%r{https?://}, '')
@@ -242,6 +246,21 @@ module Cloudtasker
     #
     def on_dead
       @on_dead || DEFAULT_ON_ERROR
+    end
+
+    #
+    # Return the Open ID Connect configuration to use in tasks.
+    #
+    # @return [Hash] The OIDC configuration
+    #
+    def oidc
+      return unless @oidc
+      raise(StandardError, OIDC_EMAIL_MISSING_ERROR) unless @oidc[:service_account_email]
+
+      {
+        service_account_email: @oidc[:service_account_email],
+        audience: @oidc[:audience] || processor_host
+      }
     end
 
     #

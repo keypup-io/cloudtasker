@@ -148,24 +148,20 @@ module Cloudtasker
     # @return [Hash] The task body
     #
     def task_payload
-      payload = {
+      {
         http_request: {
           http_method: 'POST',
           url: Cloudtasker.config.processor_url,
           headers: {
             Cloudtasker::Config::CONTENT_TYPE_HEADER => 'application/json',
-          },
+            Cloudtasker::Config::AUTHORIZATION_HEADER => Cloudtasker.config.oidc ? nil : Authenticator.bearer_token
+          }.compact,
+          oidc_token: Cloudtasker.config.oidc,
           body: worker_payload.to_json
-        },
+        }.compact,
         dispatch_deadline: worker.dispatch_deadline.to_i,
         queue: worker.job_queue
       }
-
-      unless Cloudtasker.config.oidc
-        payload[:http_request][:headers][Cloudtasker::Config::AUTHORIZATION_HEADER] = "Bearer #{Authenticator.verification_token}"
-      end
-
-      payload
     end
 
     #

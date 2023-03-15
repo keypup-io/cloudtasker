@@ -33,17 +33,18 @@ if defined?(Rails)
       let(:env_retries_header) { "HTTP_#{Cloudtasker::Config::RETRY_HEADER.tr('-', '_').upcase}" }
       let(:env_task_id_header) { "HTTP_#{Cloudtasker::Config::TASK_ID_HEADER.tr('-', '_').upcase}" }
 
-      before { request.env[env_retries_header] = retries }
-      before { request.env[env_task_id_header] = task_id }
+      before do
+        request.env[env_retries_header] = retries
+        request.env[env_task_id_header] = task_id
+      end
 
       context 'with valid worker' do
         before do
           request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"
-          allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
+          expect(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
             .with(expected_payload)
             .and_return(true)
         end
-        after { expect(Cloudtasker::WorkerHandler).to have_received(:execute_from_payload!) }
         it { is_expected.to be_successful }
       end
 
@@ -54,11 +55,20 @@ if defined?(Rails)
         before do
           request.env['HTTP_AUTHORIZATION'] = "Bearer #{auth_token}"
           request.env['HTTP_CONTENT_TRANSFER_ENCODING'] = 'BASE64'
-          allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
+          expect(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
             .with(expected_payload)
             .and_return(true)
         end
-        after { expect(Cloudtasker::WorkerHandler).to have_received(:execute_from_payload!) }
+        it { is_expected.to be_successful }
+      end
+
+      context 'with OIDC authentication' do
+        before do
+          allow(Cloudtasker.config).to receive(:oidc).and_return({ service_account_emai: 'foo@bar.com' })
+          expect(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
+            .with(expected_payload)
+            .and_return(true)
+        end
         it { is_expected.to be_successful }
       end
 

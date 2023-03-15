@@ -14,6 +14,7 @@ RSpec.describe Cloudtasker::Config do
   let(:dispatch_deadline) { 15 * 60 }
   let(:on_error) { ->(e, w) {} }
   let(:on_dead) { ->(e, w) {} }
+  let(:oidc) { nil }
 
   let(:rails_hosts) { [] }
   let(:rails_secret) { 'rails_secret' }
@@ -44,6 +45,7 @@ RSpec.describe Cloudtasker::Config do
       c.dispatch_deadline = dispatch_deadline
       c.on_error = on_error
       c.on_dead = on_dead
+      c.oidc = oidc
     end
 
     Cloudtasker.config
@@ -285,6 +287,34 @@ RSpec.describe Cloudtasker::Config do
     subject { config.processor_url }
 
     it { is_expected.to eq("#{config.processor_host}#{config.processor_path}") }
+  end
+
+  describe '#oidc' do
+    subject(:oidc_config) { config.oidc }
+
+    context 'with no oidc configuration' do
+      let(:oidc) { nil }
+
+      it { is_expected.to be_nil }
+    end
+
+    context 'with oidc email only' do
+      let(:oidc) { { service_account_email: 'foo@bar.com' } }
+
+      it { is_expected.to eq(oidc.merge(audience: config.processor_host)) }
+    end
+
+    context 'with oidc email and audience' do
+      let(:oidc) { { service_account_email: 'foo@bar.com', audience: 'https://foo.bar' } }
+
+      it { is_expected.to eq(oidc) }
+    end
+
+    context 'with oidc object but email missing' do
+      let(:oidc) { { audience: 'https://foo.bar' } }
+
+      it { expect { oidc_config }.to raise_error(StandardError, described_class::OIDC_EMAIL_MISSING_ERROR) }
+    end
   end
 
   describe '#client_middleware' do
