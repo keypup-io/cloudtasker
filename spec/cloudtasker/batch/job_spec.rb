@@ -282,9 +282,22 @@ RSpec.describe Cloudtasker::Batch::Job do
         expect(batch).to receive(:save)
         expect(child_worker).to receive(:schedule).and_raise(error)
       end
-      after { expect(batch_state).to eq(batch.jobs[0].job_id => 'pending') }
+      after { expect(batch_state).to be_empty }
 
       it { expect { setup }.to raise_error(error) }
+    end
+
+    context 'with job having completed even before being flagged as scheduled' do
+      before do
+        batch.jobs.push(child_worker)
+
+        expect(batch).to receive(:save)
+        expect(child_worker).to receive(:schedule).and_return(true)
+        redis.hset(batch.batch_state_gid, batch.jobs[0].job_id, 'completed')
+      end
+      after { expect(batch_state).to eq(batch.jobs[0].job_id => 'completed') }
+
+      it { is_expected.to be_truthy }
     end
   end
 
@@ -293,7 +306,7 @@ RSpec.describe Cloudtasker::Batch::Job do
 
     let(:child_id) { child_batch.batch_id }
     let(:status) { 'processing' }
-    let(:initial_state) { { child_id => 'scheduled' } }
+    let(:initial_state) { { 'foo' => 'bar' } }
 
     before do
       redis.hset(batch.batch_state_gid, initial_state) if initial_state.present?
@@ -301,15 +314,7 @@ RSpec.describe Cloudtasker::Batch::Job do
       expect(batch).to receive(:migrate_batch_state_to_redis_hash).and_call_original
     end
 
-    context 'with existing child id in batch state' do
-      it { is_expected.to eq(status) }
-    end
-
-    context 'with unknown child id' do
-      let(:initial_state) { {} }
-
-      it { is_expected.to be_nil }
-    end
+    it { is_expected.to eq(status) }
   end
 
   describe '#complete?' do
@@ -320,7 +325,7 @@ RSpec.describe Cloudtasker::Batch::Job do
       expect(batch).to receive(:migrate_batch_state_to_redis_hash).and_call_original
     end
 
-    %w[completed dead pending].each do |tested_status|
+    %w[completed dead].each do |tested_status|
       context "with all jobs #{tested_status}" do
         let(:status) { tested_status }
 

@@ -14,7 +14,6 @@ module Cloudtasker
       # if the batch is complete.
       #
       # Batch jobs go through the following states:
-      # - pending: the parent batch is about to enqueue a worker for the child job
       # - scheduled: the parent batch has enqueued a worker for the child job
       # - processing: the child job is running
       # - completed: the child job has completed successfully
@@ -25,16 +24,7 @@ module Cloudtasker
       # means that the job will never succeed. There is no point in blocking
       # the batch forever so we proceed forward eventually.
       #
-      # The 'pending' status is purely informational and does not aim at blocking
-      # the completion of the batch. It is only used while enqueuing child jobs and
-      # indicates that the child job is about to be enqueued. Once enqueued the child
-      # job will have the 'scheduled' status.
-      #
-      # If the batch job crashes while enqueuing child jobs (e.g. Out Of Memory error)
-      # the batch job will be retried and another series of child jobs will be enqueued.
-      # Some child jobs from the original crashed batch may remain in pending status (they never
-      # got scheduled) but they will be ignored when evaluating the completion of the batch.
-      COMPLETION_STATUSES = %w[completed dead pending].freeze
+      COMPLETION_STATUSES = %w[completed dead].freeze
 
       # These callbacks do not need to raise errors on their own
       # because the jobs will be either retried or dropped
@@ -280,7 +270,7 @@ module Cloudtasker
         migrate_batch_state_to_redis_hash
 
         # Update the batch state batch_id entry with the new status
-        redis.hset(batch_state_gid, batch_id, status) if redis.hexists(batch_state_gid, batch_id)
+        redis.hset(batch_state_gid, batch_id, status)
       end
 
       #
@@ -411,18 +401,25 @@ module Cloudtasker
       #
       # Save the batch and enqueue all child workers attached to it.
       #
-      # @return [Array<Cloudtasker::CloudTask>] The Google Task responses
-      #
       def setup
         return true if jobs.empty?
 
         # Save batch
         save
 
-        # Enqueue all child workers
-        redis.hset(batch_state_gid, jobs.map { |e| [e.job_id, 'pending'] }.to_h)
-        jobs.map(&:schedule)
-        redis.hset(batch_state_gid, jobs.map { |e| [e.job_id, 'scheduled'] }.to_h)
+        # Schedule all child workers
+        jobs.each do |j|
+          # Schedule the job
+          j.schedule
+
+          # Initialize the batch state unless the job has already started (and taken
+          # hold of its own status)
+          # The batch state is initialized only after the job is scheduled to avoid
+          # having never-ending batches - which could occur if a batch was crashing
+          # while enqueuing children due to a OOM error and since 'scheduled' is a
+          # blocking status.
+          redis.hsetnx(batch_state_gid, j.job_id, 'scheduled')
+        end
       end
 
       #
