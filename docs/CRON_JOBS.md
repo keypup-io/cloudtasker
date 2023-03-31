@@ -65,6 +65,29 @@ if File.exist?(schedule_file) && !Rails.env.test?
 end
 ```
 
+## With Puma Cluster-mode
+Due to this issue with gRPC here: https://github.com/grpc/grpc/issues/7951.
+
+TLTR: 
+> Forking processes and using gRPC across processes is not supported behavior due to very low-level resource issues. Either delay your use of gRPC until you've forked from fresh processes (similar to Python 3's use of a zygote process), or don't expect things to work after a fork.
+
+In order to make it works, we should schedule cron jobs (which triggers gPRC calls) once puma is booted.
+
+Example:
+```ruby
+config/puma.rb
+
+workers ENV.fetch("WEB_CONCURRENCY") { 2 }
+preload_app!
+
+on_booted do
+  schedule_file = "config/cloudtasker_cron.yml"
+  if File.exist?(schedule_file) && !Rails.env.test?
+    Cloudtasker::Cron::Schedule.load_from_hash!(YAML.load_file(schedule_file))
+  end
+end
+```
+
 ## Limitations
 GCP Cloud Tasks does not allow tasks to be scheduled more than 30 days (720h) in the future. Cron schedules should therefore be limited to 30 days intervals at most.
 
