@@ -31,6 +31,7 @@ if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '
           body: { foo: 'bar' }.to_json
         },
         schedule_time: 2,
+        dispatch_deadline: 600,
         queue: relative_queue
       }
     end
@@ -147,8 +148,8 @@ if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '
       end
     end
 
-    describe '.format_schedule_time' do
-      subject { described_class.format_schedule_time(timestamp) }
+    describe '.format_protobuf_time' do
+      subject { described_class.format_protobuf_time(timestamp) }
 
       context 'with nil' do
         let(:timestamp) { nil }
@@ -164,19 +165,46 @@ if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '
       end
     end
 
-    describe '.format_task_payload' do
-      subject { described_class.format_task_payload(job_payload) }
+    describe '.format_protobuf_duration' do
+      subject { described_class.format_protobuf_duration(duration) }
 
-      let(:expected_payload) do
-        payload = JSON.parse(job_payload.to_json, symbolize_names: true)
-        payload[:schedule_time] = described_class.format_schedule_time(job_payload[:schedule_time])
-        payload[:http_request][:headers]['Content-Type'] = 'text/json'
-        payload[:http_request][:headers]['Content-Transfer-Encoding'] = 'Base64'
-        payload[:http_request][:body] = Base64.encode64(job_payload[:http_request][:body])
-        payload
+      context 'with nil' do
+        let(:duration) { nil }
+
+        it { is_expected.to be_nil }
       end
 
-      it { is_expected.to eq(expected_payload) }
+      context 'with integer' do
+        let(:duration) { 600 }
+        let(:expected) { Google::Protobuf::Duration.new.tap { |e| e.seconds = duration } }
+
+        it { is_expected.to eq(expected) }
+      end
+    end
+
+    describe '.format_task_payload' do
+      subject { described_class.format_task_payload(arg_payload) }
+
+      let(:arg_payload) { job_payload }
+      let(:expected_payload) do
+        payload = JSON.parse(arg_payload.to_json, symbolize_names: true)
+        payload[:schedule_time] = described_class.format_protobuf_time(arg_payload[:schedule_time])
+        payload[:dispatch_deadline] = described_class.format_protobuf_duration(arg_payload[:dispatch_deadline])
+        payload[:http_request][:headers]['Content-Type'] = 'text/json'
+        payload[:http_request][:headers]['Content-Transfer-Encoding'] = 'Base64'
+        payload[:http_request][:body] = Base64.encode64(arg_payload[:http_request][:body])
+        payload.compact
+      end
+
+      context 'with defined keys' do
+        it { is_expected.to eq(expected_payload) }
+      end
+
+      context 'with nil keys' do
+        let(:arg_payload) { job_payload.merge(some_nil_key: nil) }
+
+        it { is_expected.to eq(expected_payload) }
+      end
     end
 
     describe '.find' do
@@ -223,7 +251,8 @@ if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '
       let(:expected_payload) do
         payload = JSON.parse(job_payload.to_json, symbolize_names: true)
         payload.delete(:queue)
-        payload[:schedule_time] = described_class.format_schedule_time(job_payload[:schedule_time])
+        payload[:schedule_time] = described_class.format_protobuf_time(job_payload[:schedule_time])
+        payload[:dispatch_deadline] = described_class.format_protobuf_duration(job_payload[:dispatch_deadline])
         payload[:http_request][:headers]['Content-Type'] = 'text/json'
         payload[:http_request][:headers]['Content-Transfer-Encoding'] = 'Base64'
         payload[:http_request][:body] = Base64.encode64(job_payload[:http_request][:body])
@@ -344,6 +373,7 @@ if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '
       let(:resp_payload) do
         job_payload.merge(
           schedule_time: { seconds: job_payload[:schedule_time] },
+          dispatch_deadline: { seconds: job_payload[:dispatch_deadline] },
           response_count: retries
         )
       end
