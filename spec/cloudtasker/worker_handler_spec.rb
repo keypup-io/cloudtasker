@@ -33,8 +33,8 @@ RSpec.describe Cloudtasker::WorkerHandler do
   describe '.log_execution_error' do
     subject { described_class.log_execution_error(worker, error) }
 
-    let(:worker) { instance_double('TestWorker') }
-    let(:error) { instance_double('ArgumentError', backtrace: %w[1 2 3]) }
+    let(:worker) { instance_double(TestWorker) }
+    let(:error) { instance_double(ArgumentError, backtrace: %w[1 2 3]) }
 
     if defined?(Rails)
       context 'with ActiveJob worker' do
@@ -51,7 +51,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
 
     context 'with no worker' do
       let(:worker) { nil }
-      let(:logger) { instance_double('ActiveSupport::Logger') }
+      let(:logger) { instance_double(Logger) }
 
       before do
         allow(Cloudtasker).to receive(:logger).and_return(logger)
@@ -62,7 +62,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
     end
 
     context 'with worker' do
-      let(:logger) { instance_double('Cloudtasker::WorkerLogger') }
+      let(:logger) { instance_double(Cloudtasker::WorkerLogger) }
 
       before do
         allow(worker).to receive(:logger).and_return(logger)
@@ -106,7 +106,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
   end
 
   describe '.with_worker_handling' do
-    let(:subject_block) { expect { |b| described_class.with_worker_handling(input_payload, &(block || b)) } }
+    let(:expect_subject_block) { expect { |b| described_class.with_worker_handling(input_payload, &(block || b)) } }
     let(:block) { nil }
 
     let(:args_payload_id) { '111' }
@@ -127,8 +127,8 @@ RSpec.describe Cloudtasker::WorkerHandler do
     context 'with redis payload and successful yield' do
       before { described_class.redis.write(args_payload_key, args_payload) }
       after { expect(args_key_content).to be_nil }
-      it { subject_block.to yield_with_args(be_a(Cloudtasker::Worker)) }
-      it { subject_block.to yield_with_args(have_attributes(extracted_payload)) }
+      it { expect_subject_block.to yield_with_args(be_a(Cloudtasker::Worker)) }
+      it { expect_subject_block.to yield_with_args(have_attributes(extracted_payload)) }
     end
 
     context 'with redis payload and reenqueued worker' do
@@ -136,7 +136,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
 
       before { described_class.redis.write(args_payload_key, args_payload) }
       after { expect(args_key_content).to be_truthy }
-      it { subject_block.not_to raise_error }
+      it { expect_subject_block.not_to raise_error }
     end
 
     context 'with redis payload and errored yield' do
@@ -149,7 +149,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
       end
       after { expect(args_key_content).to be_truthy }
 
-      it { subject_block.to raise_error(job_error) }
+      it { expect_subject_block.to raise_error(job_error) }
     end
 
     context 'with redis payload and invalid worker' do
@@ -161,7 +161,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
         expect(Cloudtasker.config.on_error).to receive(:call).with(job_error, be_a(Cloudtasker::Worker))
       end
       after { expect(args_key_content).to be_truthy }
-      it { subject_block.to raise_error(job_error) }
+      it { expect_subject_block.to raise_error(job_error) }
     end
 
     context 'with redis payload and Cloudtasker::DeadWorkerError' do
@@ -173,15 +173,15 @@ RSpec.describe Cloudtasker::WorkerHandler do
         expect(Cloudtasker.config.on_dead).to receive(:call).with(job_error, be_a(Cloudtasker::Worker))
       end
       after { expect(args_key_content).to be_nil }
-      it { subject_block.to raise_error(job_error) }
+      it { expect_subject_block.to raise_error(job_error) }
     end
 
     context 'with native payload' do
       let(:input_payload) { { 'worker' => 'TestWorker', 'job_id' => 'some-id', 'job_args' => [1, 2] } }
       let(:extracted_payload) { { job_id: 'some-id', job_args: [1, 2] } }
 
-      it { subject_block.to yield_with_args(be_a(Cloudtasker::Worker)) }
-      it { subject_block.to yield_with_args(have_attributes(extracted_payload)) }
+      it { expect_subject_block.to yield_with_args(be_a(Cloudtasker::Worker)) }
+      it { expect_subject_block.to yield_with_args(have_attributes(extracted_payload)) }
     end
   end
 
@@ -190,7 +190,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
 
     let(:input_payload) { { 'foo' => 'bar' } }
     let(:actual_payload) { { 'baz' => 'fooz' } }
-    let(:worker) { instance_double('TestWorker') }
+    let(:worker) { instance_double(TestWorker) }
     let(:ret) { 'some-result' }
 
     before { allow(described_class).to receive(:with_worker_handling).with(input_payload).and_yield(worker) }
@@ -325,7 +325,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
 
     let(:attrs) { {} }
     let(:expected_payload) { task.task_payload }
-    let(:resp) { instance_double('Cloudtasker::CloudTask') }
+    let(:resp) { instance_double(Cloudtasker::CloudTask) }
 
     around { |e| Timecop.freeze { e.run } }
     before { allow(Cloudtasker::CloudTask).to receive(:create).with(expected_payload).and_return(resp) }

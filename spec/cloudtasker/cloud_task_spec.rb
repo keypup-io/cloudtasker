@@ -62,7 +62,7 @@ RSpec.describe Cloudtasker::CloudTask do
     subject { described_class.setup_production_queue(**args) }
 
     let(:args) { { name: 'critical', concurrency: 20, retries: 100 } }
-    let(:queue) { instance_double('Google::Cloud::Tasks::V2::Queue') }
+    let(:queue) { double('Google::Cloud::Tasks::V2::Queue') }
 
     before { expect(gct_klass).to receive(:setup_queue).with(**args).and_return(queue) }
     it { is_expected.to eq(queue) }
@@ -138,7 +138,7 @@ RSpec.describe Cloudtasker::CloudTask do
     end
 
     context 'with different id' do
-      it { is_expected.not_to eq(described_class.new(**payload.merge(id: payload[:id] + 'a'))) }
+      it { is_expected.not_to eq(described_class.new(**payload.merge(id: "#{payload[:id]}a"))) }
     end
 
     context 'with different object' do

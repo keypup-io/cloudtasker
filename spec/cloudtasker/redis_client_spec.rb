@@ -53,7 +53,7 @@ RSpec.describe Cloudtasker::RedisClient do
   describe '#with_lock' do
     let(:key) { 'cache-key' }
     let(:lock_key) { 'cloudtasker/lock/cache-key' }
-    let(:redis) { instance_double('Redis') }
+    let(:redis) { instance_double(Redis) }
     let(:lock_duration) { 30 }
     let(:expected_lock_duration) { described_class::LOCK_DURATION }
 

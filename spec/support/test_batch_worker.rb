@@ -41,6 +41,6 @@ class TestBatchWorker
 
   # Return the number of jobs completed per level
   def self.callback_counts
-    callback_registry.map { |k, v| [k, v.size] }.to_h
+    callback_registry.transform_values(&:size)
   end
 end

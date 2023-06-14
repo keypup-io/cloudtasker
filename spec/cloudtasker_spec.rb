@@ -4,7 +4,7 @@ RSpec.describe Cloudtasker do
   describe '::VERSION' do
     subject { Cloudtasker::VERSION }
 
-    it { is_expected.not_to be nil }
+    it { is_expected.not_to be_nil }
   end
 
   describe '.logger' do

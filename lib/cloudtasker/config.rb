@@ -135,7 +135,7 @@ module Cloudtasker
     # @return [Logger, any] The cloudtasker logger.
     #
     def logger
-      @logger ||= defined?(Rails) ? Rails.logger : ::Logger.new(STDOUT)
+      @logger ||= defined?(Rails) ? Rails.logger : ::Logger.new($stdout)
     end
 
     #

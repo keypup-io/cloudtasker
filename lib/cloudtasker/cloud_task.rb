@@ -19,17 +19,15 @@ module Cloudtasker
       # Re-evaluate backend every time if testing mode enabled
       @backend = nil if defined?(Cloudtasker::Testing)
 
-      @backend ||= begin
-        if defined?(Cloudtasker::Testing) && Cloudtasker::Testing.in_memory?
-          require 'cloudtasker/backend/memory_task'
-          Backend::MemoryTask
-        elsif Cloudtasker.config.mode.to_sym == :development
-          require 'cloudtasker/backend/redis_task'
-          Backend::RedisTask
-        else
-          gct_backend
-        end
-      end
+      @backend ||= if defined?(Cloudtasker::Testing) && Cloudtasker::Testing.in_memory?
+                     require 'cloudtasker/backend/memory_task'
+                     Backend::MemoryTask
+                   elsif Cloudtasker.config.mode.to_sym == :development
+                     require 'cloudtasker/backend/redis_task'
+                     Backend::RedisTask
+                   else
+                     gct_backend
+                   end
     end
 
     #
@@ -42,15 +40,13 @@ module Cloudtasker
     # ] The google cloud task backend.
     #
     def self.gct_backend
-      @gct_backend ||= begin
-        if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '2'
-          require 'cloudtasker/backend/google_cloud_task_v1'
-          Backend::GoogleCloudTaskV1
-        else
-          require 'cloudtasker/backend/google_cloud_task_v2'
-          Backend::GoogleCloudTaskV2
-        end
-      end
+      @gct_backend ||= if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '2'
+                         require 'cloudtasker/backend/google_cloud_task_v1'
+                         Backend::GoogleCloudTaskV1
+                       else
+                         require 'cloudtasker/backend/google_cloud_task_v2'
+                         Backend::GoogleCloudTaskV2
+                       end
     end
 
     #

@@ -53,7 +53,7 @@ module ActiveJob
       # == Job Wrapper for the Cloudtasker adapter
       #
       # Executes jobs scheduled by the Cloudtasker ActiveJob adapter
-      class JobWrapper #:nodoc:
+      class JobWrapper # :nodoc:
         include Cloudtasker::Worker
 
         # Executes the given serialized ActiveJob call.

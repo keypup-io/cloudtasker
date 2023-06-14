@@ -12,7 +12,7 @@ module Cloudtasker
     LOCK_WAIT_DURATION = 0.03 # seconds
 
     # Default pool size used for Redis
-    DEFAULT_POOL_SIZE = ENV.fetch('RAILS_MAX_THREADS') { 25 }
+    DEFAULT_POOL_SIZE = ENV.fetch('RAILS_MAX_THREADS', 25)
     DEFAULT_POOL_TIMEOUT = 5
 
     def self.client
@@ -132,7 +132,6 @@ module Cloudtasker
       list
     end
 
-    # rubocop:disable Style/MissingRespondToMissing
     if RUBY_VERSION < '3'
       #
       # Delegate all methods to the redis client.
@@ -172,8 +171,6 @@ module Cloudtasker
         end
       end
     end
-    # rubocop:enable Style/MissingRespondToMissing
-
     #
     # Check if the class respond to a certain method.
     #

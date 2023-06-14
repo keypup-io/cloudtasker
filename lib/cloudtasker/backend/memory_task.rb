@@ -127,7 +127,7 @@ module Cloudtasker
       # @return [Hash] The task payload.
       #
       def payload
-        @payload ||= JSON.parse(http_request.dig(:body), symbolize_names: true)
+        @payload ||= JSON.parse(http_request[:body], symbolize_names: true)
       end
 
       #

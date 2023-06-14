@@ -11,7 +11,7 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
         url: 'http://localhost:300/run',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer 123'
+          Authorization: 'Bearer 123'
         },
         body: { foo: 'bar' }.to_json
       },
@@ -283,7 +283,7 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
     end
 
     context 'with different id' do
-      it { is_expected.not_to eq(described_class.new(**job_payload.merge(id: task_id + 'a'))) }
+      it { is_expected.not_to eq(described_class.new(**job_payload.merge(id: "#{task_id}a"))) }
     end
 
     context 'with different object' do

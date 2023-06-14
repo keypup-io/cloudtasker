@@ -177,10 +177,8 @@ module Cloudtasker
       #
       # Helper method encapsulating the retry strategy for GAX calls
       #
-      def self.with_gax_retries
-        Retriable.retriable(on: [Google::Gax::UnavailableError], tries: 3) do
-          yield
-        end
+      def self.with_gax_retries(&block)
+        Retriable.retriable(on: [Google::Gax::UnavailableError], tries: 3, &block)
       end
 
       #

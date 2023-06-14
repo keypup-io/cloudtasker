@@ -144,7 +144,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
     end
 
     context 'with non-existing id' do
-      it { expect { described_class.delete(id + 'a') }.not_to raise_error }
+      it { expect { described_class.delete("#{id}a") }.not_to raise_error }
     end
   end
 
@@ -200,7 +200,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
     end
 
     context 'with different id' do
-      it { is_expected.not_to eq(described_class.new(id: id + 'a', cron: cron, worker: worker_klass.to_s)) }
+      it { is_expected.not_to eq(described_class.new(id: "#{id}a", cron: cron, worker: worker_klass.to_s)) }
     end
 
     context 'with different object' do
@@ -335,10 +335,10 @@ RSpec.describe Cloudtasker::Cron::Schedule do
   describe '#save' do
     subject { schedule.save }
 
-    let(:job) { instance_double('Cloudtasker::Cron::Job') }
+    let(:job) { instance_double(Cloudtasker::Cron::Job) }
     let(:existing_task) { nil }
     let(:task_id) { nil }
-    let(:wrapper) { instance_double('Cloudtasker::WorkerWrapper') }
+    let(:wrapper) { instance_double(Cloudtasker::WorkerWrapper) }
 
     before do
       schedule.task_id = task_id
@@ -379,7 +379,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
 
     context 'with non-config attributes changed' do
       let(:task_id) { '222' }
-      let(:existing_task) { instance_double('Cloudtasker::CloudTask') }
+      let(:existing_task) { instance_double(Cloudtasker::CloudTask) }
 
       before { allow(schedule).to receive(:config_changed?).and_return(false) }
       after { expect(described_class.find(id)).to eq(schedule) }

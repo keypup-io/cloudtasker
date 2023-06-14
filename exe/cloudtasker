@@ -9,8 +9,11 @@ options = {}
 OptionParser.new do |opts|
   opts.banner = 'Usage: cloudtasker [options]'
 
-  opts.on('-q QUEUE', '--queue=QUEUE', 'Queue to process and number of threads. ' \
-    "Examples: '-q critical' | '-q critical,2' | '-q critical,3 -q defaults,2'") do |o|
+  opts.on(
+    '-q QUEUE', '--queue=QUEUE',
+    'Queue to process and number of threads. ' \
+    "Examples: '-q critical' | '-q critical,2' | '-q critical,3 -q defaults,2'"
+  ) do |o|
     options[:queues] ||= []
     options[:queues] << o.split(',')
   end

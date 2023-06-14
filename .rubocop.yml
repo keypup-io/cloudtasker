@@ -1,14 +1,12 @@
 require: rubocop-rspec
 
 AllCops:
+  NewCops: enable
+  SuggestExtensions: false
+  TargetRubyVersion: 2.7
   Exclude:
     - 'gemfiles/**/*'
     - 'vendor/**/*'
-
-# Ruby 3.0: curly braces around last argument has meaning
-# See: https://github.com/rubocop/rubocop/issues/7641
-Style/BracesAroundHashParameters:
-  Enabled: false
 
 Metrics/ClassLength:
   Max: 200
@@ -21,7 +19,7 @@ Metrics/AbcSize:
   Exclude:
     - 'spec/support/*'
 
-Metrics/LineLength:
+Layout/LineLength:
   Max: 120
 
 Metrics/MethodLength:
@@ -53,6 +51,13 @@ Style/Documentation:
 Metrics/ParameterLists:
   CountKeywordArgs: false
 
+Metrics/CyclomaticComplexity:
+  Max: 15
+
+Lint/EmptyBlock:
+  Exclude:
+    - 'examples/rails/config/routes.rb'
+
 RSpec/MessageSpies:
   Enabled: false
 
@@ -63,3 +68,23 @@ RSpec/MultipleExpectations:
 
 RSpec/AnyInstance:
   Enabled: false
+
+RSpec/MultipleMemoizedHelpers:
+  Enabled: false
+
+RSpec/NoExpectationExample:
+  AllowedPatterns:
+    - ^expect_
+    - ^assert_
+
+RSpec/IndexedLet:
+  Enabled: false
+
+RSpec/StubbedMock:
+  Enabled: false
+
+RSpec/VerifiedDoubles:
+  Exclude:
+    - spec/cloudtasker/cloud_task_spec.rb
+    - spec/cloudtasker/backend/google_cloud_task_v1_spec.rb
+    - spec/cloudtasker/backend/google_cloud_task_v2_spec.rb

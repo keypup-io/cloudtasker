@@ -6,9 +6,9 @@ RSpec.describe Cloudtasker::UniqueJob::Middleware::Server do
   let(:middleware) { described_class.new }
 
   describe '#call' do
-    let(:lock_instance) { instance_double('Cloudtasker::UniqueJob::Lock::Reject') }
-    let(:worker) { instance_double('Cloudtasker::Worker') }
-    let(:job) { instance_double('Cloudtasker::UniqueJob::Job') }
+    let(:lock_instance) { instance_double(Cloudtasker::UniqueJob::Lock::UntilExecuted) }
+    let(:worker) { instance_double(Cloudtasker::Worker) }
+    let(:job) { instance_double(Cloudtasker::UniqueJob::Job) }
 
     before { allow(Cloudtasker::UniqueJob::Job).to receive(:new).with(worker).and_return(job) }
     before { allow(job).to receive(:lock_instance).and_return(lock_instance) }

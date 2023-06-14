@@ -147,7 +147,7 @@ RSpec.describe Cloudtasker::Cron::Job do
     end
 
     context 'with no time_at and Time.current' do
-      let(:time_current) { instance_double('Time') }
+      let(:time_current) { instance_double(Time) }
 
       before { allow(Time).to receive(:current).and_return(time_current) }
       around { |e| Timecop.freeze { e.run } }
@@ -158,7 +158,7 @@ RSpec.describe Cloudtasker::Cron::Job do
   describe '#next_time' do
     subject { job.next_time }
 
-    let(:current_time) { Time.now - 3600 * 24 * 30 }
+    let(:current_time) { Time.now - (3600 * 24 * 30) }
 
     before { allow(job).to receive(:cron_schedule).and_return(cron_schedule) }
     before { allow(job).to receive(:current_time).and_return(current_time) }
@@ -205,7 +205,7 @@ RSpec.describe Cloudtasker::Cron::Job do
 
     let(:next_worker) { TestWorker.new }
     let(:task_id) { 'some-task-id' }
-    let(:resp) { instance_double('Cloudtasker::CloudTask', id: task_id) }
+    let(:resp) { instance_double(Cloudtasker::CloudTask, id: task_id) }
 
     before do
       allow(worker).to receive(:new_instance).and_return(next_worker)

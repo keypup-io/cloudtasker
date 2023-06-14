@@ -10,7 +10,7 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
         url: 'http://localhost:300/run',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer 123'
+          Authorization: 'Bearer 123'
         },
         body: {
           worker: worker_name,
@@ -28,7 +28,7 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
         url: 'http://localhost:300/run',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer 123'
+          Authorization: 'Bearer 123'
         },
         body: {
           worker: worker_name2,
@@ -222,7 +222,7 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
       it { expect { execute }.to raise_error(Cloudtasker::DeadWorkerError) }
     end
 
-    context 'with error and no inline_mode' do
+    context 'with dead worker and no inline_mode' do
       before { allow(described_class).to receive(:inline_mode?).and_return(false) }
       before { allow(worker).to receive(:execute).and_raise(Cloudtasker::DeadWorkerError) }
       after { expect(described_class).to have_received(:delete) }
@@ -230,7 +230,7 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
       it { expect { execute }.not_to raise_error }
     end
 
-    context 'with error and inline_mode' do
+    context 'with standard error and inline_mode' do
       before { allow(described_class).to receive(:inline_mode?).and_return(true) }
       before { allow(worker).to receive(:execute).and_raise(StandardError) }
       after { expect(described_class).not_to have_received(:delete) }
@@ -238,7 +238,7 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
       it { expect { execute }.to raise_error(StandardError) }
     end
 
-    context 'with error and no inline_mode' do
+    context 'with standard error and no inline_mode' do
       before { allow(described_class).to receive(:inline_mode?).and_return(false) }
       before { allow(worker).to receive(:execute).and_raise(StandardError) }
       after { expect(described_class).not_to have_received(:delete) }
@@ -255,7 +255,7 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
     end
 
     context 'with different id' do
-      it { is_expected.not_to eq(described_class.new(**job_payload.merge(id: task_id + 'a'))) }
+      it { is_expected.not_to eq(described_class.new(**job_payload.merge(id: "#{task_id}a"))) }
     end
 
     context 'with different object' do

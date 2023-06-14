@@ -159,7 +159,7 @@ module Cloudtasker
       def insert_after(oldklass, newklass, *args)
         i = entries.index { |entry| entry.klass == newklass }
         new_entry = i.nil? ? Entry.new(newklass, *args) : entries.delete_at(i)
-        i = entries.index { |entry| entry.klass == oldklass } || entries.count - 1
+        i = entries.index { |entry| entry.klass == oldklass } || (entries.count - 1)
         entries.insert(i + 1, new_entry)
       end
 

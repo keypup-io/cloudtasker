@@ -188,21 +188,19 @@ module Cloudtasker
     # @return [Hash] The worker args payload.
     #
     def worker_args_payload
-      @worker_args_payload ||= begin
-        if store_payload_in_redis?
-          # Store payload in Redis
-          self.class.redis.write(
-            self.class.key([REDIS_PAYLOAD_NAMESPACE, worker.job_id].join('/')),
-            worker.job_args
-          )
+      @worker_args_payload ||= if store_payload_in_redis?
+                                 # Store payload in Redis
+                                 self.class.redis.write(
+                                   self.class.key([REDIS_PAYLOAD_NAMESPACE, worker.job_id].join('/')),
+                                   worker.job_args
+                                 )
 
-          # Return reference to args payload
-          { job_args_payload_id: worker.job_id }
-        else
-          # Return regular job args payload
-          { job_args: worker.job_args }
-        end
-      end
+                                 # Return reference to args payload
+                                 { job_args_payload_id: worker.job_id }
+                               else
+                                 # Return regular job args payload
+                                 { job_args: worker.job_args }
+                               end
     end
 
     #

@@ -2,6 +2,16 @@
 
 source "https://rubygems.org"
 
+gem "appraisal", github: "thoughtbot/appraisal"
+gem "bundler", "~> 2.0"
+gem "rake", ">= 12.3.3"
+gem "rspec", "~> 3.0"
+gem "rspec-json_expectations", "~> 2.2"
+gem "rubocop", "1.52.1"
+gem "rubocop-rspec", "2.22.0"
+gem "semantic_logger"
+gem "timecop"
+gem "webmock"
 gem "rails", "~> 7.0.0"
 gem "rspec-rails"
 

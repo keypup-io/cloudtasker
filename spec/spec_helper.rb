@@ -21,8 +21,8 @@ require 'cloudtasker/cron'
 require 'cloudtasker/batch'
 
 # Require supporting files
-Dir['./spec/support/**/*.rb'].each { |f| require f }
-Dir['./spec/shared/**/*.rb'].each { |f| require f }
+Dir['./spec/support/**/*.rb'].sort.each { |f| require f }
+Dir['./spec/shared/**/*.rb'].sort.each { |f| require f }
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -44,7 +44,7 @@ RSpec.configure do |config|
     Cloudtasker::RedisClient.new.clear
   end
 
-  # Note: Retriable is configured in a conditional before
+  # NOTE: Retriable is configured in a conditional before
   # block to avoid requiring the gem in the spec helper. This
   # ensures that classes have defined the proper requires.
   config.before(:all) do

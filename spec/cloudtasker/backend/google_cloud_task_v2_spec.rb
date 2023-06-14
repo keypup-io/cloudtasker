@@ -3,6 +3,7 @@
 require 'google/cloud/tasks'
 
 if defined?(Google::Cloud::Tasks::VERSION) && Google::Cloud::Tasks::VERSION >= '2'
+  require 'google/cloud/tasks/v2'
   require 'cloudtasker/backend/google_cloud_task_v2'
 
   RSpec.describe Cloudtasker::Backend::GoogleCloudTaskV2 do
@@ -26,7 +27,7 @@ if defined?(Google::Cloud::Tasks::VERSION) && Google::Cloud::Tasks::VERSION >= '
           url: 'http://localhost:300/run',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer 123'
+            Authorization: 'Bearer 123'
           },
           body: { foo: 'bar' }.to_json
         },
@@ -36,13 +37,13 @@ if defined?(Google::Cloud::Tasks::VERSION) && Google::Cloud::Tasks::VERSION >= '
       }
     end
     let(:config) { Cloudtasker.config }
-    let(:client) { instance_double('Google::Cloud::Tasks::V2::CloudTasks::Client') }
+    let(:client) { instance_double(Google::Cloud::Tasks::V2::CloudTasks::Client) }
 
     describe '.setup_queue' do
       subject { described_class.setup_queue(**opts) }
 
       let(:opts) { { name: relative_queue, concurrency: 20, retries: 100 } }
-      let(:queue) { instance_double('Google::Cloud::Tasks::V2::Queue') }
+      let(:queue) { instance_double(Google::Cloud::Tasks::V2::Queue) }
       let(:base_path) { 'foo/bar' }
       let(:queue_path) { 'foo/bar/baz' }
       let(:expected_payload) do
@@ -223,7 +224,7 @@ if defined?(Google::Cloud::Tasks::VERSION) && Google::Cloud::Tasks::VERSION >= '
       subject { described_class.find(id) }
 
       let(:id) { '123' }
-      let(:resp) { instance_double('Google::Cloud::Tasks::V2::Task') }
+      let(:resp) { instance_double(Google::Cloud::Tasks::V2::Task) }
       let(:task) { instance_double(described_class.to_s) }
 
       before { allow(described_class).to receive(:client).and_return(client) }
@@ -258,7 +259,7 @@ if defined?(Google::Cloud::Tasks::VERSION) && Google::Cloud::Tasks::VERSION >= '
 
       let(:id) { '123' }
       let(:queue) { 'some-queue' }
-      let(:resp) { instance_double('Google::Cloud::Tasks::V2::Task') }
+      let(:resp) { instance_double(Google::Cloud::Tasks::V2::Task) }
       let(:task) { instance_double(described_class.to_s) }
       let(:expected_payload) do
         payload = JSON.parse(job_payload.to_json, symbolize_names: true)
@@ -307,7 +308,7 @@ if defined?(Google::Cloud::Tasks::VERSION) && Google::Cloud::Tasks::VERSION >= '
       subject { described_class.delete(id) }
 
       let(:id) { '123' }
-      let(:resp) { instance_double('Google::Cloud::Tasks::V2::Task') }
+      let(:resp) { instance_double(Google::Cloud::Tasks::V2::Task) }
 
       before { allow(described_class).to receive(:client).and_return(client) }
 
@@ -345,7 +346,7 @@ if defined?(Google::Cloud::Tasks::VERSION) && Google::Cloud::Tasks::VERSION >= '
     describe '.new' do
       subject { described_class.new(resp) }
 
-      let(:resp) { instance_double('Google::Cloud::Tasks::V2::Task') }
+      let(:resp) { instance_double(Google::Cloud::Tasks::V2::Task) }
 
       it { is_expected.to have_attributes(gcp_task: resp) }
     end
@@ -353,7 +354,7 @@ if defined?(Google::Cloud::Tasks::VERSION) && Google::Cloud::Tasks::VERSION >= '
     describe '#relative_queue' do
       subject { described_class.new(resp).relative_queue }
 
-      let(:resp) { instance_double('Google::Cloud::Tasks::V2::Task', name: task_name, to_h: resp_payload) }
+      let(:resp) { double(Google::Cloud::Tasks::V2::Task, name: task_name, to_h: resp_payload) }
       let(:resp_payload) { job_payload.merge(schedule_time: { seconds: job_payload[:schedule_time] }) }
 
       context 'with gcp_queue_prefix' do
@@ -383,8 +384,8 @@ if defined?(Google::Cloud::Tasks::VERSION) && Google::Cloud::Tasks::VERSION >= '
         )
       end
       let(:resp) do
-        instance_double(
-          'Google::Cloud::Tasks::V2::Task',
+        double(
+          Google::Cloud::Tasks::V2::Task,
           name: task_name,
           to_h: resp_payload
         )

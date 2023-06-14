@@ -180,10 +180,8 @@ module Cloudtasker
       #
       # Helper method encapsulating the retry strategy for Google API calls
       #
-      def self.with_gapi_retries
-        Retriable.retriable(on: [Google::Cloud::UnavailableError], tries: 3) do
-          yield
-        end
+      def self.with_gapi_retries(&block)
+        Retriable.retriable(on: [Google::Cloud::UnavailableError], tries: 3, &block)
       end
 
       #

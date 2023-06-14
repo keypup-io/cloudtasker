@@ -28,6 +28,8 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
+  spec.required_ruby_version = '>= 2.7.0'
+
   spec.add_dependency 'activesupport'
   spec.add_dependency 'connection_pool'
   spec.add_dependency 'fugit'
@@ -36,14 +38,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'redis'
   spec.add_dependency 'retriable'
 
-  spec.add_development_dependency 'appraisal'
-  spec.add_development_dependency 'bundler', '~> 2.0'
-  spec.add_development_dependency 'rake', '>= 12.3.3'
-  spec.add_development_dependency 'rspec', '~> 3.0'
-  spec.add_development_dependency 'rspec-json_expectations', '~> 2.2'
-  spec.add_development_dependency 'rubocop', '0.76.0'
-  spec.add_development_dependency 'rubocop-rspec', '1.37.0'
-  spec.add_development_dependency 'semantic_logger'
-  spec.add_development_dependency 'timecop'
-  spec.add_development_dependency 'webmock'
+  spec.metadata['rubygems_mfa_required'] = 'true'
 end

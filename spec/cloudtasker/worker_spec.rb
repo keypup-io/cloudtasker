@@ -8,7 +8,7 @@ RSpec.describe Cloudtasker::Worker do
 
     let(:worker_hash) { { 'foo' => 'bar' } }
     let(:serialized_worker) { worker_hash.to_json }
-    let(:worker) { instance_double('TestWorker') }
+    let(:worker) { instance_double(TestWorker) }
 
     before { allow(described_class).to receive(:from_hash).with(worker_hash).and_return(worker) }
 
@@ -86,7 +86,7 @@ RSpec.describe Cloudtasker::Worker do
     let(:time_at) { Time.now }
     let(:arg1) { 1 }
     let(:arg2) { 2 }
-    let(:resp) { instance_double('Cloudtasker::CloudTask') }
+    let(:resp) { instance_double(Cloudtasker::CloudTask) }
 
     before { allow(worker_class).to receive(:schedule).with(time_at: time_at, args: [arg1, arg2]).and_return(resp) }
 
@@ -99,7 +99,7 @@ RSpec.describe Cloudtasker::Worker do
     let(:delay) { 10 }
     let(:arg1) { 1 }
     let(:arg2) { 2 }
-    let(:resp) { instance_double('Cloudtasker::CloudTask') }
+    let(:resp) { instance_double(Cloudtasker::CloudTask) }
 
     before { allow(worker_class).to receive(:schedule).with(time_in: delay, args: [arg1, arg2]).and_return(resp) }
 
@@ -111,7 +111,7 @@ RSpec.describe Cloudtasker::Worker do
 
     let(:arg1) { 1 }
     let(:arg2) { 2 }
-    let(:resp) { instance_double('Cloudtasker::CloudTask') }
+    let(:resp) { instance_double(Cloudtasker::CloudTask) }
 
     before { allow(worker_class).to receive(:schedule).with(args: [arg1, arg2]).and_return(resp) }
     it { is_expected.to eq(resp) }
@@ -124,8 +124,8 @@ RSpec.describe Cloudtasker::Worker do
     let(:delay) { 10 }
     let(:arg1) { 1 }
     let(:arg2) { 2 }
-    let(:task) { instance_double('Cloudtasker::WorkerHandler') }
-    let(:resp) { instance_double('Cloudtasker::CloudTask') }
+    let(:task) { instance_double(Cloudtasker::WorkerHandler) }
+    let(:resp) { instance_double(Cloudtasker::CloudTask) }
     let(:worker) { instance_double(worker_class.to_s) }
 
     before { allow(worker_class).to receive(:new).with(job_queue: queue, job_args: [arg1, arg2]).and_return(worker) }
@@ -153,7 +153,7 @@ RSpec.describe Cloudtasker::Worker do
 
     before { worker_class.cloudtasker_options(opts) }
     after { worker_class.cloudtasker_options(original_opts) }
-    it { is_expected.to eq(Hash[opts.map { |k, v| [k.to_sym, v] }]) }
+    it { is_expected.to eq(opts.transform_keys(&:to_sym)) }
   end
 
   describe '.max_retries' do
@@ -349,8 +349,8 @@ RSpec.describe Cloudtasker::Worker do
     let(:delay) { 10 }
     let(:arg1) { 1 }
     let(:arg2) { 2 }
-    let(:task) { instance_double('Cloudtasker::WorkerHandler') }
-    let(:resp) { instance_double('Cloudtasker::CloudTask') }
+    let(:task) { instance_double(Cloudtasker::WorkerHandler) }
+    let(:resp) { instance_double(Cloudtasker::CloudTask) }
     let(:worker) { worker_class.new(job_args: [1, 2]) }
     let(:cal_time_at) { Time.now + 3600 }
 
@@ -441,7 +441,7 @@ RSpec.describe Cloudtasker::Worker do
     let(:worker) { worker_class.new(job_args: args) }
     let(:args) { [1, 2] }
 
-    let(:resp) { instance_double('Cloudtasker::CloudTask') }
+    let(:resp) { instance_double(Cloudtasker::CloudTask) }
 
     before { allow(worker).to receive(:schedule).with(interval: delay).and_return(resp) }
     after { expect(worker.job_reenqueued).to be_truthy }
@@ -508,7 +508,7 @@ RSpec.describe Cloudtasker::Worker do
     end
 
     context 'with different job_id' do
-      it { is_expected.not_to eq(worker_class.new(job_id: worker.job_id + 'a')) }
+      it { is_expected.not_to eq(worker_class.new(job_id: "#{worker.job_id}a")) }
     end
 
     context 'with different object' do

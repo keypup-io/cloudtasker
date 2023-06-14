@@ -51,4 +51,4 @@ module Cloudtasker
   end
 end
 
-require 'cloudtasker/engine' if defined?(::Rails::Engine)
+require 'cloudtasker/engine' if defined?(Rails::Engine)

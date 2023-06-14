@@ -21,14 +21,14 @@ RSpec.describe Cloudtasker::Config do
   let(:rails_credentials) { { secret_key_base: rails_secret } }
   let(:rails_config) do
     if defined?(Rails) && Rails.application.config.respond_to?(:hosts)
-      instance_double('Rails::Application::Configuration', hosts: rails_hosts)
+      instance_double(Rails::Application::Configuration, hosts: rails_hosts)
     else
-      instance_double('Rails::Application::Configuration')
+      instance_double(Rails::Application::Configuration)
     end
   end
-  let(:rails_app) { instance_double('Dummy::Application', credentials: rails_credentials, config: rails_config) }
-  let(:rails_logger) { instance_double('ActiveSupport::Logger') }
-  let(:rails_klass) { class_double('Rails', application: rails_app, logger: rails_logger) }
+  let(:rails_app) { instance_double(Dummy::Application, credentials: rails_credentials, config: rails_config) }
+  let(:rails_logger) { instance_double(ActiveSupport::Logger) }
+  let(:rails_klass) { class_double(Rails, application: rails_app, logger: rails_logger) }
 
   let(:config) do
     Cloudtasker.configure do |c|
@@ -152,18 +152,20 @@ RSpec.describe Cloudtasker::Config do
     context 'with no logger provided' do
       let(:logger) { nil }
 
-      it { is_expected.to be_a(::Logger) }
+      it { is_expected.to be_a(Logger) }
     end
 
     context 'with logger provided' do
       it { is_expected.to eq(logger) }
     end
 
-    context 'with Rails and no logger provided' do
-      let(:logger) { nil }
+    if defined?(Rails)
+      context 'with Rails and no logger provided' do
+        let(:logger) { nil }
 
-      before { stub_const('Rails', rails_klass) }
-      it { is_expected.to eq(rails_logger) }
+        before { stub_const('Rails', rails_klass) }
+        it { is_expected.to eq(rails_logger) }
+      end
     end
   end
 
@@ -174,11 +176,13 @@ RSpec.describe Cloudtasker::Config do
       it { is_expected.to eq(secret) }
     end
 
-    context 'with Rails secret available' do
-      let(:secret) { nil }
+    if defined?(Rails)
+      context 'with Rails secret available' do
+        let(:secret) { nil }
 
-      before { stub_const('Rails', rails_klass) }
-      it { is_expected.to eq(rails_secret) }
+        before { stub_const('Rails', rails_klass) }
+        it { is_expected.to eq(rails_secret) }
+      end
     end
 
     context 'with no value' do

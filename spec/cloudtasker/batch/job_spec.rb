@@ -73,7 +73,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     end
 
     context 'with invalid batch id' do
-      let(:batch_id) { worker.job_id + 'aaa' }
+      let(:batch_id) { "#{worker.job_id}aaa" }
 
       it { is_expected.to be_nil }
     end

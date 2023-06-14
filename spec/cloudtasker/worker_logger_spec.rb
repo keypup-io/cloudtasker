@@ -53,7 +53,7 @@ RSpec.shared_examples 'a log appender' do |level|
     before { allow(logger).to receive(:logger).and_return(logger_adapter) }
 
     context 'with Logger' do
-      let(:logger_adapter) { ::Logger.new(nil) }
+      let(:logger_adapter) { Logger.new(nil) }
 
       it { expect { log_action }.not_to raise_error }
     end

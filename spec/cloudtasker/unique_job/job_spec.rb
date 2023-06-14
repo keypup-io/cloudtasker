@@ -76,7 +76,7 @@ RSpec.describe Cloudtasker::UniqueJob::Job do
     end
 
     context 'with invalid lock strategy' do
-      let(:job_opts) { {} }
+      let(:job_opts) { { lock: 'foo' } }
 
       it { is_expected.to be_a(Cloudtasker::UniqueJob::Lock::NoOp) }
       it { is_expected.to have_attributes(job: job) }

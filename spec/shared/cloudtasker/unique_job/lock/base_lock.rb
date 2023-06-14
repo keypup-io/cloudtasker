@@ -37,8 +37,8 @@ RSpec.shared_examples Cloudtasker::UniqueJob::Lock::BaseLock do
       it { is_expected.to have_attributes(job: job) }
     end
 
-    context 'with invalid lock strategy' do
-      let(:job_opts) { {} }
+    context 'with invalid conflict strategy' do
+      let(:job_opts) { { on_conflict: 'foo' } }
 
       it { is_expected.to be_a(lock.default_conflict_strategy) }
       it { is_expected.to have_attributes(job: job) }

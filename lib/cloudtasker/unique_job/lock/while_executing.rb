@@ -10,11 +10,11 @@ module Cloudtasker
         # Acquire a lock for the job and trigger a conflict
         # if the lock could not be acquired.
         #
-        def execute
+        def execute(&block)
           job.lock!
           yield
         rescue LockError
-          conflict_instance.on_execute { yield }
+          conflict_instance.on_execute(&block)
         ensure
           # Unlock the job on any error to avoid deadlocks.
           job.unlock!

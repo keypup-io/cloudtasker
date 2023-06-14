@@ -63,7 +63,7 @@ module Cloudtasker
       #
       def cloudtasker_options(opts = {})
         opt_list = opts&.map { |k, v| [k.to_sym, v] } || [] # symbolize
-        @cloudtasker_options_hash = Hash[opt_list]
+        @cloudtasker_options_hash = opt_list.to_h
       end
 
       #
@@ -174,13 +174,13 @@ module Cloudtasker
     # @return [Integer] The value in seconds.
     #
     def dispatch_deadline
-      @dispatch_deadline ||= [
-        [
-          Config::MIN_DISPATCH_DEADLINE,
-          (self.class.cloudtasker_options_hash[:dispatch_deadline] || Cloudtasker.config.dispatch_deadline).to_i
-        ].max,
-        Config::MAX_DISPATCH_DEADLINE
-      ].min
+      @dispatch_deadline ||= begin
+        configured_deadline = (
+          self.class.cloudtasker_options_hash[:dispatch_deadline] ||
+          Cloudtasker.config.dispatch_deadline
+        ).to_i
+        configured_deadline.clamp(Config::MIN_DISPATCH_DEADLINE, Config::MAX_DISPATCH_DEADLINE)
+      end
     end
 
     #

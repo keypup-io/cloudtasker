@@ -58,7 +58,7 @@ module Cloudtasker
     #
     def boot_system
       # Sync logs
-      STDOUT.sync = true
+      $stdout.sync = true
 
       # Check for Rails
       return false unless File.exist?('./config/environment.rb')
@@ -103,7 +103,7 @@ module Cloudtasker
     def run_server(read_pipe, opts = {})
       local_server.start(opts)
 
-      while (readable_io = IO.select([read_pipe]))
+      while (readable_io = read_pipe.wait_readable)
         signal = readable_io.first[0].gets.strip
         handle_signal(signal)
       end
@@ -124,11 +124,9 @@ module Cloudtasker
       # USR1 and USR2 don't work on the JVM
       sigs << 'USR2' unless jruby?
       sigs.each do |sig|
-        begin
-          trap(sig) { write_pipe.puts(sig) }
-        rescue ArgumentError
-          puts "Signal #{sig} not supported"
-        end
+        trap(sig) { write_pipe.puts(sig) }
+      rescue ArgumentError
+        puts "Signal #{sig} not supported"
       end
     end
 
