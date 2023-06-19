@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.13.1](https://github.com/keypup-io/cloudtasker/tree/v0.13.1) (2023-06-19)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.13.0...v0.13.1)
+
+**Fixed bugs:**
+- Batch jobs: Gracefully handle errors (e.g. Redis connection error) while setting up child jobs. Previously this could lead to ghost child jobs preventing the parent batch from finishing (child job is registered but is never enqueued)
+- Protobuf: fix formatting of protobuf payload by removig `nil` values and formatting the `dispatch_deadline` as a proper `Google::Protobuf::Duration` (instead of `integer`). Fixes [#94](https://github.com/keypup-io/cloudtasker/issues/94)
+
+
 ## [v0.13.0](https://github.com/keypup-io/cloudtasker/tree/v0.13.0) (2022-03-11)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.12.2...v0.13.0)
