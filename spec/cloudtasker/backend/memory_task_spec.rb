@@ -92,6 +92,7 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
 
     context 'without filter' do
       it { is_expected.to eq([task, task2]) }
+      it { expect(described_class.all.object_id).not_to eq(described_class.queue.object_id) }
     end
 
     context 'with filter' do
