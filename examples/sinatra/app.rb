@@ -15,8 +15,11 @@ get '/' do
 end
 
 post '/cloudtasker/run' do
-  # Authenticate request unless OpenID Connect is enabled
-  Cloudtasker::Authenticator.verify!(request.env['HTTP_AUTHORIZATION'].to_s.split.last) unless Cloudtasker.config.oidc
+  # Get authorization token from custom header (since v0.14.0) or fallback to
+  # former authorization header (jobs enqueued by v0.13 and below)
+  auth_token = request.env['HTTP_X_CLOUDTASKER_AUTHORIZATION'].to_s.split.last ||
+               request.env['HTTP_AUTHORIZATION'].to_s.split.last
+  Cloudtasker::Authenticator.verify!(auth_token)
 
   # Capture content and decode content
   content = request.body.read

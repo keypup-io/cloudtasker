@@ -35,8 +35,12 @@ module Cloudtasker
     # Content Type
     CONTENT_TYPE_HEADER = 'Content-Type'
 
-    # Authorization header
-    AUTHORIZATION_HEADER = 'Authorization'
+    # OIDC Authorization header
+    OIDC_AUTHORIZATION_HEADER = 'Authorization'
+
+    # Custom authentication header that does not conflict with
+    # OIDC authorization header
+    CT_AUTHORIZATION_HEADER = 'X-Cloudtasker-Authorization'
 
     # Default values
     DEFAULT_LOCATION_ID = 'us-east1'

@@ -80,9 +80,13 @@ module Cloudtasker
     # See Cloudtasker::Authenticator#verification_token
     #
     def authenticate!
-      return true if Cloudtasker.config.oidc
+      # Get authorization token from custom header (since v0.14.0) or fallback to
+      # former authorization header (jobs enqueued by v0.13 and below)
+      auth_token = request.headers[Cloudtasker::Config::CT_AUTHORIZATION_HEADER].to_s.split.last ||
+                   request.headers[Cloudtasker::Config::OIDC_AUTHORIZATION_HEADER].to_s.split.last
 
-      Authenticator.verify!(request.headers['Authorization'].to_s.split.last)
+      # Verify the token
+      Authenticator.verify!(auth_token)
     end
   end
 end
