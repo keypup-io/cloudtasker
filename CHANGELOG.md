@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.13.2](https://github.com/keypup-io/cloudtasker/tree/v0.13.2) (2023-07-02)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.13.1...v0.13.2)
+
+**Fixed bugs:**
+- Fix concurrency issue when draining test jobs in `fake!` mode
+
 ## [v0.13.1](https://github.com/keypup-io/cloudtasker/tree/v0.13.1) (2023-06-19)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.13.0...v0.13.1)
