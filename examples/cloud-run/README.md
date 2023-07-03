@@ -5,48 +5,82 @@ All the steps below require the [gcloud CLI](https://cloud.google.com/sdk/docs/i
 ## Deploying to Cloud Run
 The following steps will deploy a minimal app called `cloudtasker-demo` to your Cloud Run account.
 
-First, build the app via Cloud Build. This step uses the local `Dockerfile` under the hood.
+First, set your GCP project ID
 ```
-gcloud builds submit --tag gcr.io/$PROJECT_ID/cloudrun/cloudtasker-demo
+export PROJECT_ID=my-gcp-project
 ```
 
-Then deploy the app to Cloud Run:
+Check the initial Cloudtasker configuration in `config/initializers/cloudtasker.rb`. Make sure the `gcp_project_id` and `gcp_location_id` are correct
+
+Make sure the default queue exists for the demo application in Google Cloud Tasks:
 ```
-gcloud run deploy cloudtasker-demo --region us-central1 --platform managed --image gcr.io/$PROJECT_ID/cloudrun/cloudtasker-demo --allow-unauthenticated
+bundle exec rake cloudtasker:setup_queue
+```
+
+Create a service account for your application and attach the **Cloud Tasks Enqueuer** roles to it so it is allowed to enqueue tasks. In a production context, you can restrict this permission to specific Cloud Task queues using [--condition](https://cloud.google.com/sdk/gcloud/reference/projects/add-iam-policy-binding#--condition):
+```
+# Create service account
+gcloud iam service-accounts create cloudtasker-demo --display-name="cloudtasker-demo" --project=$PROJECT_ID
+
+# Add Task Runner role
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:cloudtasker-demo@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/cloudtasks.enqueuer"
+```
+
+Build and deploy the app to Cloud Run:
+```
+# Build
+gcloud builds submit --project=$PROJECT_ID --tag gcr.io/$PROJECT_ID/cloudrun/cloudtasker-demo
+
+# Deploy
+gcloud run deploy cloudtasker-demo --project=$PROJECT_ID --region us-central1 --platform managed --image gcr.io/$PROJECT_ID/cloudrun/cloudtasker-demo --service-account="cloudtasker-demo@$PROJECT_ID.iam.gserviceaccount.com" --allow-unauthenticated
 ```
 
 Once you have your service URL, update the `processor_host` in `config/initializers/cloudtasker.rb`. Also make sure that your Cloud Run service account has the "Cloud Tasks Enqueuer" IAM role. You can then re-build and redeploy your service:
 ```
-gcloud builds submit --tag gcr.io/$PROJECT_ID/cloudrun/cloudtasker-demo
-gcloud run deploy cloudtasker-demo --region us-central1 --image gcr.io/$PROJECT_ID/cloudrun/cloudtasker-demo
+gcloud builds submit --project=$PROJECT_ID --tag gcr.io/$PROJECT_ID/cloudrun/cloudtasker-demo
+gcloud run deploy cloudtasker-demo --project=$PROJECT_ID --region us-central1 --image gcr.io/$PROJECT_ID/cloudrun/cloudtasker-demo
 ```
 
 Once deployed, you can enqueue dummy jobs by visiting `https://<your-service>.run.app/enqueue/dummy`. This URL will enqueue a `DummyWorker` on Cloud Tasks.
 
 The job progress can be followed in your Cloud Run service logs.
 
-## Making your service private
-First deploy your service, as explained in the previous section.
+## Making your service private using OpenID Connect (OIDC)
+If you do not want your app to be publicly accessible on the internet, you may configure it to use private invocations on Cloud Run.
 
-Make your service private:
+For Cloud Tasks to work with a Cloud Run service in private mode, a service account must be specified on the tasks that has access to the Cloud Run service. This is the purpose of the `config.oidc` parameter in Cloudtasker.
+
+The steps below explain how to configure your application and service account to work with private invocations.
+
+### Switching the app to private mode
+Uncomment the `oidc` section in `config/initializers/cloudtasker.rb` and specify the `service_account_email` to:
 ```
-gcloud run deploy cloudtasker-demo --region us-central1 --image gcr.io/$PROJECT_ID/cloudrun/cloudtasker-demo --no-allow-unauthenticated
-```
-
-Now we need to tell Cloudtasker to use a specific service account when enqueuing jobs, otherwise your jobs will be denied by your now private service.
-
-Go to GCP IAM and create a new service account for Cloud Tasks with the following configuration:
-- The Cloud Run service account must have principal access to this account with the "Service Account User" role. This will ensure that the Cloud Run can "act as" the Cloud Task service account when enqueuing jobs. Even if you use the same account for Cloud Run and Cloud Tasks, the service account must have "Service Account User" access to itself.
-- Add the "Cloud Tasks Task Runner" role to the service account
-
-Unless you are an admin on your GCP account, you should also give yourself the "Cloud Run Invoker" role, otherwise, you won't be able to access your Cloud Run service via HTTP.
-
-Once done with permission, you should re-deploy your Cloud Run service to ensure that they are properly applied:
-```
-gcloud run deploy cloudtasker-demo --region us-central1 --image gcr.io/$PROJECT_ID/cloudrun/cloudtasker-demo
+echo cloudtasker-demo@$PROJECT_ID.iam.gserviceaccount.com
 ```
 
-Now you should be able to enqueue jobs on your private service by running the following authenticated request:
+Add the **Cloud Run Invoker** role to the service account. Since tasks will be enqueued under the service account created previously, they need to be able to invoke the Cloud Run app. In a production context, you can restrict this permission to this Cloud Run app only using [--condition](https://cloud.google.com/sdk/gcloud/reference/projects/add-iam-policy-binding#--condition):
+```
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:cloudtasker-demo@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/run.invoker"
+```
+
+The service account also needs to be able to act as itself to enqueue tasks on its behalf. To do so, we need to attach the "Service Acccount User" to our service account:
+```
+gcloud projects add-iam-policy-binding $PROJECT_ID --member="serviceAccount:cloudtasker-demo@$PROJECT_ID.iam.gserviceaccount.com" --role="roles/iam.serviceAccountUser"
+```
+
+Re-build and deploy your service in private authentication mode:
+```
+# Build
+gcloud builds submit --project=$PROJECT_ID --tag gcr.io/$PROJECT_ID/cloudrun/cloudtasker-demo
+
+# Deploy in authenticated mode
+gcloud run deploy cloudtasker-demo --project=$PROJECT_ID --region us-central1 --image gcr.io/$PROJECT_ID/cloudrun/cloudtasker-demo --no-allow-unauthenticated
+```
+
+### Enqueuing jobs using private invocations
+Unless you are an admin on your GCP account, you should give yourself the "Cloud Run Invoker" role, otherwise, you won't be able to access your Cloud Run service via HTTP.
+
+Now you should be able to enqueue jobs on your private service by running the following authenticated request (visiting the URL via a browser will not work anymore):
 ```
 curl -H "Authorization: Bearer $(gcloud auth print-identity-token)" https://<your-service>.run.app/enqueue/dummy
 ```
