@@ -4,11 +4,12 @@ require 'cloudtasker/backend/redis_task'
 
 RSpec.describe Cloudtasker::Backend::RedisTask do
   let(:redis) { described_class.redis }
+  let(:url) { 'http://localhost:300/run' }
   let(:job_payload) do
     {
       http_request: {
         http_method: 'POST',
-        url: 'http://localhost:300/run',
+        url: url,
         headers: {
           'Content-Type': 'application/json',
           Authorization: 'Bearer 123'
@@ -242,36 +243,48 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
     subject { task.deliver }
 
     let(:status) { 200 }
-    let!(:http_stub) do
-      stub_request(:post, job_payload.dig(:http_request, :url))
-        .with(
-          headers: {
-            Cloudtasker::Config::TASK_ID_HEADER => task_id,
-            Cloudtasker::Config::RETRY_HEADER => job_payload[:retries]
-          },
-          body: job_payload.dig(:http_request, :body)
-        )
-        .to_return(status: status)
+
+    shared_examples 'of delivering a task' do |protocol|
+      let(:url) { "#{protocol}://localhost:300/run" }
+      let!(:http_stub) do
+        stub_request(:post, job_payload.dig(:http_request, :url))
+          .with(
+            headers: {
+              Cloudtasker::Config::TASK_ID_HEADER => task_id,
+              Cloudtasker::Config::RETRY_HEADER => job_payload[:retries]
+            },
+            body: job_payload.dig(:http_request, :body)
+          )
+          .to_return(status: status)
+      end
+
+      before do
+        allow(task).to receive(:destroy).and_return(true)
+        allow(task).to receive(:retry_later).with(described_class::RETRY_INTERVAL).and_return(true)
+      end
+      after { expect(http_stub).to have_been_requested }
+
+      context 'with success' do
+        after { expect(task).to have_received(:destroy) }
+        after { expect(task).not_to have_received(:retry_later) }
+        it { is_expected.to be_truthy }
+      end
+
+      context 'with failure' do
+        let(:status) { 500 }
+
+        after { expect(task).not_to have_received(:destroy) }
+        after { expect(task).to have_received(:retry_later) }
+        it { is_expected.to be_truthy }
+      end
     end
 
-    before do
-      allow(task).to receive(:destroy).and_return(true)
-      allow(task).to receive(:retry_later).with(described_class::RETRY_INTERVAL).and_return(true)
-    end
-    after { expect(http_stub).to have_been_requested }
-
-    context 'with success' do
-      after { expect(task).to have_received(:destroy) }
-      after { expect(task).not_to have_received(:retry_later) }
-      it { is_expected.to be_truthy }
+    context 'with HTTP' do
+      include_examples 'of delivering a task', 'http'
     end
 
-    context 'with failure' do
-      let(:status) { 500 }
-
-      after { expect(task).not_to have_received(:destroy) }
-      after { expect(task).to have_received(:retry_later) }
-      it { is_expected.to be_truthy }
+    context 'with HTTPS' do
+      include_examples 'of delivering a task', 'https'
     end
   end
 
