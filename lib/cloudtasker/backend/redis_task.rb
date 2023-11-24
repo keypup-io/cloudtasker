@@ -259,6 +259,7 @@ module Cloudtasker
             uri = URI(http_request[:url])
             http = Net::HTTP.new(uri.host, uri.port).tap { |e| e.read_timeout = dispatch_deadline }
             http.use_ssl = true if uri.instance_of?(URI::HTTPS)
+            http.verify_mode = OpenSSL::SSL::VERIFY_NONE unless Cloudtasker.config.ssl_verify_mode
             http
           end
       end
