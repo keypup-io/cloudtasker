@@ -52,7 +52,7 @@ module Cloudtasker
       end
 
       #
-      # Reeturn all tasks ready to process.
+      # Return all tasks ready to process.
       #
       # @param [String] queue The queue to retrieve items from.
       #
