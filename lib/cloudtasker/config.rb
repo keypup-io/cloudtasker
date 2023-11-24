@@ -164,9 +164,9 @@ module Cloudtasker
 
       # Check if Rails supports host filtering
       return unless val &&
-        defined?(Rails) &&
-        Rails.application.config.respond_to?(:hosts) &&
-        Rails.application.config.hosts&.any?
+                    defined?(Rails) &&
+                    Rails.application.config.respond_to?(:hosts) &&
+                    Rails.application.config.hosts&.any?
 
       # Add processor host to the list of authorized hosts
       Rails.application.config.hosts << val.gsub(%r{https?://}, '')
