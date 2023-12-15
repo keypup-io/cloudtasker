@@ -10,6 +10,7 @@ RSpec.describe Cloudtasker::Config do
   let(:logger) { Logger.new(nil) }
   let(:mode) { :production }
   let(:max_retries) { 10 }
+  let(:retry_mechanism) { :provider }
   let(:store_payloads_in_redis) { 10 }
   let(:dispatch_deadline) { 15 * 60 }
   let(:on_error) { ->(e, w) {} }
@@ -41,6 +42,7 @@ RSpec.describe Cloudtasker::Config do
       c.processor_host = processor_host
       c.processor_path = processor_path
       c.max_retries = max_retries
+      c.retry_mechanism = retry_mechanism
       c.store_payloads_in_redis = store_payloads_in_redis
       c.dispatch_deadline = dispatch_deadline
       c.on_error = on_error
@@ -94,6 +96,20 @@ RSpec.describe Cloudtasker::Config do
       let(:max_retries) { nil }
 
       it { is_expected.to eq(described_class::DEFAULT_MAX_RETRY_ATTEMPTS) }
+    end
+  end
+
+  describe '#retry_mechanism' do
+    subject { config.retry_mechanism }
+
+    context 'with value specified via config' do
+      it { is_expected.to eq(retry_mechanism) }
+    end
+
+    context 'with no value' do
+      let(:retry_mechanism) { nil }
+
+      it { is_expected.to eq(:provider) }
     end
   end
 

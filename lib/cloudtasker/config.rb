@@ -7,7 +7,7 @@ module Cloudtasker
   class Config
     attr_accessor :redis, :store_payloads_in_redis, :gcp_queue_prefix
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
-                :processor_path, :logger, :mode, :max_retries,
+                :processor_path, :logger, :mode, :max_retries, :retry_mechanism,
                 :dispatch_deadline, :on_error, :on_dead, :oidc
 
     # Max Cloud Task size in bytes
@@ -111,6 +111,19 @@ module Cloudtasker
     #
     def max_retries
       @max_retries ||= DEFAULT_MAX_RETRY_ATTEMPTS
+    end
+
+    #
+    # Configures who is responsible for tracking and managing retries.
+    # Defaults to `:provider`.
+    #   - :provider => Use CloudTask's retry management.
+    #   - :active_job => Rely on ActiveJob first to manage retries, e.g. using `retry_on`.
+    #       Ignores the CloudTask `RetryCount` header.
+    #
+    # @return [<Type>] <description>
+    #
+    def retry_mechanism
+      @retry_mechanism ||= :provider
     end
 
     #
