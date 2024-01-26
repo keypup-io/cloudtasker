@@ -108,25 +108,12 @@ module Cloudtasker
             http_method: request_config[:http_method],
             headers: request_config[:headers],
             body: request_config[:body],
-            oidc_token: oidc_config
+            oidc_token: config.oidc
           }.compact
         }
       end
 
       private
-
-      def oidc_config
-        return unless oidc?
-
-        {
-          service_account_email: config.oidc[:service_account_email],
-          audience: config.oidc[:audience]
-        }
-      end
-
-      def oidc?
-        config.oidc && config.oidc[:service_account_email] && config.oidc[:audience]
-      end
 
       def request_config
         schedule.worker_handler.task_payload[:http_request]
