@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require 'fugit'
+require 'cloudtasker/cloud_scheduler/job/active_job_payload'
+require 'cloudtasker/cloud_scheduler/job/worker_payload'
 
 module Cloudtasker
   module CloudScheduler
@@ -29,6 +31,7 @@ module Cloudtasker
             worker: config['worker'],
             args: config['args'],
             queue: config['queue'],
+            active_job: config['active_job'] || false,
             time_zone: config['time_zone'] || DEFAULT_TIME_ZONE
           )
 
@@ -54,6 +57,7 @@ module Cloudtasker
         @worker = worker
         @args = opts[:args]
         @queue = opts[:queue]
+        @active_job = opts[:active_job]
         @time_zone = opts[:time_zone]
       end
 
@@ -76,21 +80,45 @@ module Cloudtasker
       end
 
       #
-      # Return an instance of the underlying worker.
+      # Return if the specified worker is an ActiveJob.
       #
-      # @return [Cloudtasker::WorkerWrapper] The worker instance
+      # @return [Boolean] True if the worker is an ActiveJob, false otherwise.
       #
-      def worker_instance
-        @worker_instance ||= worker.safe_constantize.new(job_queue: queue, job_args: args)
+      def active_job?
+        @active_job
       end
 
       #
-      # Return an instance of the worker handler.
+      # Return the job payload to make requests to the remote scheduler.
       #
-      # @return [Cloudtasker::WorkerHandler] The worker handler.
+      # @return [Hash] The job payload.
       #
-      def worker_handler
-        @worker_handler ||= Cloudtasker::WorkerHandler.new(worker_instance)
+      def job_payload
+        if active_job?
+          Job::ActiveJobPayload.new(active_job_instance).to_h
+        else
+          Job::WorkerPayload.new(worker_instance).to_h
+        end
+      end
+
+      private
+
+      def worker_instance
+        @worker_instance ||= worker_class.new(job_queue: queue, job_args: args)
+      end
+
+      def active_job_instance
+        @active_job_instance ||= begin
+          instance = worker_class.new(args)
+          instance.queue_name = queue if queue.present?
+          instance.timezone = time_zone if time_zone.present?
+
+          instance
+        end
+      end
+
+      def worker_class
+        worker.safe_constantize
       end
     end
   end

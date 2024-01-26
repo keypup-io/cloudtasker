@@ -72,7 +72,7 @@ module Cloudtasker
       # @return [Google::Cloud::Scheduler::V1::Job] The job instance.
       #
       def create!
-        client.create_job(parent: parent, job: to_request_body)
+        client.create_job(parent: parent, job: payload)
       end
 
       #
@@ -81,7 +81,7 @@ module Cloudtasker
       # @return [Google::Cloud::Scheduler::V1::Job] The job instance.
       #
       def update!
-        client.update_job(job: to_request_body)
+        client.update_job(job: payload)
       end
 
       #
@@ -98,17 +98,20 @@ module Cloudtasker
       #
       # @return [Hash<Symbol, String>] The job hash.
       #
-      def to_request_body
+      def payload
         {
           name: remote_name,
           schedule: schedule.cron,
           time_zone: schedule.time_zone,
           http_target: {
-            uri: request_config[:url],
-            http_method: request_config[:http_method],
-            headers: request_config[:headers],
-            body: request_config[:body],
-            oidc_token: config.oidc
+            http_method: 'POST',
+            uri: config.processor_url,
+            oidc_token: config.oidc,
+            body: schedule.job_payload.to_json,
+            headers: {
+              Cloudtasker::Config::CONTENT_TYPE_HEADER => 'application/json',
+              Cloudtasker::Config::CT_AUTHORIZATION_HEADER => Authenticator.bearer_token
+            }.compact
           }.compact
         }
       end
