@@ -25,11 +25,11 @@ module Cloudtasker
         hash.map do |id, config|
           schedule = new(
             id: id.to_s,
-            cron: config["cron"],
-            worker: config["worker"],
-            args: config["args"],
-            queue: config["queue"],
-            time_zone: config["time_zone"] || DEFAULT_TIME_ZONE
+            cron: config['cron'],
+            worker: config['worker'],
+            args: config['args'],
+            queue: config['queue'],
+            time_zone: config['time_zone'] || DEFAULT_TIME_ZONE
           )
 
           raise InvalidScheduleError, "Invalid schedule: #{schedule.id}" unless schedule.valid?
