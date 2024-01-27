@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'google/cloud/scheduler/v1'
 require 'cloudtasker/worker_handler'
 
 module Cloudtasker
@@ -28,15 +29,6 @@ module Cloudtasker
       #
       def initialize(schedule)
         @schedule = schedule
-      end
-
-      #
-      # Parent folder for all jobs.
-      #
-      # @return [String] The parent folder.
-      #
-      def parent
-        @parent ||= client.location_path(project: config.gcp_project_id, location: config.gcp_location_id)
       end
 
       #
@@ -118,8 +110,8 @@ module Cloudtasker
 
       private
 
-      def request_config
-        schedule.worker_handler.task_payload[:http_request]
+      def parent
+        @parent ||= client.location_path(project: config.gcp_project_id, location: config.gcp_location_id)
       end
 
       def config

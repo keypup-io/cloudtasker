@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'google/cloud/scheduler/v1'
 require 'google/cloud/scheduler'
 
 module Cloudtasker

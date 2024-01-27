@@ -67,7 +67,7 @@ module Cloudtasker
       # @return [Boolean] True if the schedule is valid, false otherwise.
       #
       def valid?
-        id && cron_schedule && worker
+        id.present? && cron_schedule.present? && worker.present?
       end
 
       #
@@ -99,6 +99,17 @@ module Cloudtasker
         else
           Job::WorkerPayload.new(worker_instance).to_h
         end
+      end
+
+      #
+      # Equality operator.
+      #
+      # @param [Any] other The object to compare.
+      #
+      # @return [Boolean] True if the object is equal.
+      #
+      def ==(other)
+        other.is_a?(self.class) && id == other.id
       end
 
       private
