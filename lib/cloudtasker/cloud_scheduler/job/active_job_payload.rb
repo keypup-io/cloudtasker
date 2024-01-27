@@ -7,10 +7,20 @@ module Cloudtasker
       class ActiveJobPayload
         attr_reader :worker
 
+        #
+        # Build a new instance of the class.
+        #
+        # @param [ActiveJob::Base] worker The ActiveJob instance.
+        #
         def initialize(worker)
           @worker = worker
         end
 
+        #
+        # Return the Hash representation of the job payload.
+        #
+        # @return [Hash] The job payload.
+        #
         def to_h
           {
             'worker' => 'ActiveJob::QueueAdapters::CloudtaskerAdapter::JobWrapper',
