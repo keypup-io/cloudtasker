@@ -32,7 +32,7 @@ module Cloudtasker
       end
 
       #
-      # Prefix for all jobs.
+      # Prefix for all jobs that includes the parent path and the queue prefix.
       #
       # @return [String] The job prefix.
       #
@@ -110,14 +110,29 @@ module Cloudtasker
 
       private
 
+      #
+      # Return the parent path for all jobs.
+      #
+      # @return [String] The parent path.
+      #
       def parent
         @parent ||= client.location_path(project: config.gcp_project_id, location: config.gcp_location_id)
       end
 
+      #
+      # Return the Cloudtasker configuration.
+      #
+      # @return [Cloudtasker::Config] The configuration.
+      #
       def config
         @config ||= Cloudtasker.config
       end
 
+      #
+      # Return the Cloud Scheduler client.
+      #
+      # @return [Google::Cloud::Scheduler::V1::CloudSchedulerClient] The client.
+      #
       def client
         @client ||= Google::Cloud::Scheduler.cloud_scheduler
       end

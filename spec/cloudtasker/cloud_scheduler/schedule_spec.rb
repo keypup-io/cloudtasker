@@ -140,7 +140,6 @@ RSpec.describe Cloudtasker::CloudScheduler::Schedule do
     let(:active_job) { false }
     let(:time_zone) { 'America/New_York' }
 
-    # TODO: is there a better way of doing this?
     before do
       allow(TestActiveJob).to receive(:new).and_return(TestActiveJob.new)
       allow_any_instance_of(TestActiveJob).to receive(:queue_name=).and_return(queue)

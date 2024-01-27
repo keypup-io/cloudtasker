@@ -114,10 +114,20 @@ module Cloudtasker
 
       private
 
+      #
+      # Return an instance of the Cloudtasker Worker class.
+      #
+      # @return [Object] The worker instance.
+      #
       def worker_instance
         @worker_instance ||= worker_class.new(job_queue: queue, job_args: args)
       end
 
+      #
+      # Return an instance of the ActiveJob class.
+      #
+      # @return [Object] The ActiveJob instance.
+      #
       def active_job_instance
         @active_job_instance ||= begin
           instance = worker_class.new(args)
@@ -128,6 +138,11 @@ module Cloudtasker
         end
       end
 
+      #
+      # Return the worker class.
+      #
+      # @return [Class] The worker class.
+      #
       def worker_class
         worker.safe_constantize
       end
