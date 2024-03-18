@@ -19,6 +19,7 @@ require 'cloudtasker/testing'
 require 'cloudtasker/unique_job'
 require 'cloudtasker/cron'
 require 'cloudtasker/batch'
+require 'cloudtasker/storable'
 
 # Require supporting files
 Dir['./spec/support/**/*.rb'].sort.each { |f| require f }

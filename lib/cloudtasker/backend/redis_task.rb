@@ -12,9 +12,9 @@ module Cloudtasker
       RETRY_INTERVAL = 20 # seconds
 
       #
-      # Return the cloudtasker redis client
+      # Return the Cloudtasker redis client
       #
-      # @return [Cloudtasker::RedisClient] The cloudtasker redis client..
+      # @return [Cloudtasker::RedisClient] The cloudtasker redis client.
       #
       def self.redis
         @redis ||= RedisClient.new

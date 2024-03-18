@@ -80,6 +80,34 @@ RSpec.describe Cloudtasker::Worker do
     end
   end
 
+  describe '.redis' do
+    subject { worker_class.redis }
+
+    it { is_expected.to be_a(Cloudtasker::RedisClient) }
+  end
+
+  describe '.cache_key' do
+    subject { worker_class.cache_key(val) }
+
+    context 'with value' do
+      let(:val) { :some_key }
+
+      it { is_expected.to eq([worker_class.to_s.underscore, val.to_s].join('/')) }
+    end
+
+    context 'with values' do
+      let(:val) { %i[key1 key2] }
+
+      it { is_expected.to eq([worker_class.to_s.underscore, val].flatten.map(&:to_s).join('/')) }
+    end
+
+    context 'with nil' do
+      let(:val) { nil }
+
+      it { is_expected.to eq(worker_class.to_s.underscore) }
+    end
+  end
+
   describe '.perform_at' do
     subject { worker_class.perform_at(time_at, arg1, arg2) }
 

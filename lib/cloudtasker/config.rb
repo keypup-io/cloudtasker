@@ -59,6 +59,10 @@ module Cloudtasker
     # Default on_error Proc
     DEFAULT_ON_ERROR = ->(error, worker) {}
 
+    # Cache key prefix used to store workers in cache and retrieve
+    # them later.
+    WORKER_STORE_PREFIX = 'worker_store'
+
     # The number of times jobs will be attempted before declaring them dead.
     #
     # With the default retry configuration (maxDoublings = 16 and minBackoff = 0.100s)

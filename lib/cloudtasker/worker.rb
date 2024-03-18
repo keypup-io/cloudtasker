@@ -55,6 +55,15 @@ module Cloudtasker
     # Module class methods
     module ClassMethods
       #
+      # Return the Cloudtasker redis client
+      #
+      # @return [Cloudtasker::RedisClient] The cloudtasker redis client.
+      #
+      def redis
+        @redis ||= RedisClient.new
+      end
+
+      #
       # Set the worker runtime options.
       #
       # @param [Hash] opts The worker options.
@@ -73,6 +82,17 @@ module Cloudtasker
       #
       def cloudtasker_options_hash
         @cloudtasker_options_hash || {}
+      end
+
+      #
+      # Return a namespaced cache key.
+      #
+      # @param [Any, Array<Any>, nil] val The key to namespace
+      #
+      # @return [String] The namespaced key(s).
+      #
+      def cache_key(val = nil)
+        [to_s.underscore, val].flatten.compact.map(&:to_s).join('/')
       end
 
       #
