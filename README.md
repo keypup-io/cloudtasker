@@ -324,6 +324,22 @@ Cloudtasker.configure do |config|
   #
   # config.max_retries = 10
 
+  # 
+  # Specify whether ActiveJob's or CloudTask's retry mechanism should be used.
+  # - :provider => Use CloudTask's retry management.
+  # - :active_job => Rely on ActiveJob to manage retries, e.g. using `retry_on`.
+  # 
+  # ActiveJob has its own mechanism for retries and will reschedule the job and prevent it 
+  # from failing hard until a configured threshold is met. Then, the error is allowed to bubble up 
+  # to the underlying queuing system (in this case CloudTask). To prevent CloudTask from retrying
+  # on top of ActiveJob, pass a (potentially empty) block to `retry_on`.
+  # 
+  # When `:active_job` is chosen, `max_retries` will have no effect!
+  #
+  # Default: `:provider` (CloudTask)
+  #
+  # config.retry_mechanism = :active_job
+
   #
   # Specify the redis connection hash.
   #
