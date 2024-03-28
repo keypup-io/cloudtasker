@@ -370,6 +370,8 @@ Cloudtasker.configure do |config|
   # Supported since: v0.12.0
   #
   # Default: 600 seconds (10 minutes)
+  # Min: 15 seconds
+  # Max: 1800 seconds (30 minutes)
   #
   # config.dispatch_deadline = 600
 
