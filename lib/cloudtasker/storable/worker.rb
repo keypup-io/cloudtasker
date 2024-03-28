@@ -65,7 +65,7 @@ module Cloudtasker
               worker_args = JSON.parse(args_json)
 
               if block_given?
-                yield(self, worker_args)
+                yield(worker_args)
               else
                 perform_async(*worker_args)
               end

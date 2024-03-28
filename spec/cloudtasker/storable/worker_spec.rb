@@ -53,13 +53,13 @@ RSpec.describe Cloudtasker::Storable::Worker do
 
     context 'with block' do
       subject do
-        worker_class.pull_all_from_store(namespace, page_size: page_size) do |klass, args|
-          results << [klass, args]
+        worker_class.pull_all_from_store(namespace, page_size: page_size) do |args|
+          results << args
         end
       end
 
       before { expect(worker_class).not_to receive(:perform_async) }
-      after { expect(results.sort).to eq(arg_list.map { |e| [worker_class, e] }.sort) }
+      after { expect(results.sort).to eq(arg_list.sort) }
       it { is_expected.to be_nil }
     end
   end
