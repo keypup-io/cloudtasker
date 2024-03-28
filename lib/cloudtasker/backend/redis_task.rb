@@ -215,6 +215,9 @@ module Cloudtasker
         end
 
         resp
+      rescue Errno::ECONNREFUSED
+        retry_later(RETRY_INTERVAL)
+        Cloudtasker.logger.info(format_log_message("Processor not ready - Retry in #{RETRY_INTERVAL} seconds..."))
       rescue Net::ReadTimeout
         retry_later(RETRY_INTERVAL)
         Cloudtasker.logger.info(
