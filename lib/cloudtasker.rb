@@ -10,6 +10,7 @@ require 'cloudtasker/config'
 
 require 'cloudtasker/authentication_error'
 require 'cloudtasker/dead_worker_error'
+require 'cloudtasker/retry_worker_error'
 require 'cloudtasker/invalid_worker_error'
 require 'cloudtasker/missing_worker_arguments_error'
 require 'cloudtasker/max_task_size_exceeded_error'

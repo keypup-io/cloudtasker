@@ -49,6 +49,17 @@ RSpec.describe Cloudtasker::WorkerHandler do
       end
     end
 
+    context 'with RetryWorkerError' do
+      let(:error) { Cloudtasker::RetryWorkerError.new }
+
+      before do
+        expect(worker).not_to receive(:logger)
+        expect(Cloudtasker).not_to receive(:logger)
+      end
+
+      it { is_expected.to be_nil }
+    end
+
     context 'with no worker' do
       let(:worker) { nil }
       let(:logger) { instance_double(Logger) }

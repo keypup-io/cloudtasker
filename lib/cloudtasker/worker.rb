@@ -229,6 +229,9 @@ module Cloudtasker
     rescue DeadWorkerError => e
       logger.info("Job dead after #{job_duration}s and #{job_retries} retries") { { duration: job_duration } }
       raise(e)
+    rescue RetryWorkerError => e
+      logger.info("Job done after #{job_duration}s (retry requested)") { { duration: job_duration } }
+      raise(e)
     rescue StandardError => e
       logger.info("Job failed after #{job_duration}s") { { duration: job_duration } }
       raise(e)
@@ -442,7 +445,7 @@ module Cloudtasker
           # Perform the job
           perform(*job_args)
         rescue StandardError => e
-          run_callback(:on_error, e)
+          run_callback(:on_error, e) unless e.is_a?(RetryWorkerError)
           return raise(e) unless job_must_die?
 
           # Flag job as dead

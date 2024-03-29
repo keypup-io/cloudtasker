@@ -53,6 +53,9 @@ module Cloudtasker
       # ActiveJob::QueueAdapters::CloudtaskerAdapter::JobWrapper might not be loaded
       return if worker.class.to_s =~ /^ActiveJob::/
 
+      # Do not log error when a retry was specifically requested
+      return if error.is_a?(RetryWorkerError)
+
       # Choose logger to use based on context
       # Worker will be nil on InvalidWorkerError - in that case we use generic logging
       logger = worker&.logger || Cloudtasker.logger
