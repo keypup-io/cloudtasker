@@ -8,6 +8,54 @@ module Cloudtasker
 
     class << self
       attr_accessor :log_context_processor
+
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+      #
+      # Truncate an array or hash payload.
+      #
+      # This can be used to log arguments on jobs while still keeping logs to a
+      # reasonable size.
+      #
+      # @param [Hash,Array] payload The payload to truncate
+      # @param [Integer] string_limit The maximum size for strings. Set to -1 to disable.
+      # @param [Integer] array_limit The maximum length for arrays. Set to -1 to disable.
+      # @param [Hash] max_depth The maximum recursive depth. Set to -1 to disable.
+      #
+      # @return [Hash,Array] The truncated payload
+      #
+      def truncate(payload, **kwargs)
+        depth = kwargs[:depth].to_i
+        max_depth = kwargs[:max_depth] || 3
+        string_limit = kwargs[:string_limit] || 64
+        array_limit = kwargs[:array_limit] || 10
+
+        case payload
+        when Array
+          if max_depth > -1 && depth > max_depth
+            ["...#{payload.size} items..."]
+          elsif array_limit > -1
+            payload.take(array_limit).map { |e| truncate(e, **kwargs, depth: depth + 1) } +
+              (payload.size > array_limit ? ["...#{payload.size - array_limit} items..."] : [])
+          else
+            payload.map { |e| truncate(e, **kwargs, depth: depth + 1) }
+          end
+        when Hash
+          if max_depth > -1 && depth > max_depth
+            '{hash}'
+          else
+            payload.transform_values { |e| truncate(e, **kwargs, depth: depth + 1) }
+          end
+        when String
+          if string_limit > -1 && payload.size > string_limit
+            payload.truncate(string_limit)
+          else
+            payload
+          end
+        else
+          payload
+        end
+      end
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     end
 
     # Only log the job meta information by default (exclude arguments)
