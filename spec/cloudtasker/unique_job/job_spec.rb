@@ -153,7 +153,7 @@ RSpec.describe Cloudtasker::UniqueJob::Job do
 
     context 'with lock available' do
       after { expect(job.redis.get(job.unique_gid)).to eq(job.id) }
-      after { expect(job.redis.ttl(job.unique_gid)).to be_between(0, job.lock_ttl) }
+      after { expect(job.redis.ttl(job.unique_gid)).to be_within(10).of(job.lock_ttl) }
       it { expect { lock! }.not_to raise_error }
     end
   end
