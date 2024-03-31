@@ -15,16 +15,11 @@ module Cloudtasker
 
     # Retry header in Cloud Task responses
     #
-    # TODO: use 'X-CloudTasks-TaskExecutionCount' instead of 'X-CloudTasks-TaskRetryCount'
-    #   'X-CloudTasks-TaskExecutionCount' is currently bugged and remains at 0 even on retries.
-    #
-    # See bug: https://issuetracker.google.com/issues/154532072
-    #
     # Definitions:
     #   X-CloudTasks-TaskRetryCount: total number of retries (including 504 "instance unreachable")
     #   X-CloudTasks-TaskExecutionCount: number of non-503 retries (= actual number of job failures)
     #
-    RETRY_HEADER = 'X-CloudTasks-TaskRetryCount'
+    RETRY_HEADER = 'X-Cloudtasks-Taskexecutioncount'
 
     # Cloud Task ID header
     TASK_ID_HEADER = 'X-CloudTasks-TaskName'

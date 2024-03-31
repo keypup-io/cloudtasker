@@ -421,6 +421,8 @@ Cloudtasker.configure do |config|
   #
   # See https://openid.net/connect for more information on OpenID Connect tokens.
   #
+  # Supported since: v0.14.0
+  #
   # Default: nil 
   #
   # config.oidc = { service_account_email: 'example@gserviceaccount.com' }
@@ -767,7 +769,7 @@ By default jobs are retried 25 times - using an exponential backoff - before bei
 
 Note that the number of retries set on your Cloud Task queue should be many times higher than the number of retries configured in Cloudtasker because Cloud Task also includes failures to connect to your application. Ideally set the number of retries to `unlimited` in Cloud Tasks.
 
-**Note**: The `X-CloudTasks-TaskExecutionCount` header sent by Google Cloud Tasks and providing the number of retries outside of `HTTP 503` (instance not reachable) is currently bugged and remains at `0` all the time. Starting with `v0.10.0` Cloudtasker uses the `X-CloudTasks-TaskRetryCount` header to detect the number of retries. This header includes `HTTP 503` errors which means that if your application is down at some point, jobs will fail and these failures will be counted toward the maximum number of retries. A [bug report](https://issuetracker.google.com/issues/154532072) has been raised with GCP to address this issue. Once fixed we will revert to using `X-CloudTasks-TaskExecutionCount` to avoid counting `HTTP 503` as job failures.
+**Note**: Versions prior to `v0.14.0` use the `X-CloudTasks-TaskRetryCount` header for retries instead of the `X-CloudTasks-TaskExecutionCount` header to detect the number of retries, because there a previous bug on the GCP side which made the `X-CloudTasks-TaskExecutionCount` stay at zero instead of increasing on successive executions. Versions prior to `v0.14.0` count any failure as failure, including failures due to the backend being unavailable (`HTTP 503`). Versions `v0.14.0` and later only count application failure (`HTTP 4xx`) as failure for retry purpose.
 
 E.g. Set max number of retries globally via the cloudtasker initializer.
 ```ruby
