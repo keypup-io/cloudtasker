@@ -484,6 +484,8 @@ class FetchResourceWorker
     # ...do some logic...
     if some_condition
       # Stop and re-enqueue the job to be run again in 10 seconds.
+      # Also see the section on Cloudtasker::RetryWorkerError for a different
+      # approach on reenqueuing.
       return reenqueue(10)
     else
       # ...keep going...
@@ -823,6 +825,46 @@ class SomeErrorWorker
 
   def perform(arg1, arg2)
     raise(ArgumentError)
+  end
+end
+```
+
+### Forced retries/reenqueues using silent exception management
+**Supported since**: `0.14.0`  
+
+If your worker is waiting for some precondition to occur and you want to re-enqueue it until the condition has been met, you can raise a `Cloudtasker::RetryWorkerError`. This special error will fail your job **without logging an error** while still increasing the number of retries.
+
+This is a safer approach than using the `reenqueue` helper, which can lead to forever running jobs if not used properly.
+
+```ruby
+# app/workers/my_worker.rb
+
+class MyWorker
+  include Cloudtasker::Worker
+
+  def perform(project_id)
+    # Abort if project does not exist
+    return unless (project = Project.find_by(id: project_id))
+
+    # Trigger a retry if the project is still in "discovering" status
+    # This error will NOT log an error. It only triggers a retry.
+    raise Cloudtasker::RetryWorkerError if project.status == 'discovering'
+
+    # The previous approach was to use `reenqueue`. This works but since it
+    # does not increase the number of retries, you may ended with forever running
+    # jobs
+    # return reenqueue(10) if project.status == 'discovering'
+
+    # Do stuff when project is not longer discovering
+    do_some_stuff
+  end
+
+  # You can then specify what should be done if we've been waiting for too long
+  def on_dead(error)
+    logger.error("Looks like the project is forever discovering. Time to give up.")
+
+    # This is of course an imaginary method
+    send_slack_notification_to_internal_support_team(worker: self.class, args: job_args)
   end
 end
 ```
