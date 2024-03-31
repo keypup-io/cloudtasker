@@ -8,7 +8,7 @@ Cloudtasker provides an easy to manage interface to Google Cloud Tasks for backg
 
 Cloudtasker is particularly suited for serverless applications only responding to HTTP requests and where running a dedicated job processing server is not an option (e.g. deploy via [Cloud Run](https://cloud.google.com/run)). All jobs enqueued in Cloud Tasks via Cloudtasker eventually get processed by your application via HTTP requests.
 
-Cloudtasker also provides optional modules for running [cron jobs](docs/CRON_JOBS.md), [batch jobs](docs/BATCH_JOBS.md) and [unique jobs](docs/UNIQUE_JOBS.md).
+Cloudtasker also provides optional modules for running [cron jobs](docs/CRON_JOBS.md), [batch jobs](docs/BATCH_JOBS.md), [unique jobs](docs/UNIQUE_JOBS.md) and [storable jobs](docs/STORABLE_JOBS.md).
 
 A local processing server is also available for development. This local server processes jobs in lieu of Cloud Tasks and allows you to work offline.
 
@@ -137,7 +137,7 @@ Now jump to the next section to configure your app to use Google Cloud Tasks as 
 
 ## Get started with Rails & ActiveJob
 **Note**: ActiveJob is supported since `0.11.0`  
-**Note**: Cloudtasker extensions (cron, batch and unique jobs) are not available when using cloudtasker via ActiveJob.
+**Note**: Cloudtasker extensions (cron, batch, unique jobs and storable) are not available when using cloudtasker via ActiveJob.
 
 Cloudtasker is pre-integrated with ActiveJob. Follow the steps below to get started.
 
@@ -328,7 +328,8 @@ Cloudtasker.configure do |config|
   # Specify the redis connection hash.
   #
   # This is ONLY required in development for the Cloudtasker local server and in
-  # all environments if you use any cloudtasker extension (unique jobs, cron jobs or batch jobs)
+  # all environments if you use any cloudtasker extension (unique jobs, cron jobs,
+  # batch jobs or storable jobs)
   #
   # See https://github.com/redis/redis-rb for examples of configuration hashes.
   #
@@ -544,6 +545,7 @@ Cloudtasker comes with three optional features:
 - Cron Jobs [[docs](docs/CRON_JOBS.md)]: Run jobs at fixed intervals.
 - Batch Jobs [[docs](docs/BATCH_JOBS.md)]: Run jobs in jobs and track completion of the overall batch.
 - Unique Jobs [[docs](docs/UNIQUE_JOBS.md)]: Ensure uniqueness of jobs based on job arguments.
+- Storable Jobs [[docs](docs/STORABLE_JOBS.md)]: Park jobs until they are ready to be enqueued.
 
 ## Working locally
 
