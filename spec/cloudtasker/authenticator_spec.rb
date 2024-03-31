@@ -58,15 +58,15 @@ RSpec.describe Cloudtasker::Authenticator do
     end
   end
 
-  describe ".sign_payload" do
+  describe '.sign_payload' do
     subject { described_class.sign_payload(payload) }
 
     let(:payload) { { 'foo' => 'bar' }.to_json }
 
-    it { is_expected.to eq(OpenSSL::HMAC.hexdigest('sha256', config.secret, payload))}
+    it { is_expected.to eq(OpenSSL::HMAC.hexdigest('sha256', config.secret, payload)) }
   end
 
-  describe ".verify_signature!" do
+  describe '.verify_signature!' do
     subject(:verify!) { described_class.verify_signature!(signature, payload) }
 
     let(:payload) { { 'foo' => 'bar' }.to_json }
@@ -78,7 +78,7 @@ RSpec.describe Cloudtasker::Authenticator do
     end
 
     context 'with invalid token' do
-      let(:signature) { "some-invalid-signature" }
+      let(:signature) { 'some-invalid-signature' }
 
       it { expect { verify! }.to raise_error(Cloudtasker::AuthenticationError) }
     end

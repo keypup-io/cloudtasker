@@ -55,7 +55,6 @@ module Cloudtasker
       end
     end
 
-
     #
     # Parse the request body and return the actual job
     # payload.
@@ -98,7 +97,7 @@ module Cloudtasker
         # Get authorization token from custom header (since v0.14.0) or fallback to
         # former authorization header (jobs enqueued by v0.13 and below)
         bearer_token = request.headers[Cloudtasker::Config::CT_AUTHORIZATION_HEADER].to_s.split.last ||
-                    request.headers[Cloudtasker::Config::OIDC_AUTHORIZATION_HEADER].to_s.split.last
+                       request.headers[Cloudtasker::Config::OIDC_AUTHORIZATION_HEADER].to_s.split.last
 
         # Verify the token
         Authenticator.verify!(bearer_token)

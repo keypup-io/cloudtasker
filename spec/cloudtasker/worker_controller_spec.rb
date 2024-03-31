@@ -123,7 +123,7 @@ if defined?(Rails)
       end
 
       context 'with invalid bearer authentication' do
-        before { request.env['HTTP_X_CLOUDTASKER_AUTHORIZATION'] = "Bearer aaa" }
+        before { request.env['HTTP_X_CLOUDTASKER_AUTHORIZATION'] = 'Bearer aaa' }
         it { is_expected.to have_http_status(:unauthorized) }
       end
 
