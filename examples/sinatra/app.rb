@@ -15,18 +15,26 @@ get '/' do
 end
 
 post '/cloudtasker/run' do
-  # Get authorization token from custom header (since v0.14.0) or fallback to
-  # former authorization header (jobs enqueued by v0.13 and below)
-  auth_token = request.env['HTTP_X_CLOUDTASKER_AUTHORIZATION'].to_s.split.last ||
-               request.env['HTTP_AUTHORIZATION'].to_s.split.last
-  Cloudtasker::Authenticator.verify!(auth_token)
-
   # Capture content and decode content
-  content = request.body.read
-  content = Base64.decode64(content) if request.env['HTTP_CONTENT_TRANSFER_ENCODING'].to_s.downcase == 'base64'
+  json_payload = request.body.read
+  json_payload = Base64.decode64(json_payload) if request.env['HTTP_CONTENT_TRANSFER_ENCODING'].to_s.downcase == 'base64'
+
+  # Authenticate the request
+  if (signature = request.env['HTTP_X_CLOUDTASKER_SIGNATURE'])
+    # Verify content signature
+    Cloudtasker::Authenticator.verify_signature!(signature, json_payload)
+  else
+    # Get authorization token from custom header (since v0.14.0) or fallback to
+    # former authorization header (jobs enqueued by v0.13 and below)
+    auth_token = request.env['HTTP_X_CLOUDTASKER_AUTHORIZATION'].to_s.split.last ||
+                request.env['HTTP_AUTHORIZATION'].to_s.split.last
+
+    # Verify the token
+    Cloudtasker::Authenticator.verify!(auth_token)
+  end
 
   # Format job payload
-  payload = JSON.parse(content)
+  payload = JSON.parse(json_payload)
                 .merge(
                   job_retries: request.env[Cloudtasker::Config::RETRY_HEADER].to_i,
                   task_id: request.env[Cloudtasker::Config::TASK_ID_HEADER]
