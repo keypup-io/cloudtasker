@@ -9,6 +9,7 @@ ruby '~> 3.0'
 gem 'puma', '~> 6.4.2'
 
 # Web framework
+gem "rackup", "~> 2.1"
 gem 'sinatra'
 
 # Background jobs via Cloud Tasks

@@ -26,11 +26,11 @@ GEM
     addressable (2.8.6)
       public_suffix (>= 2.0.2, < 6.0)
     base64 (0.2.0)
-    bigdecimal (3.1.6)
+    bigdecimal (3.1.7)
     concurrent-ruby (1.2.3)
     connection_pool (2.4.1)
     drb (2.2.1)
-    et-orbi (1.2.7)
+    et-orbi (1.2.11)
       tzinfo
     faraday (2.9.0)
       faraday-net_http (>= 2.0, < 3.2)
@@ -84,7 +84,7 @@ GEM
       google-protobuf (~> 3.18)
       googleapis-common-protos-types (~> 1.7)
       grpc (~> 1.41)
-    googleapis-common-protos-types (1.13.0)
+    googleapis-common-protos-types (1.14.0)
       google-protobuf (~> 3.18)
     googleauth (1.11.0)
       faraday (>= 1.0, < 3.a)
@@ -104,28 +104,31 @@ GEM
       concurrent-ruby (~> 1.0)
     jwt (2.8.1)
       base64
-    minitest (5.22.2)
+    minitest (5.22.3)
     multi_json (1.15.0)
     mustermann (3.0.0)
       ruby2_keywords (~> 0.0.1)
     mutex_m (0.2.0)
     net-http (0.4.1)
       uri
-    nio4r (2.7.0)
+    nio4r (2.7.1)
     os (1.1.4)
     public_suffix (5.0.4)
     puma (6.4.2)
       nio4r (~> 2.0)
     raabro (1.4.0)
-    rack (3.0.9.1)
+    rack (3.0.10)
     rack-protection (4.0.0)
       base64 (>= 0.1.0)
       rack (>= 3.0.0, < 4)
     rack-session (2.0.0)
       rack (>= 3.0.0)
+    rackup (2.1.0)
+      rack (>= 3)
+      webrick (~> 1.8)
     redis (5.1.0)
       redis-client (>= 0.17.0)
-    redis-client (0.21.0)
+    redis-client (0.21.1)
       connection_pool
     retriable (3.1.2)
     ruby2_keywords (0.0.5)
@@ -144,6 +147,7 @@ GEM
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
     uri (0.13.0)
+    webrick (1.8.1)
 
 PLATFORMS
   ruby
@@ -152,6 +156,7 @@ DEPENDENCIES
   cloudtasker!
   foreman
   puma (~> 6.4.2)
+  rackup (~> 2.1)
   sinatra
 
 RUBY VERSION
