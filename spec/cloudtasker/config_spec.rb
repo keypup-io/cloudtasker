@@ -15,7 +15,7 @@ RSpec.describe Cloudtasker::Config do
   let(:on_error) { ->(e, w) {} }
   let(:on_dead) { ->(e, w) {} }
   let(:oidc) { nil }
-  let(:ssl_verify_mode) { false }
+  let(:local_server_ssl_verify) { false }
 
   let(:rails_hosts) { [] }
   let(:rails_secret) { 'rails_secret' }
@@ -47,7 +47,7 @@ RSpec.describe Cloudtasker::Config do
       c.on_error = on_error
       c.on_dead = on_dead
       c.oidc = oidc
-      c.ssl_verify_mode = ssl_verify_mode
+      c.local_server_ssl_verify = local_server_ssl_verify
     end
 
     Cloudtasker.config
@@ -323,17 +323,17 @@ RSpec.describe Cloudtasker::Config do
     end
   end
 
-  describe '#ssl_verify_mode' do
-    subject { config.ssl_verify_mode }
+  describe '#local_server_ssl_verify' do
+    subject { config.local_server_ssl_verify }
 
     context 'with value specified via config' do
-      it { is_expected.to eq(ssl_verify_mode) }
+      it { is_expected.to eq(local_server_ssl_verify) }
     end
 
     context 'with no value' do
-      let(:ssl_verify_mode) { nil }
+      let(:local_server_ssl_verify) { nil }
 
-      it { is_expected.to eq(described_class::DEFAULT_SSL_VERIFY_MODE) }
+      it { is_expected.to eq(described_class::DEFAULT_LOCAL_SERVER_SSL_VERIFY_MODE) }
     end
   end
 

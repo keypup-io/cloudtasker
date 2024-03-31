@@ -424,6 +424,16 @@ Cloudtasker.configure do |config|
   # Default: nil 
   #
   # config.oidc = { service_account_email: 'example@gserviceaccount.com' }
+
+  #
+  # Enable/disable the verification of SSL certificates on the local processing server when
+  # sending tasks to the processor.
+  #
+  # Set to false to disable SSL verification (OpenSSL::SSL::VERIFY_NONE).
+  #
+  # Default: true
+  #
+  # config.local_server_ssl_verify = true
 end
 ```
 
