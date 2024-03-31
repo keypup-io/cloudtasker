@@ -8,7 +8,7 @@ module Cloudtasker
     attr_accessor :redis, :store_payloads_in_redis, :gcp_queue_prefix
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
                 :processor_path, :logger, :mode, :max_retries,
-                :dispatch_deadline, :on_error, :on_dead, :oidc
+                :dispatch_deadline, :on_error, :on_dead, :oidc, :ssl_verify_mode
 
     # Max Cloud Task size in bytes
     MAX_TASK_SIZE = 100 * 1024 # 100 KB
@@ -46,6 +46,7 @@ module Cloudtasker
     # Default values
     DEFAULT_LOCATION_ID = 'us-east1'
     DEFAULT_PROCESSOR_PATH = '/cloudtasker/run'
+    DEFAULT_SSL_VERIFY_MODE = true
 
     # Default queue values
     DEFAULT_JOB_QUEUE = 'default'
@@ -292,6 +293,15 @@ module Cloudtasker
       @server_middleware ||= Middleware::Chain.new
       yield @server_middleware if block_given?
       @server_middleware
+    end
+
+    #
+    # Return the ssl verify mode for the Cloudtasker local server.
+    #
+    # @return [Boolean] The ssl verify mode for the Cloudtasker local server.
+    #
+    def ssl_verify_mode
+      @ssl_verify_mode.nil? ? DEFAULT_SSL_VERIFY_MODE : @ssl_verify_mode
     end
   end
 end
