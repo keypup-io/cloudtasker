@@ -36,13 +36,12 @@ module Cloudtasker
     private
 
     #
-    # Parse the request body and return the actual job
-    # payload.
+    # Parse the request body and return the JSON payload
     #
-    # @return [Hash] The job payload
+    # @return [String] The JSON payload
     #
-    def payload
-      @payload ||= begin
+    def json_payload
+      @json_payload ||= begin
         # Get raw body
         content = request.body.read
 
@@ -51,9 +50,21 @@ module Cloudtasker
           content = Base64.decode64(content)
         end
 
-        # Return content parsed as JSON and add job retries count
-        JSON.parse(content).merge(job_retries: job_retries, task_id: task_id)
+        # Return the content
+        content
       end
+    end
+
+
+    #
+    # Parse the request body and return the actual job
+    # payload.
+    #
+    # @return [Hash] The job payload
+    #
+    def payload
+      # Return content parsed as JSON and add job retries count
+      @payload ||= JSON.parse(json_payload).merge(job_retries: job_retries, task_id: task_id)
     end
 
     #
@@ -80,13 +91,18 @@ module Cloudtasker
     # See Cloudtasker::Authenticator#verification_token
     #
     def authenticate!
-      # Get authorization token from custom header (since v0.14.0) or fallback to
-      # former authorization header (jobs enqueued by v0.13 and below)
-      auth_token = request.headers[Cloudtasker::Config::CT_AUTHORIZATION_HEADER].to_s.split.last ||
-                   request.headers[Cloudtasker::Config::OIDC_AUTHORIZATION_HEADER].to_s.split.last
+      if (signature = request.headers[Cloudtasker::Config::CT_SIGNATURE_HEADER])
+        # Verify content signature
+        Authenticator.verify_signature!(signature, json_payload)
+      else
+        # Get authorization token from custom header (since v0.14.0) or fallback to
+        # former authorization header (jobs enqueued by v0.13 and below)
+        bearer_token = request.headers[Cloudtasker::Config::CT_AUTHORIZATION_HEADER].to_s.split.last ||
+                    request.headers[Cloudtasker::Config::OIDC_AUTHORIZATION_HEADER].to_s.split.last
 
-      # Verify the token
-      Authenticator.verify!(auth_token)
+        # Verify the token
+        Authenticator.verify!(bearer_token)
+      end
     end
   end
 end

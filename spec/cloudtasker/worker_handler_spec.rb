@@ -214,12 +214,9 @@ RSpec.describe Cloudtasker::WorkerHandler do
     subject { task.task_payload }
 
     let(:oidc_token) { nil }
-    let(:bearer_token) { 'Bearer 12345' }
+    let(:signature) { Cloudtasker::Authenticator.sign_payload(task.worker_payload.to_json) }
 
-    before do
-      allow(config).to receive(:oidc).and_return(oidc_token)
-      allow(Cloudtasker::Authenticator).to receive(:bearer_token).and_return(bearer_token)
-    end
+    before { allow(config).to receive(:oidc).and_return(oidc_token) }
 
     context 'with HTTP authentication' do
       let(:expected_payload) do
@@ -229,7 +226,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
             url: config.processor_url,
             headers: {
               'Content-Type' => 'application/json',
-              Cloudtasker::Config::CT_AUTHORIZATION_HEADER => bearer_token
+              Cloudtasker::Config::CT_SIGNATURE_HEADER => signature
             },
             body: task.worker_payload.to_json
           },
@@ -250,7 +247,7 @@ RSpec.describe Cloudtasker::WorkerHandler do
             url: config.processor_url,
             headers: {
               'Content-Type' => 'application/json',
-              Cloudtasker::Config::CT_AUTHORIZATION_HEADER => bearer_token
+              Cloudtasker::Config::CT_SIGNATURE_HEADER => signature
             },
             oidc_token: oidc_token,
             body: task.worker_payload.to_json

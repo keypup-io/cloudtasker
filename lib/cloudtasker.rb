@@ -4,6 +4,7 @@ require 'active_support/core_ext/object/blank'
 require 'active_support/core_ext/object/try'
 require 'active_support/core_ext/string/inflections'
 require 'active_support/core_ext/string/filters'
+require 'active_support/security_utils'
 
 require 'cloudtasker/version'
 require 'cloudtasker/config'

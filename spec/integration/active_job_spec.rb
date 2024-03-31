@@ -5,7 +5,6 @@ require 'spec_helper'
 if defined?(Rails)
   RSpec.describe 'ActiveJob integration' do
     let(:example_job_arguments) { [1, 'two', { three: 3 }] }
-    let(:example_verification_token) { 'VERIFICATION_TOKEN' }
 
     let(:example_job_class) do
       Class.new(ActiveJob::Base) do
@@ -16,20 +15,11 @@ if defined?(Rails)
     end
 
     let(:expected_cloud_task_http_request_data) do
-      a_hash_including(
-        body: expected_cloud_task_body,
-        headers: a_hash_including(
-          Cloudtasker::Config::CT_AUTHORIZATION_HEADER => "Bearer #{example_verification_token}"
-        )
-      )
+      a_hash_including(body: expected_cloud_task_body)
     end
 
     let(:expected_cloud_task_create_argument) do
       a_hash_including(http_request: expected_cloud_task_http_request_data, queue: 'default')
-    end
-
-    before do
-      allow(Cloudtasker::Authenticator).to receive(:verification_token).and_return(example_verification_token)
     end
 
     describe 'Calling .perform_later on an ActiveJob class' do

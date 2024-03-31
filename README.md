@@ -1114,7 +1114,7 @@ To size the concurrency of your queues you should therefore take the most limiti
 After checking out the repo, run `bin/setup` to install dependencies.
 
 For tests, run `rake` to run the tests. Note that Rails is not in context by default, which means Rails-specific test will not run.
-For tests including Rails-specific tests, run `bundle exec appraisal rails-7.0 rake`
+For tests including Rails-specific tests, run `bundle exec appraisal rails_7.0 rake`
 For all context-specific tests (incl. Rails), run the [appraisal tests](Appraisals) using `bundle exec appraisal rake`.
 
 You can run `bin/console` for an interactive prompt that will allow you to experiment.

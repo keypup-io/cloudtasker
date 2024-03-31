@@ -151,16 +151,20 @@ module Cloudtasker
     # @return [Hash] The task body
     #
     def task_payload
+      # Generate content
+      worker_payload_json = worker_payload.to_json
+
+      # Build payload
       {
         http_request: {
           http_method: 'POST',
           url: Cloudtasker.config.processor_url,
           headers: {
             Cloudtasker::Config::CONTENT_TYPE_HEADER => 'application/json',
-            Cloudtasker::Config::CT_AUTHORIZATION_HEADER => Authenticator.bearer_token
+            Cloudtasker::Config::CT_SIGNATURE_HEADER => Authenticator.sign_payload(worker_payload_json)
           }.compact,
           oidc_token: Cloudtasker.config.oidc,
-          body: worker_payload.to_json
+          body: worker_payload_json
         }.compact,
         dispatch_deadline: worker.dispatch_deadline.to_i,
         queue: worker.job_queue

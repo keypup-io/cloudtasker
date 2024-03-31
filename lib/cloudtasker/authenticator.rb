@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'openssl'
+
 module Cloudtasker
   # Manage token generation and verification
   module Authenticator
@@ -59,6 +61,30 @@ module Cloudtasker
     #
     def verify!(bearer_token)
       verify(bearer_token) || raise(AuthenticationError)
+    end
+
+    #
+    # Generate a signature for a payload
+    #
+    # @param [String] payload The JSON payload
+    #
+    # @return [String] The HMAC signature
+    #
+    def sign_payload(payload)
+      OpenSSL::HMAC.hexdigest('sha256', config.secret, payload)
+    end
+
+    #
+    # Verify that a signature matches the payload and raise a `Cloudtasker::AuthenticationError`
+    # if the signature is invalid.
+    #
+    # @param [String] signature The tested signature
+    # @param [String] payload The JSON payload
+    #
+    # @return [Boolean] Return true if the signature is valid
+    #
+    def verify_signature!(signature, payload)
+      ActiveSupport::SecurityUtils.secure_compare(signature, sign_payload(payload)) || raise(AuthenticationError)
     end
   end
 end
