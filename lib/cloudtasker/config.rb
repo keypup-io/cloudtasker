@@ -254,7 +254,7 @@ module Cloudtasker
     end
 
     #
-    # Return the Open ID Connect configuration to use in tasks.
+    # Return the Open ID Connect configuration to use for tasks.
     #
     # @return [Hash] The OIDC configuration
     #

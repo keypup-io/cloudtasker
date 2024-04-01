@@ -410,26 +410,28 @@ Cloudtasker.configure do |config|
   # config.on_dead = ->(error, worker) { Rollbar.error(error) }
 
   #
-  # Specify the oidc hash.
+  # Specify the Open ID Connect (OIDC) details to connect to a protected GCP service, such
+  # as a private Cloud Run application.
   #
-  # Contains information needed for generating an OpenID Connect token. 
-  # This type of authorization can be used for many scenarios, including calling Cloud Run, 
-  # or endpoints where you intend to validate the token yourself. 
-  # For the oidcs hash, the service_account_email can be found 
-  # under the security details of the cloud run service.
-  # The audience is usually the publicly accessible host for the cloud run service 
-  # (which is the same value configured as the processor_host). If no audience is provided
-  # it will be inferred as the processor_host.
-  # Note: If the oidc token is used for a google cloud run service make sure to include
-  # the iam.serviceAccounts.actAs permission for the service account. 
+  # The configuration supports the following details:
+  # - service_account_email: This is the "act as" user. It can be found under the security details
+  #   of the Cloud Run service.
+  # - audience: The audience is usually the publicly accessible host for the Cloud Run service
+  #   (which is the same value configured as the processor_host). If no audiences are provided
+  #   it will be set to the processor_host.
   #
-  # See https://openid.net/connect for more information on OpenID Connect tokens.
+  # Note: If the OIDC token is used for a Cloud Run service make sure to include the
+  # `iam.serviceAccounts.actAs` permission on the service account.
+  #
+  # See https://cloud.google.com/tasks/docs/creating-http-target-tasks#sa for more information on
+  # setting up service accounts for use with Cloud Tasks.
   #
   # Supported since: v0.14.0
   #
   # Default: nil 
   #
   # config.oidc = { service_account_email: 'example@gserviceaccount.com' }
+  # config.oidc = { service_account_email: 'example@gserviceaccount.com', audience: 'https://api.example.net' }
 
   #
   # Enable/disable the verification of SSL certificates on the local processing server when
