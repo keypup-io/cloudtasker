@@ -31,12 +31,15 @@ A local processing server is also available for development. This local server p
 8. [Logging](#logging)
     1. [Configuring a logger](#configuring-a-logger)
     2. [Logging context](#logging-context)
+    3. [Truncating log arguments](#truncating-log-arguments)
+    4. [Searching logs: Job ID vs Task ID](#searching-logs-job-id-vs-task-id)
 9. [Error Handling](#error-handling)
     1. [HTTP Error codes](#http-error-codes)
     2. [Worker callbacks](#worker-callbacks)
     3. [Global callbacks](#global-callbacks)
     4. [Max retries](#max-retries)
-    5. [Dispatch deadline](#dispatch-deadline)
+    5. [Conditional reenqueues using retry errors](#conditional-reenqueues-using-retry-errors)
+    6. [Dispatch deadline](#dispatch-deadline)
 10. [Testing](#testing)
     1. [Test helper setup](#test-helper-setup)
     2. [In-memory queues](#in-memory-queues)
@@ -690,6 +693,60 @@ end
 
 See the [Cloudtasker::Worker class](lib/cloudtasker/worker.rb) for more information on attributes available to be logged in your `log_context_processor` proc.
 
+### Truncating log arguments
+**Supported since**: `0.14.0`  
+
+By default Cloudtasker does not log job arguments as arguments can contain sensitive data and generate voluminous logs, which may lead to noticeable costs with your log provider (e.g. GCP Logging). Also some providers (e.g. GCP Logging) will automatically truncate log entries that are too big and reduce their searchability.
+
+Job arguments can be logged for all workers by configuring the following log context processor in your Cloudtasker initializer:
+```ruby
+Cloudtasker::WorkerLogger.log_context_processor = ->(worker) { worker.to_h }
+```
+
+In order to reduce the size of logged job arguments, the following `truncate` utility is provided by Cloudtasker: 
+```ruby
+# string_limit: The maximum size for strings. Default is 64. Set to -1 to disable.
+# array_limit: The maximum length for arrays. Default is 10. Set to -1 to disable.
+# max_depth: The maximum recursive depth. Default is 3. Set to -1 to disable.
+Cloudtasker::WorkerLogger.truncate(payload, string_limit: 64, array_limit: 10, max_depth: 3)
+```
+
+You may use it the following way:
+```ruby
+Cloudtasker::WorkerLogger.log_context_processor = lambda do |worker|
+  payload = worker.to_h
+
+  # Using default options
+  payload[:job_args] = Cloudtasker::WorkerLogger.truncate(payload[:job_args])
+
+  # Using custom options
+  # payload[:job_args] = Cloudtasker::WorkerLogger.truncate(payload[:job_args], string_limit: 32, array_limit: 5, max_depth: 2)
+
+  # Return the payload to log
+  payload
+end
+```
+
+To further reduce logging cost, you may also log a reasonably complete version of job arguments at start then log a watered down version for the remaining log entries:
+```ruby
+Cloudtasker::WorkerLogger.log_context_processor = lambda do |worker|
+  payload = worker.to_h
+
+  # Adjust the log payload based on the lifecycle of the job
+  payload[:job_args] = if worker.perform_started_at
+                         # The job start has already been logged. Log the job primitive arguments without depth.
+                         # Arrays and hashes will be masked.
+                         Cloudtasker::WorkerLogger.truncate(payload[:job_args], max_depth: 0)
+                       else
+                         # This is the job start. Log a more complete version of the job args.
+                         Cloudtasker::WorkerLogger.truncate(payload[:job_args])
+                       end
+
+  # Return the payload to log
+  payload
+end
+```
+
 ### Searching logs: Job ID vs Task ID
 **Note**: `task_id` field is available in logs starting with `0.10.0`
 
@@ -829,7 +886,7 @@ class SomeErrorWorker
 end
 ```
 
-### Forced retries/reenqueues using silent exception management
+### Conditional reenqueues using retry errors
 **Supported since**: `0.14.0`  
 
 If your worker is waiting for some precondition to occur and you want to re-enqueue it until the condition has been met, you can raise a `Cloudtasker::RetryWorkerError`. This special error will fail your job **without logging an error** while still increasing the number of retries.
