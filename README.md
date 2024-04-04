@@ -426,7 +426,7 @@ Cloudtasker.configure do |config|
   # See https://cloud.google.com/tasks/docs/creating-http-target-tasks#sa for more information on
   # setting up service accounts for use with Cloud Tasks.
   #
-  # Supported since: v0.14.0
+  # Supported since: v0.14.0 (upcoming)
   #
   # Default: nil 
   #
@@ -696,7 +696,7 @@ end
 See the [Cloudtasker::Worker class](lib/cloudtasker/worker.rb) for more information on attributes available to be logged in your `log_context_processor` proc.
 
 ### Truncating log arguments
-**Supported since**: `0.14.0`  
+**Supported since**: `v0.14.0 (upcoming)`  
 
 By default Cloudtasker does not log job arguments as arguments can contain sensitive data and generate voluminous logs, which may lead to noticeable costs with your log provider (e.g. GCP Logging). Also some providers (e.g. GCP Logging) will automatically truncate log entries that are too big and reduce their searchability.
 
@@ -832,7 +832,7 @@ By default jobs are retried 25 times - using an exponential backoff - before bei
 
 Note that the number of retries set on your Cloud Task queue should be many times higher than the number of retries configured in Cloudtasker because Cloud Task also includes failures to connect to your application. Ideally set the number of retries to `unlimited` in Cloud Tasks.
 
-**Note**: Versions prior to `v0.14.0` use the `X-CloudTasks-TaskRetryCount` header for retries instead of the `X-CloudTasks-TaskExecutionCount` header to detect the number of retries, because there a previous bug on the GCP side which made the `X-CloudTasks-TaskExecutionCount` stay at zero instead of increasing on successive executions. Versions prior to `v0.14.0` count any failure as failure, including failures due to the backend being unavailable (`HTTP 503`). Versions `v0.14.0` and later only count application failure (`HTTP 4xx`) as failure for retry purpose.
+**Note**: Versions prior to `v0.14.0 (upcoming)` use the `X-CloudTasks-TaskRetryCount` header for retries instead of the `X-CloudTasks-TaskExecutionCount` header to detect the number of retries, because there a previous bug on the GCP side which made the `X-CloudTasks-TaskExecutionCount` stay at zero instead of increasing on successive executions. Versions prior to `v0.14.0 (upcoming)` count any failure as failure, including failures due to the backend being unavailable (`HTTP 503`). Versions `v0.14.0 (upcoming)` and later only count application failure (`HTTP 4xx`) as failure for retry purpose.
 
 E.g. Set max number of retries globally via the cloudtasker initializer.
 ```ruby
@@ -889,7 +889,7 @@ end
 ```
 
 ### Conditional reenqueues using retry errors
-**Supported since**: `0.14.0`  
+**Supported since**: `v0.14.0 (upcoming)`  
 
 If your worker is waiting for some precondition to occur and you want to re-enqueue it until the condition has been met, you can raise a `Cloudtasker::RetryWorkerError`. This special error will fail your job **without logging an error** while still increasing the number of retries.
 
@@ -910,7 +910,7 @@ class MyWorker
     raise Cloudtasker::RetryWorkerError if project.status == 'discovering'
 
     # The previous approach was to use `reenqueue`. This works but since it
-    # does not increase the number of retries, you may ended with forever running
+    # does not increase the number of retries, you may end up with forever running
     # jobs
     # return reenqueue(10) if project.status == 'discovering'
 

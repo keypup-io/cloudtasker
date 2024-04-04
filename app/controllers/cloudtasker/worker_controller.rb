@@ -94,7 +94,7 @@ module Cloudtasker
         # Verify content signature
         Authenticator.verify_signature!(signature, json_payload)
       else
-        # Get authorization token from custom header (since v0.14.0) or fallback to
+        # Get authorization token from custom header (since v0.14.0 (upcoming)) or fallback to
         # former authorization header (jobs enqueued by v0.13 and below)
         bearer_token = request.headers[Cloudtasker::Config::CT_AUTHORIZATION_HEADER].to_s.split.last ||
                        request.headers[Cloudtasker::Config::OIDC_AUTHORIZATION_HEADER].to_s.split.last

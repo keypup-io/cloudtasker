@@ -1,6 +1,6 @@
 # Cloudtasker Storable Jobs
 
-**Supported since**: `0.14.0`  
+**Supported since**: `v0.14.0 (upcoming)`  
 **Note**: this extension requires redis
 
 The Cloudtasker storage extension allows you to park jobs in a specific garage lane and enqueue (pull) them when specific conditions have been met.

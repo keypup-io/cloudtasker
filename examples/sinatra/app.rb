@@ -27,7 +27,7 @@ post '/cloudtasker/run' do
     # Verify content signature
     Cloudtasker::Authenticator.verify_signature!(signature, json_payload)
   else
-    # Get authorization token from custom header (since v0.14.0) or fallback to
+    # Get authorization token from custom header (since v0.14.0 (upcoming)) or fallback to
     # former authorization header (jobs enqueued by v0.13 and below)
     auth_token = request.env['HTTP_X_CLOUDTASKER_AUTHORIZATION'].to_s.split.last ||
                  request.env['HTTP_AUTHORIZATION'].to_s.split.last
