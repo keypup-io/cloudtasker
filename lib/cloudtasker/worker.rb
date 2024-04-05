@@ -224,16 +224,16 @@ module Cloudtasker
       resp = execute_middleware_chain
 
       # Log job completion and return result
-      logger.info("Job done after #{job_duration}s") { { duration: job_duration } }
+      logger.info("Job done after #{job_duration}s") { { duration: "#{job_duration}s" } }
       resp
     rescue DeadWorkerError => e
-      logger.info("Job dead after #{job_duration}s and #{job_retries} retries") { { duration: job_duration } }
+      logger.info("Job dead after #{job_duration}s and #{job_retries} retries") { { duration: "#{job_duration}s" } }
       raise(e)
     rescue RetryWorkerError => e
-      logger.info("Job done after #{job_duration}s (retry requested)") { { duration: job_duration } }
+      logger.info("Job done after #{job_duration}s (retry requested)") { { duration: "#{job_duration}s" } }
       raise(e)
     rescue StandardError => e
-      logger.info("Job failed after #{job_duration}s") { { duration: job_duration } }
+      logger.info("Job failed after #{job_duration}s") { { duration: "#{job_duration}s" } }
       raise(e)
     end
 
@@ -396,7 +396,7 @@ module Cloudtasker
     def job_duration
       return 0.0 unless perform_ended_at && perform_started_at
 
-      (perform_ended_at - perform_started_at).ceil(3)
+      @job_duration ||= (perform_ended_at - perform_started_at).ceil(3)
     end
 
     #
