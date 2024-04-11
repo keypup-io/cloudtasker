@@ -245,7 +245,7 @@ module Cloudtasker
       # @return [EtOrbi::EoTime] The time the schedule job should run next.
       #
       def next_time(*args)
-        cron_schedule.next_time(*args)
+        cron_schedule&.next_time(*args)
       end
 
       #

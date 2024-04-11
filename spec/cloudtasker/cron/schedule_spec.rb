@@ -309,7 +309,14 @@ RSpec.describe Cloudtasker::Cron::Schedule do
 
     let(:now) { Time.now }
 
-    it { is_expected.to eq(schedule.cron_schedule.next_time(now)) }
+    context 'with cron_schedule' do
+      it { is_expected.to eq(schedule.cron_schedule.next_time(now)) }
+    end
+
+    context 'with nil cron_schedule' do
+      before { allow(schedule).to receive(:cron_schedule).and_return(nil) }
+      it { is_expected.to be_nil }
+    end
   end
 
   describe '#assign_attributes' do
