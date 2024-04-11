@@ -223,13 +223,6 @@ RSpec.describe Cloudtasker::Cron::Job do
       it { is_expected.to be_falsey }
     end
 
-    context 'with no next_time' do
-      before { allow(job).to receive(:next_time).and_return(nil) }
-
-      before { expect(next_worker).not_to receive(:schedule) }
-      it { is_expected.to be_falsey }
-    end
-
     context 'with cron_schedule' do
       before { expect(next_worker).to receive(:schedule).with(time_at: job.next_time).and_return(resp) }
       after { expect(next_worker.job_meta.get(job.key(:time_at))).to eq(job.next_time.iso8601) }

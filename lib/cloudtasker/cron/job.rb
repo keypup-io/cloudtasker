@@ -168,7 +168,7 @@ module Cloudtasker
       # not lead to a new task getting scheduled).
       #
       def schedule!
-        return false unless cron_schedule && next_time
+        return false unless cron_schedule
 
         # Configure next cron worker
         next_worker = worker.new_instance.tap { |e| e.job_meta.set(key(:time_at), next_time.iso8601) }

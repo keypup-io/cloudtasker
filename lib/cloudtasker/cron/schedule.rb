@@ -225,7 +225,7 @@ module Cloudtasker
       # @return [Fugit::Cron] The cron schedule.
       #
       def cron_schedule
-        @cron_schedule ||= Fugit::Cron.parse(cron)
+        @cron_schedule ||= Fugit::Cron.do_parse(cron)
       end
 
       #
@@ -245,7 +245,7 @@ module Cloudtasker
       # @return [EtOrbi::EoTime] The time the schedule job should run next.
       #
       def next_time(*args)
-        cron_schedule&.next_time(*args)
+        cron_schedule.next_time(*args)
       end
 
       #

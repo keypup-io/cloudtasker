@@ -299,9 +299,17 @@ RSpec.describe Cloudtasker::Cron::Schedule do
   end
 
   describe '#cron_schedule' do
-    subject { schedule.cron_schedule }
+    subject(:cron_schedule) { schedule.cron_schedule }
 
-    it { is_expected.to eq(Fugit::Cron.parse(cron)) }
+    context 'with valid cron definition' do
+      it { is_expected.to eq(Fugit::Cron.parse(cron)) }
+    end
+
+    context 'with invalid cron definition' do
+      let(:cron) { 'random string' }
+
+      it { expect { cron_schedule }.to raise_error(ArgumentError) }
+    end
   end
 
   describe '#next_time' do
@@ -309,14 +317,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
 
     let(:now) { Time.now }
 
-    context 'with cron_schedule' do
-      it { is_expected.to eq(schedule.cron_schedule.next_time(now)) }
-    end
-
-    context 'with nil cron_schedule' do
-      before { allow(schedule).to receive(:cron_schedule).and_return(nil) }
-      it { is_expected.to be_nil }
-    end
+    it { is_expected.to eq(schedule.cron_schedule.next_time(now)) }
   end
 
   describe '#assign_attributes' do
