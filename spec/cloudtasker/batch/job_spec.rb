@@ -157,13 +157,13 @@ RSpec.describe Cloudtasker::Batch::Job do
     it { is_expected.to eq(batch.key("#{described_class::STATES_NAMESPACE}/#{batch.batch_id}")) }
   end
 
-  describe '#jobs' do
-    subject { batch.jobs }
+  describe '#pending_jobs' do
+    subject { batch.pending_jobs }
 
     context 'with jobs added' do
-      subject { batch.jobs[0] }
+      subject { batch.pending_jobs[0] }
 
-      let(:meta_batch_id) { batch.jobs[0].job_meta.get(batch.key(:parent_id)) }
+      let(:meta_batch_id) { batch.pending_jobs[0].job_meta.get(batch.key(:parent_id)) }
 
       before { batch.add(child_worker.class, *child_worker.job_args) }
       it { is_expected.to be_a(child_worker.class) }
@@ -194,9 +194,9 @@ RSpec.describe Cloudtasker::Batch::Job do
   end
 
   describe '#add' do
-    subject { batch.jobs[0] }
+    subject { batch.pending_jobs[0] }
 
-    let(:meta_batch_id) { batch.jobs[0].job_meta.get(batch.key(:parent_id)) }
+    let(:meta_batch_id) { batch.pending_jobs[0].job_meta.get(batch.key(:parent_id)) }
 
     before { batch.add(child_worker.class, *child_worker.job_args) }
     it { is_expected.to be_a(child_worker.class) }
@@ -205,10 +205,10 @@ RSpec.describe Cloudtasker::Batch::Job do
   end
 
   describe '#add_to_queue' do
-    subject { batch.jobs[0] }
+    subject { batch.pending_jobs[0] }
 
     let(:queue) { 'low' }
-    let(:meta_batch_id) { batch.jobs[0].job_meta.get(batch.key(:parent_id)) }
+    let(:meta_batch_id) { batch.pending_jobs[0].job_meta.get(batch.key(:parent_id)) }
 
     before { batch.add_to_queue(queue, child_worker.class, *child_worker.job_args) }
     it { is_expected.to be_a(child_worker.class) }
@@ -247,10 +247,55 @@ RSpec.describe Cloudtasker::Batch::Job do
     it { expect(batch_content).to eq(worker.to_h) }
   end
 
-  describe '#setup' do
-    subject(:setup) { batch.setup }
+  describe '#schedule_pending_jobs' do
+    subject(:schedule_pending_jobs) { batch.schedule_pending_jobs }
 
     let(:batch_state) { redis.hgetall(batch.batch_state_gid) }
+
+    context 'with pending jobs' do
+      before do
+        batch.pending_jobs.push(child_worker)
+        expect(child_worker).to receive(:schedule)
+        schedule_pending_jobs
+      end
+      after do
+        expect(batch_state).to eq(child_worker.job_id => 'scheduled')
+        expect(batch.pending_jobs).to be_empty
+        expect(batch.enqueued_jobs).to eq([child_worker])
+      end
+
+      it { is_expected.to eq([child_worker]) }
+    end
+
+    context 'with job having completed even before being flagged as scheduled' do
+      before do
+        batch.pending_jobs.push(child_worker)
+        expect(child_worker).to receive(:schedule)
+        redis.hset(batch.batch_state_gid, child_worker.job_id, 'completed')
+        schedule_pending_jobs
+      end
+      after do
+        expect(batch_state).to eq(child_worker.job_id => 'completed')
+        expect(batch.pending_jobs).to be_empty
+        expect(batch.enqueued_jobs).to eq([child_worker])
+      end
+
+      it { is_expected.to eq([child_worker]) }
+    end
+
+    context 'with no pending_jobs' do
+      after do
+        expect(batch_state).to be_empty
+        expect(batch.pending_jobs).to be_empty
+        expect(batch.enqueued_jobs).to be_empty
+      end
+
+      it { is_expected.to be_empty }
+    end
+  end
+
+  describe '#setup' do
+    subject(:setup) { batch.setup }
 
     context 'with no jobs' do
       before do
@@ -261,41 +306,13 @@ RSpec.describe Cloudtasker::Batch::Job do
       it { is_expected.to be_truthy }
     end
 
-    context 'with jobs on the batch' do
+    context 'with pending jobs in the batch' do
       before do
-        batch.jobs.push(child_worker)
+        batch.pending_jobs.push(child_worker)
 
         expect(batch).to receive(:save)
-        expect(child_worker).to receive(:schedule).and_return(true)
+        expect(batch).to receive(:schedule_pending_jobs).and_return(true)
       end
-      after { expect(batch_state).to eq(batch.jobs[0].job_id => 'scheduled') }
-
-      it { is_expected.to be_truthy }
-    end
-
-    context 'with exception while scheduling jobs' do
-      let(:error) { StandardError.new }
-
-      before do
-        batch.jobs.push(child_worker)
-
-        expect(batch).to receive(:save)
-        expect(child_worker).to receive(:schedule).and_raise(error)
-      end
-      after { expect(batch_state).to be_empty }
-
-      it { expect { setup }.to raise_error(error) }
-    end
-
-    context 'with job having completed even before being flagged as scheduled' do
-      before do
-        batch.jobs.push(child_worker)
-
-        expect(batch).to receive(:save)
-        expect(child_worker).to receive(:schedule).and_return(true)
-        redis.hset(batch.batch_state_gid, batch.jobs[0].job_id, 'completed')
-      end
-      after { expect(batch_state).to eq(batch.jobs[0].job_id => 'completed') }
 
       it { is_expected.to be_truthy }
     end
@@ -348,14 +365,51 @@ RSpec.describe Cloudtasker::Batch::Job do
     let(:callback) { :some_callback }
     let(:args) { [1, 'arg'] }
     let(:resp) { 'some-response' }
+    let(:parent_batch) { instance_double(described_class.to_s) }
+
+    before { allow(batch).to receive(:parent_batch).and_return(parent_batch) }
 
     context 'with successful callback' do
-      before { allow(worker).to receive(callback).with(*args).and_return(resp) }
+      before do
+        allow(batch).to receive(:parent_batch).and_return(parent_batch)
+        expect(worker).to receive(callback).with(*args).and_return(resp)
+        expect(batch).to receive(:schedule_pending_jobs)
+        expect(parent_batch).to receive(:schedule_pending_jobs)
+      end
+
+      it { is_expected.to eq(resp) }
+    end
+
+    context 'with no parent_batch' do
+      let(:parent_batch) { nil }
+
+      before do
+        allow(batch).to receive(:parent_batch).and_return(parent_batch)
+        expect(worker).to receive(callback).with(*args).and_return(resp)
+      end
+
+      it { is_expected.to eq(resp) }
+    end
+
+    context 'with on_batch_complete callback' do
+      let(:callback) { :on_batch_complete }
+
+      before do
+        expect(worker).to receive(callback).with(*args).and_return(resp)
+        expect(batch).not_to receive(:schedule_pending_jobs)
+        expect(parent_batch).to receive(:schedule_pending_jobs)
+      end
+
       it { is_expected.to eq(resp) }
     end
 
     context 'with errored callback' do
-      before { allow(worker).to receive(callback).and_raise(ArgumentError) }
+      before do
+        allow(worker).to receive(callback).and_raise(ArgumentError)
+        expect(batch).not_to receive(:schedule_pending_jobs)
+        expect(parent_batch).not_to receive(:schedule_pending_jobs)
+      end
+
       it { expect { run_worker_callback }.to raise_error(ArgumentError) }
     end
 
@@ -380,10 +434,12 @@ RSpec.describe Cloudtasker::Batch::Job do
     let(:status) { :completed }
     let(:parent_batch) { instance_double(described_class.to_s) }
 
-    before { allow(batch).to receive(:parent_batch).and_return(parent_batch) }
-    before { allow(batch).to receive(:cleanup).and_return(true) }
-    before { allow(batch).to receive(:run_worker_callback).with(:on_batch_complete) }
-    before { parent_batch && allow(parent_batch).to(receive(:on_child_complete).with(batch, status)) }
+    before do
+      allow(batch).to receive(:parent_batch).and_return(parent_batch)
+      allow(batch).to receive(:cleanup).and_return(true)
+      allow(batch).to receive(:run_worker_callback).with(:on_batch_complete)
+      parent_batch && allow(parent_batch).to(receive(:on_child_complete).with(batch, status))
+    end
 
     context 'with no parent batch' do
       let(:parent_batch) { nil }
@@ -416,12 +472,14 @@ RSpec.describe Cloudtasker::Batch::Job do
     let(:status) { :completed }
     let(:complete) { true }
 
-    before { allow(batch).to receive(:complete?).and_return(complete) }
-    before { allow(batch).to receive(:on_complete).and_return(true) }
-    before { allow(batch).to receive(:update_state).with(child_batch.batch_id, status) }
-    before { allow(batch).to receive(:run_worker_callback) }
-    before { batch.jobs.push(child_worker) }
-    before { batch.save }
+    before do
+      allow(batch).to receive(:complete?).and_return(complete)
+      allow(batch).to receive(:on_complete).and_return(true)
+      allow(batch).to receive(:update_state).with(child_batch.batch_id, status)
+      allow(batch).to receive(:run_worker_callback)
+      batch.pending_jobs.push(child_worker)
+      batch.save
+    end
 
     context 'with batch complete' do
       after { expect(batch).to have_received(:update_state) }
@@ -516,17 +574,17 @@ RSpec.describe Cloudtasker::Batch::Job do
       allow_any_instance_of(Cloudtasker::Worker).to receive(:schedule)
 
       # Create un-related batch
-      side_batch.jobs.push(worker.new_instance)
+      side_batch.pending_jobs.push(worker.new_instance)
       side_batch.setup
 
       # Create child batch
-      child_batch.jobs.push(worker.new_instance)
-      child_batch.jobs.push(worker.new_instance)
-      child_batch.jobs.push(worker.new_instance)
+      child_batch.pending_jobs.push(worker.new_instance)
+      child_batch.pending_jobs.push(worker.new_instance)
+      child_batch.pending_jobs.push(worker.new_instance)
       child_batch.setup
 
       # Attach child batch to main batch
-      batch.jobs.push(child_worker)
+      batch.pending_jobs.push(child_worker)
       batch.setup
 
       expect(batch).to receive(:migrate_batch_state_to_redis_hash).and_call_original
@@ -546,17 +604,17 @@ RSpec.describe Cloudtasker::Batch::Job do
       allow_any_instance_of(Cloudtasker::Worker).to receive(:schedule)
 
       # Add child jobs
-      child_batch.jobs.push(worker.new_instance)
-      child_batch.jobs.push(worker.new_instance)
-      child_batch.jobs.push(worker.new_instance)
+      child_batch.pending_jobs.push(worker.new_instance)
+      child_batch.pending_jobs.push(worker.new_instance)
+      child_batch.pending_jobs.push(worker.new_instance)
       child_batch.setup
 
       # Update progress status on children
-      child_batch.update_state(child_batch.jobs[0].job_id, 'completed')
-      child_batch.update_state(child_batch.jobs[1].job_id, 'processing')
+      child_batch.update_state(child_batch.enqueued_jobs[0].job_id, 'completed')
+      child_batch.update_state(child_batch.enqueued_jobs[1].job_id, 'processing')
 
       # Expand batch with new child job
-      batch.jobs.push(child_worker)
+      batch.pending_jobs.push(child_worker)
       batch.setup
     end
 
@@ -602,13 +660,6 @@ RSpec.describe Cloudtasker::Batch::Job do
       it { is_expected.to be_truthy }
     end
 
-    context 'with child jobs' do
-      before { batch.jobs.push(worker.new_instance) }
-      after { expect(batch).not_to have_received(:on_complete) }
-      after { expect(parent_batch).not_to have_received(:on_batch_node_complete) }
-      it { is_expected.to be_truthy }
-    end
-
     context 'with batch incomplete' do
       after { expect(batch).not_to have_received(:on_complete) }
       after { expect(parent_batch).to have_received(:on_batch_node_complete) }
@@ -637,52 +688,25 @@ RSpec.describe Cloudtasker::Batch::Job do
     let(:batch_jobs) { [1, 2] }
     let(:parent_batch_jobs) { [] }
 
-    let(:parent_batch) { instance_double(described_class, jobs: parent_batch_jobs) }
+    let(:parent_batch) { instance_double(described_class, pending_jobs: parent_batch_jobs) }
 
     before do
       allow(batch).to receive(:parent_batch).and_return(parent_batch)
       allow(batch).to receive(:jobs).and_return(batch_jobs)
     end
 
-    context 'with parent_batch and child jobs added' do
+    context 'with parent_batch' do
       before do
         expect(parent_batch).to receive(:update_state).with(batch.batch_id, :processing)
         expect(batch).to receive(:setup)
+        expect(parent_batch).to receive(:schedule_pending_jobs)
         expect(batch).to receive(:complete).with(:completed)
       end
 
       it { expect { |b| batch.execute(&b) }.to yield_control }
     end
 
-    context 'with parent_batch and parent jobs added' do
-      let(:batch_jobs) { [] }
-      let(:parent_batch_jobs) { [1, 2] }
-
-      before do
-        expect(parent_batch).to receive(:update_state).with(batch.batch_id, :processing)
-        expect(batch).not_to receive(:setup)
-        expect(parent_batch).to receive(:setup)
-        expect(batch).to receive(:complete).with(:completed)
-      end
-
-      it { expect { |b| batch.execute(&b) }.to yield_control }
-    end
-
-    context 'with parent_batch and child + parent jobs added' do
-      let(:batch_jobs) { [1, 2] }
-      let(:parent_batch_jobs) { [1, 2] }
-
-      before do
-        expect(parent_batch).to receive(:update_state).with(batch.batch_id, :processing)
-        expect(batch).to receive(:setup)
-        expect(parent_batch).to receive(:setup)
-        expect(batch).to receive(:complete).with(:completed)
-      end
-
-      it { expect { |b| batch.execute(&b) }.to yield_control }
-    end
-
-    context 'with no parent batch and child jobs added' do
+    context 'with no parent batch' do
       let(:parent_batch) { nil }
 
       before do

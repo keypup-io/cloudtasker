@@ -183,12 +183,21 @@ module Cloudtasker
       end
 
       #
-      # The list of jobs in the batch
+      # The list of jobs to be enqueued in the batch
       #
       # @return [Array<Cloudtasker::Worker>] The jobs to enqueue at the end of the batch.
       #
-      def jobs
-        @jobs ||= []
+      def pending_jobs
+        @pending_jobs ||= []
+      end
+
+      #
+      # The list of jobs that have been enqueued as part of the batch
+      #
+      # @return [Array<Cloudtasker::Worker>] The jobs enqueued as part of the batch.
+      #
+      def enqueued_jobs
+        @enqueued_jobs ||= []
       end
 
       #
@@ -208,7 +217,7 @@ module Cloudtasker
       # @param [Class] worker_klass The worker class.
       # @param [Array<any>] *args The worker arguments.
       #
-      # @return [Array<Cloudtasker::Worker>] The updated list of jobs.
+      # @return [Array<Cloudtasker::Worker>] The updated list of pending jobs.
       #
       def add(worker_klass, *args)
         add_to_queue(worker.job_queue, worker_klass, *args)
@@ -221,10 +230,10 @@ module Cloudtasker
       # @param [Class] worker_klass The worker class.
       # @param [Array<any>] *args The worker arguments.
       #
-      # @return [Array<Cloudtasker::Worker>] The updated list of jobs.
+      # @return [Array<Cloudtasker::Worker>] The updated list of pending jobs.
       #
       def add_to_queue(queue, worker_klass, *args)
-        jobs << worker_klass.new(
+        pending_jobs << worker_klass.new(
           job_args: args,
           job_meta: { key(:parent_id) => batch_id },
           job_queue: queue
@@ -295,7 +304,14 @@ module Cloudtasker
       # @return [any] The callback return value
       #
       def run_worker_callback(callback, *args)
-        worker.try(callback, *args)
+        worker.try(callback, *args).tap do
+          # Enqueue pending jobs if batch was expanded in callback
+          # A completed batch cannot receive additional jobs
+          schedule_pending_jobs if callback.to_sym != :on_batch_complete
+
+          # Schedule pending jobs on parent if batch was expanded
+          parent_batch&.schedule_pending_jobs
+        end
       rescue StandardError => e
         # There is no point in retrying jobs due to failure callbacks failing
         # Only completion callbacks will trigger a re-run of the job because
@@ -399,16 +415,12 @@ module Cloudtasker
       end
 
       #
-      # Save the batch and enqueue all child workers attached to it.
+      # Schedule the child workers that were added to the batch
       #
-      def setup
-        return true if jobs.empty?
+      def schedule_pending_jobs
+        ret_list = []
 
-        # Save batch
-        save
-
-        # Schedule all child workers
-        jobs.each do |j|
+        while (j = pending_jobs.shift)
           # Schedule the job
           j.schedule
 
@@ -419,14 +431,34 @@ module Cloudtasker
           # while enqueuing children due to a OOM error and since 'scheduled' is a
           # blocking status.
           redis.hsetnx(batch_state_gid, j.job_id, 'scheduled')
+
+          # Flag job as enqueued
+          ret_list << j
+          enqueued_jobs << j
         end
+
+        # Return the list of jobs just enqueued
+        ret_list
+      end
+
+      #
+      # Save the batch and enqueue all child workers attached to it.
+      #
+      def setup
+        return true if pending_jobs.empty?
+
+        # Save batch
+        save
+
+        # Schedule all child workers
+        schedule_pending_jobs
       end
 
       #
       # Post-perform logic. The parent batch is notified if the job is complete.
       #
       def complete(status = :completed)
-        return true if reenqueued? || jobs.any?
+        return true if reenqueued?
 
         # Notify the parent batch that a child is complete
         on_complete(status) if complete?
@@ -445,11 +477,12 @@ module Cloudtasker
         # Perform job
         yield
 
-        # Save batch if child jobs added
-        setup if jobs.any?
+        # Setup batch
+        # Only applicable if the batch has pending_jobs
+        setup
 
-        # Save parent batch if batch expanded
-        parent_batch&.setup if parent_batch&.jobs&.any?
+        # Save parent batch if batch was expanded
+        parent_batch&.schedule_pending_jobs
 
         # Complete batch
         complete(:completed)

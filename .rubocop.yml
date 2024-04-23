@@ -19,6 +19,9 @@ Metrics/AbcSize:
   Exclude:
     - 'spec/support/*'
 
+Metrics/PerceivedComplexity:
+  Max: 20
+
 Layout/LineLength:
   Max: 120
 

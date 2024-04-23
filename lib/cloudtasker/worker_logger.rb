@@ -9,7 +9,7 @@ module Cloudtasker
     class << self
       attr_accessor :log_context_processor
 
-      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
       #
       # Truncate an array or hash payload.
       #
@@ -55,7 +55,7 @@ module Cloudtasker
           payload
         end
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
+      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
     end
 
     # Only log the job meta information by default (exclude arguments)
