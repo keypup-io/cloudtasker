@@ -159,6 +159,9 @@ module Cloudtasker
       #
       def valid?
         id && cron_schedule && worker
+      rescue ArgumentError
+        # Rescue invalid cron expressions
+        false
       end
 
       #
