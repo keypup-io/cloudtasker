@@ -346,7 +346,7 @@ module Cloudtasker
     # @return [Integer] The number of retries
     #
     def job_max_retries
-      @job_max_retries ||= (try(:max_retries, *job_args) || self.class.max_retries)
+      @job_max_retries ||= try(:max_retries, *job_args) || self.class.max_retries
     end
 
     #

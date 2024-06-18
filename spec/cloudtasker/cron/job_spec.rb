@@ -161,8 +161,7 @@ RSpec.describe Cloudtasker::Cron::Job do
     let(:current_time) { Time.now - (3600 * 24 * 30) }
 
     before do
-      allow(job).to receive(:cron_schedule).and_return(cron_schedule)
-      allow(job).to receive(:current_time).and_return(current_time)
+      allow(job).to receive_messages(cron_schedule: cron_schedule, current_time: current_time)
     end
 
     it { is_expected.to eq(cron_schedule.next_time(current_time)) }

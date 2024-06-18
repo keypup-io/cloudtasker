@@ -6,6 +6,6 @@ RSpec.describe Cloudtasker::Batch::Middleware do
   describe '.configure' do
     before { described_class.configure }
 
-    it { expect(Cloudtasker.config.server_middleware).to be_exists(Cloudtasker::Batch::Middleware::Server) }
+    it { expect(Cloudtasker.config.server_middleware).to exist(Cloudtasker::Batch::Middleware::Server) }
   end
 end

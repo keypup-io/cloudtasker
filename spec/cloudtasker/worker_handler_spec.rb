@@ -117,7 +117,9 @@ RSpec.describe Cloudtasker::WorkerHandler do
   end
 
   describe '.with_worker_handling' do
-    let(:expect_subject_block) { expect { |b| described_class.with_worker_handling(input_payload, &(block || b)) } }
+    # rubocop:disable RSpec/ExpectInLet
+    let(:expect_subject_block) { expect { |b| described_class.with_worker_handling(input_payload, &block || b) } }
+    # rubocop:enable RSpec/ExpectInLet
     let(:block) { nil }
 
     let(:args_payload_id) { '111' }

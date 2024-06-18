@@ -258,7 +258,7 @@ module Cloudtasker
       #
       def assign_attributes(opts)
         opts
-          .select { |k, _| instance_variables.include?("@#{k}".to_sym) }
+          .select { |k, _| instance_variables.include?(:"@#{k}") }
           .each { |k, v| instance_variable_set("@#{k}", v) }
       end
 

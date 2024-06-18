@@ -130,7 +130,7 @@ RSpec.describe Cloudtasker::WorkerLogger do
   describe '#context_processor' do
     subject { logger.context_processor }
 
-    let(:processor) { ->(worker) { worker.to_h } }
+    let(:processor) { lambda(&:to_h) }
 
     context 'with no context_processor defined' do
       it { is_expected.to eq(described_class::DEFAULT_CONTEXT_PROCESSOR) }

@@ -450,8 +450,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     let(:parent_batch) { instance_double(described_class.to_s) }
 
     before do
-      allow(batch).to receive(:parent_batch).and_return(parent_batch)
-      allow(batch).to receive(:cleanup).and_return(true)
+      allow(batch).to receive_messages(parent_batch: parent_batch, cleanup: true)
       allow(batch).to receive(:run_worker_callback).with(:on_batch_complete)
       parent_batch && allow(parent_batch).to(receive(:on_child_complete).with(batch, status))
     end
@@ -488,8 +487,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     let(:complete) { true }
 
     before do
-      allow(batch).to receive(:complete?).and_return(complete)
-      allow(batch).to receive(:on_complete).and_return(true)
+      allow(batch).to receive_messages(complete?: complete, on_complete: true)
       allow(batch).to receive(:update_state).with(child_batch.batch_id, status)
       allow(batch).to receive(:run_worker_callback)
       batch.pending_jobs.push(child_worker)
@@ -663,8 +661,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     let(:parent_batch) { instance_double(described_class.to_s) }
 
     before do
-      allow(batch).to receive(:complete?).and_return(complete)
-      allow(batch).to receive(:parent_batch).and_return(parent_batch)
+      allow(batch).to receive_messages(complete?: complete, parent_batch: parent_batch)
       allow(batch).to receive(:on_complete).with(status)
 
       allow(parent_batch).to(receive(:on_batch_node_complete).with(batch, status)).and_return(true) if parent_batch
@@ -708,8 +705,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     let(:parent_batch) { instance_double(described_class, pending_jobs: parent_batch_jobs) }
 
     before do
-      allow(batch).to receive(:parent_batch).and_return(parent_batch)
-      allow(batch).to receive(:jobs).and_return(batch_jobs)
+      allow(batch).to receive_messages(parent_batch: parent_batch, jobs: batch_jobs)
     end
 
     context 'with parent_batch' do

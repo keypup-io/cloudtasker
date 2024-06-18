@@ -347,7 +347,7 @@ RSpec.describe Cloudtasker::Config do
     end
 
     it { is_expected.to be_a(Cloudtasker::Middleware::Chain) }
-    it { expect(middlewares).to be_exists(TestMiddleware) }
+    it { expect(middlewares).to exist(TestMiddleware) }
   end
 
   # Error hooks
@@ -379,6 +379,6 @@ RSpec.describe Cloudtasker::Config do
     end
 
     it { is_expected.to be_a(Cloudtasker::Middleware::Chain) }
-    it { expect(middlewares).to be_exists(TestMiddleware) }
+    it { expect(middlewares).to exist(TestMiddleware) }
   end
 end
