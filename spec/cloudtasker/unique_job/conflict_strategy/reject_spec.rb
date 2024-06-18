@@ -12,14 +12,14 @@ RSpec.describe Cloudtasker::UniqueJob::ConflictStrategy::Reject do
   describe '#on_schedule' do
     subject { strategy.on_schedule }
 
-    it { is_expected.to be_truthy }
+    it { is_expected.to be_falsey }
     it { expect { |b| strategy.on_schedule(&b) }.not_to yield_control }
   end
 
   describe '#on_execute' do
     subject { strategy.on_execute }
 
-    it { is_expected.to be_truthy }
+    it { is_expected.to be_falsey }
     it { expect { |b| strategy.on_execute(&b) }.not_to yield_control }
   end
 end

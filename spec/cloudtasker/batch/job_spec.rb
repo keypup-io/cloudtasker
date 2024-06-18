@@ -255,7 +255,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     context 'with pending jobs' do
       before do
         batch.pending_jobs.push(child_worker)
-        expect(child_worker).to receive(:schedule)
+        expect(child_worker).to receive(:schedule).and_return(instance_double(Cloudtasker::CloudTask))
         schedule_pending_jobs
       end
       after do
@@ -270,7 +270,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     context 'with job having completed even before being flagged as scheduled' do
       before do
         batch.pending_jobs.push(child_worker)
-        expect(child_worker).to receive(:schedule)
+        expect(child_worker).to receive(:schedule).and_return(instance_double(Cloudtasker::CloudTask))
         redis.hset(batch.batch_state_gid, child_worker.job_id, 'completed')
         schedule_pending_jobs
       end
@@ -281,6 +281,21 @@ RSpec.describe Cloudtasker::Batch::Job do
       end
 
       it { is_expected.to eq([child_worker]) }
+    end
+
+    context 'with non-scheduled jobs (e.g. unique-evicted jobs)' do
+      before do
+        batch.pending_jobs.push(child_worker)
+        expect(child_worker).to receive(:schedule).and_return(nil)
+        schedule_pending_jobs
+      end
+      after do
+        expect(batch_state).to be_empty
+        expect(batch.pending_jobs).to be_empty
+        expect(batch.enqueued_jobs).to be_empty
+      end
+
+      it { is_expected.to be_empty }
     end
 
     context 'with no pending_jobs' do
@@ -572,6 +587,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     before do
       # Do not enqueue jobs
       allow_any_instance_of(Cloudtasker::Worker).to receive(:schedule)
+        .and_return(instance_double(Cloudtasker::CloudTask))
 
       # Create un-related batch
       side_batch.pending_jobs.push(worker.new_instance)
@@ -602,6 +618,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     before do
       # Stub job enqueuing
       allow_any_instance_of(Cloudtasker::Worker).to receive(:schedule)
+        .and_return(instance_double(Cloudtasker::CloudTask))
 
       # Add child jobs
       child_batch.pending_jobs.push(worker.new_instance)

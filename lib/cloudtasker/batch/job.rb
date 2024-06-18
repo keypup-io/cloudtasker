@@ -422,7 +422,9 @@ module Cloudtasker
 
         while (j = pending_jobs.shift)
           # Schedule the job
-          j.schedule
+          # Skip batch registration if the job was not actually scheduled
+          # E.g. the job was evicted due to uniqueness requirements
+          next unless j.schedule
 
           # Initialize the batch state unless the job has already started (and taken
           # hold of its own status)

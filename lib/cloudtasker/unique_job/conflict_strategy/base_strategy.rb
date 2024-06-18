@@ -20,8 +20,10 @@ module Cloudtasker
         # Handling logic to perform when a conflict occurs while
         # scheduling a job.
         #
+        # We return nil to flag the job as not scheduled
+        #
         def on_schedule
-          true
+          nil
         end
 
         #
@@ -29,7 +31,7 @@ module Cloudtasker
         # executing a job.
         #
         def on_execute
-          true
+          nil
         end
       end
     end

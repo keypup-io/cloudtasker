@@ -258,7 +258,7 @@ module Cloudtasker
     # @param [Integer] interval The delay in seconds.
     # @param [Time, Integer] interval The time at which the job should run
     #
-    # @return [Cloudtasker::CloudTask] The Google Task response
+    # @return [Cloudtasker::CloudTask, nil] The Google Task response or nil if the job was not scheduled
     #
     def schedule(**args)
       # Evaluate when to schedule the job
