@@ -6,15 +6,28 @@ module Cloudtasker
   module Batch
     # Capture the progress of a batch
     class BatchProgress
-      attr_reader :batch_state
+      attr_reader :batches
 
       #
       # Build a new instance of the class.
       #
-      # @param [Hash] batch_state The batch state
+      # @param [Array<Cloudtasker::Batch::Job>] batches The batches to consider
       #
-      def initialize(batch_state = {})
-        @batch_state = batch_state
+      def initialize(batches = [])
+        @batches = batches
+      end
+
+      # Count the number of items in a given status
+
+      #
+      # Count the number of items in a given status
+      #
+      # @param [String] status The status to count
+      #
+      # @return [Integer] The number of jobs in the status
+      #
+      def count(status = 'all')
+        batches.sum { |e| e.batch_state_count(status) }
       end
 
       #
@@ -122,16 +135,7 @@ module Cloudtasker
       # @return [Cloudtasker::Batch::BatchProgress] The sum of the two batch progresses.
       #
       def +(other)
-        self.class.new(batch_state.to_h.merge(other.batch_state.to_h))
-      end
-
-      private
-
-      # Count the number of items in a given status
-      def count(status = nil)
-        return batch_state.to_h.keys.size unless status
-
-        batch_state.to_h.values.count { |e| e == status }
+        self.class.new(batches + other.batches)
       end
     end
   end

@@ -24,6 +24,7 @@ module Cloudtasker
       # means that the job will never succeed. There is no point in blocking
       # the batch forever so we proceed forward eventually.
       #
+      BATCH_STATUSES = %w[scheduled processing completed errored dead all].freeze
       COMPLETION_STATUSES = %w[completed dead].freeze
 
       # These callbacks do not need to raise errors on their own
@@ -183,6 +184,25 @@ module Cloudtasker
       end
 
       #
+      # Return the key under which the batch progress is stored
+      # for a specific state.
+      #
+      # @return [String] The batch progress state namespaced id.
+      #
+      def batch_state_count_gid(state)
+        "#{batch_state_gid}/state_count/#{state}"
+      end
+
+      #
+      # Return the number of jobs in a given state
+      #
+      # @return [String] The batch progress state namespaced id.
+      #
+      def batch_state_count(state)
+        redis.get(batch_state_count_gid(state)).to_i
+      end
+
+      #
       # The list of jobs to be enqueued in the batch
       #
       # @return [Array<Cloudtasker::Worker>] The jobs to enqueue at the end of the batch.
@@ -259,6 +279,28 @@ module Cloudtasker
       end
 
       #
+      # This method initializes the batch job counters if not set already
+      #
+      def migrate_progress_stats_to_redis_counters
+        # Abort if counters have already been set. The 'all' counter acts as a feature flag.
+        return if redis.exists?(batch_state_count_gid('all'))
+
+        # Get all job states
+        values = batch_state.values
+
+        # Count by value
+        redis.multi do |m|
+          # Per status
+          values.tally.each do |k, v|
+            m.set(batch_state_count_gid(k), v)
+          end
+
+          # All counter
+          m.set(batch_state_count_gid('all'), values.size)
+        end
+      end
+
+      #
       # Save serialized version of the worker.
       #
       # This is required to be able to invoke callback methods in the
@@ -278,8 +320,17 @@ module Cloudtasker
       def update_state(batch_id, status)
         migrate_batch_state_to_redis_hash
 
+        # Get current status
+        current_status = redis.hget(batch_state_gid, batch_id)
+        return if current_status == status.to_s
+
         # Update the batch state batch_id entry with the new status
-        redis.hset(batch_state_gid, batch_id, status)
+        # and update counters
+        redis.multi do |m|
+          m.hset(batch_state_gid, batch_id, status)
+          m.decr(batch_state_count_gid(current_status))
+          m.incr(batch_state_count_gid(status))
+        end
       end
 
       #
@@ -385,8 +436,11 @@ module Cloudtasker
         redis.hkeys(batch_state_gid).each { |id| self.class.find(id)&.cleanup }
 
         # Delete batch redis entries
-        redis.del(batch_gid)
-        redis.del(batch_state_gid)
+        redis.multi do |m|
+          m.del(batch_gid)
+          m.del(batch_state_gid)
+          BATCH_STATUSES.each { |e| m.del(batch_state_count_gid(e)) }
+        end
       end
 
       #
@@ -400,17 +454,17 @@ module Cloudtasker
       def progress(depth: 0)
         depth = depth.to_i
 
-        # Capture batch state
-        state = batch_state
+        # Initialize counters from batch state. This is only applicable to running batches
+        # that started before the counter-based progress was implemented/released.
+        migrate_progress_stats_to_redis_counters
 
         # Return immediately if we do not need to go down the tree
-        return BatchProgress.new(state) if depth <= 0
+        return BatchProgress.new([self]) if depth <= 0
 
         # Sum batch progress of current batch and sub-batches up to the specified
         # depth
-        state.to_h.reduce(BatchProgress.new(state)) do |memo, (child_id, child_status)|
-          memo + (self.class.find(child_id)&.progress(depth: depth - 1) ||
-            BatchProgress.new(child_id => child_status))
+        batch_state.to_h.reduce(BatchProgress.new([self])) do |memo, (child_id, _)|
+          memo + (self.class.find(child_id)&.progress(depth: depth - 1) || BatchProgress.new)
         end
       end
 
@@ -432,7 +486,11 @@ module Cloudtasker
           # having never-ending batches - which could occur if a batch was crashing
           # while enqueuing children due to a OOM error and since 'scheduled' is a
           # blocking status.
-          redis.hsetnx(batch_state_gid, j.job_id, 'scheduled')
+          redis.multi do |m|
+            m.hsetnx(batch_state_gid, j.job_id, 'scheduled')
+            m.incr(batch_state_count_gid('scheduled'))
+            m.incr(batch_state_count_gid('all'))
+          end
 
           # Flag job as enqueued
           ret_list << j

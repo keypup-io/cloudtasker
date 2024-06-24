@@ -157,6 +157,24 @@ RSpec.describe Cloudtasker::Batch::Job do
     it { is_expected.to eq(batch.key("#{described_class::STATES_NAMESPACE}/#{batch.batch_id}")) }
   end
 
+  describe '#batch_state_count_gid' do
+    subject { batch.batch_state_count_gid(state) }
+
+    let(:state) { 'processing' }
+
+    it { is_expected.to eq("#{batch.batch_state_gid}/state_count/#{state}") }
+  end
+
+  describe '#batch_state_count' do
+    subject { batch.batch_state_count(state) }
+
+    let(:state) { 'processing' }
+    let(:count) { 18 }
+
+    before { redis.set(batch.batch_state_count_gid(state), count.to_s) }
+    it { is_expected.to eq(count) }
+  end
+
   describe '#pending_jobs' do
     subject { batch.pending_jobs }
 
@@ -240,6 +258,50 @@ RSpec.describe Cloudtasker::Batch::Job do
     end
   end
 
+  describe '#migrate_progress_stats_to_redis_counters' do
+    subject do
+      described_class::BATCH_STATUSES.each_with_object({}) do |elem, memo|
+        memo[elem] = batch.batch_state_count(elem)
+      end
+    end
+
+    let(:expected_counters) do
+      h = (described_class::BATCH_STATUSES - ['all']).each_with_object({}).with_index do |(elem, memo), i|
+        memo[elem] = i + 1
+      end
+      h.merge('all' => h.values.sum)
+    end
+
+    context 'with counters already set' do
+      before do
+        expected_counters.each { |k, v| redis.set(batch.batch_state_count_gid(k), v) }
+
+        # Since counters are already set, we expect the migration script not to set them
+        expect(redis).not_to receive(:set)
+
+        # Perform migration
+        batch.migrate_progress_stats_to_redis_counters
+      end
+      it { is_expected.to eq(expected_counters) }
+    end
+
+    context 'with no counters set' do
+      let(:batch_state) do
+        expected_counters.except('all').each_with_object({}) do |(k, v), memo|
+          v.times { memo[SecureRandom.uuid] = k }
+        end
+      end
+
+      before do
+        allow(batch).to receive(:batch_state).and_return(batch_state)
+
+        # Perform migration
+        batch.migrate_progress_stats_to_redis_counters
+      end
+      it { is_expected.to eq(expected_counters) }
+    end
+  end
+
   describe '#save' do
     let(:batch_content) { redis.fetch(batch.batch_gid) }
 
@@ -262,6 +324,8 @@ RSpec.describe Cloudtasker::Batch::Job do
         expect(batch_state).to eq(child_worker.job_id => 'scheduled')
         expect(batch.pending_jobs).to be_empty
         expect(batch.enqueued_jobs).to eq([child_worker])
+        expect(batch.batch_state_count('scheduled')).to eq(1)
+        expect(batch.batch_state_count('all')).to eq(1)
       end
 
       it { is_expected.to eq([child_worker]) }
@@ -338,12 +402,18 @@ RSpec.describe Cloudtasker::Batch::Job do
 
     let(:child_id) { child_batch.batch_id }
     let(:status) { 'processing' }
-    let(:initial_state) { { 'foo' => 'bar' } }
+    let(:initial_state) { { child_id => 'scheduled' } }
 
     before do
-      redis.hset(batch.batch_state_gid, initial_state) if initial_state.present?
+      redis.hset(batch.batch_state_gid, initial_state)
+      redis.set(batch.batch_state_count_gid('scheduled'), 1)
       batch.update_state(child_id, status)
       expect(batch).to receive(:migrate_batch_state_to_redis_hash).and_call_original
+    end
+
+    after do
+      expect(batch.batch_state_count('scheduled')).to eq(0)
+      expect(batch.batch_state_count(status)).to eq(1)
     end
 
     it { is_expected.to eq(status) }
@@ -580,7 +650,14 @@ RSpec.describe Cloudtasker::Batch::Job do
     subject { redis.keys.sort }
 
     let(:side_batch) { described_class.new(worker.new_instance) }
-    let(:expected_keys) { [side_batch.batch_gid, side_batch.batch_state_gid].sort }
+    let(:expected_keys) do
+      [
+        side_batch.batch_gid,
+        side_batch.batch_state_gid,
+        side_batch.batch_state_count_gid('all'),
+        side_batch.batch_state_count_gid('scheduled')
+      ].sort
+    end
 
     before do
       # Do not enqueue jobs
@@ -596,6 +673,9 @@ RSpec.describe Cloudtasker::Batch::Job do
       child_batch.pending_jobs.push(worker.new_instance)
       child_batch.pending_jobs.push(worker.new_instance)
       child_batch.setup
+
+      # Flag a child batch job as completed
+      child_batch.update_state(child_batch.enqueued_jobs[1].job_id, 'completed')
 
       # Attach child batch to main batch
       batch.pending_jobs.push(child_worker)
