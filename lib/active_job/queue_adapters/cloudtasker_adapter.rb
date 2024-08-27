@@ -38,6 +38,13 @@ module ActiveJob
         build_worker(job).schedule(time_at: Time.at(precise_timestamp))
       end
 
+      # Determines if enqueuing will check and wait for an associated transaction completes before enqueuing
+      #
+      # @return [Boolean] True always as this is the default from QueueAdapters::AbstractAdapter
+      def enqueue_after_transaction_commit?
+        true
+      end
+
       private
 
       def build_worker(job)
