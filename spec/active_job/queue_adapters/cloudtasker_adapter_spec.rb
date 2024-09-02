@@ -52,5 +52,11 @@ if defined?(Rails)
         adapter.enqueue_at(example_job, example_execution_timestamp)
       end
     end
+
+    describe '#enqueue_after_transaction_commit?' do
+      it 'returns true' do
+        expect(adapter.enqueue_after_transaction_commit?).to be true
+      end
+    end
   end
 end
