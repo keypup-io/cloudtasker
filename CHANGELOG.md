@@ -1,5 +1,29 @@
 # Changelog
 
+## [v0.14.rc1](https://github.com/keypup-io/cloudtasker/tree/v0.14.rc1) (2024-09-22)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.13.2...v0.14.rc1)
+
+**Improvements:**
+- Authentication: To support OIDC and regular Cloudtasker authentication, we moved the Cloudtasker Authentication header from `Authorization` to `X-Cloudtasker-Authorization`. Backward compatibility is maintained for existing jobs.
+- Authentication: Use signature-based authentication instead of plain tokens. The authentication token now HMACs the content of the job. This approach prevents token from being reused.
+- Batch Jobs: Batch job progress and statistics are now calculated using counters, instead of checking every job. This is much faster.
+- Cron Validation: The cron jobs extension now fails epicly if the cron configuration is invalid, instead of failing silently.
+- GCP OIDC Authentification: It is now possible to specify an Open ID Connect (OIDC) service account to run Cloudtasker on private Cloud Run services. OIDC authentication is provided as an extra authentication layer on top of the regular Cloudtasker authentication system (see below). See the OIDC section in the [initializer documentation](https://github.com/keypup-io/cloudtasker?tab=readme-ov-file#cloudtasker-initializer).
+- Job Execution Control: Add ability to conditionally raise `Cloudtasker::RetryWorkerError` to retry jobs. This error does not get logged but the retry count will still be increased. This is a safer approach than using the `reenqueue` helper, which can lead to forever running jobs if not used properly. [Documentation](https://github.com/keypup-io/cloudtasker?tab=readme-ov-file#conditional-reenqueues-using-retry-errors).
+- Log Arguments Truncation: Add `Cloudtasker::WorkerLogger.truncate` helper to truncate large payloads. This is useful to log the top-level attributes of hash/array payloads, without logging the full depth. This case save you significant $$ in logging costs. [Documentation](https://github.com/keypup-io/cloudtasker?tab=readme-ov-file#truncating-log-arguments).
+- Storable Jobs: Add an interface to park Cloudtasker jobs that need to be conditionally run later. This is useful when you need to capture jobs (and their arguments) during a batch but only enqueue them after the batch is completed. This extension requires Redis and is provided as an optional module. [Documentation](https://github.com/keypup-io/cloudtasker/blob/master/docs/STORABLE_JOBS.md).
+- Local Server: Add ability to disable SSL verification on the local server when local HTTPS endpoints are used. See the `local_server_ssl_verify` section in the [initializer documentation](https://github.com/keypup-io/cloudtasker?tab=readme-ov-file#cloudtasker-initializer).
+
+**Fixed bugs:**
+- ActiveJob: Support `enqueue_after_transaction_commit?` to be ISO with the ActiveJob interface.
+- Batch Jobs: Do not register batch jobs that were not actually enqueued due to other factors (e.g. Job Uniqueness extension). This issue could lead to never-ending batches.
+- Duration Logging: Specify the unit (`s` for seconds) on the job duration attribute so it gets properly picked up by GCP Logging. GCP Logging was occasionally mixing up seconds and milliseconds.
+- Job Retry Count: GCP fixed their retry count header some time ago. We now use the `X-CloudTasks-TaskExecutionCount` header instead of the `X-CloudTasks-TaskRetryCount`. [See more details here](https://github.com/keypup-io/cloudtasker?tab=readme-ov-file#max-retries).
+- Rails: Use `skip_forgery_protection` instead of `skip_before_action`. The later was causing occasional issues on some setups.
+
+
+
 ## [v0.13.2](https://github.com/keypup-io/cloudtasker/tree/v0.13.2) (2023-07-02)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.13.1...v0.13.2)

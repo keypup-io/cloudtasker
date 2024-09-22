@@ -1,5 +1,7 @@
 ![Build Status](https://github.com/keypup-io/cloudtasker/workflows/Test/badge.svg) [![Gem Version](https://badge.fury.io/rb/cloudtasker.svg)](https://badge.fury.io/rb/cloudtasker)
 
+🚀🚀🚀 Cloudtasker 0.14 release candidate (`v0.14.rc1`) is out and it's quite big ([Changelog](https://github.com/keypup-io/cloudtasker/blob/master/CHANGELOG.md)). Any help testing this release is welcome, and feel free to open issues if you spot any regression.
+
 # Cloudtasker
 
 Background jobs for Ruby using Google Cloud Tasks.
@@ -426,7 +428,7 @@ Cloudtasker.configure do |config|
   # See https://cloud.google.com/tasks/docs/creating-http-target-tasks#sa for more information on
   # setting up service accounts for use with Cloud Tasks.
   #
-  # Supported since: v0.14.0 (upcoming)
+  # Supported since: v0.14.rc1
   #
   # Default: nil 
   #
@@ -696,7 +698,7 @@ end
 See the [Cloudtasker::Worker class](lib/cloudtasker/worker.rb) for more information on attributes available to be logged in your `log_context_processor` proc.
 
 ### Truncating log arguments
-**Supported since**: `v0.14.0 (upcoming)`  
+**Supported since**: `v0.14.rc1`  
 
 By default Cloudtasker does not log job arguments as arguments can contain sensitive data and generate voluminous logs, which may lead to noticeable costs with your log provider (e.g. GCP Logging). Also some providers (e.g. GCP Logging) will automatically truncate log entries that are too big and reduce their searchability.
 
@@ -832,7 +834,7 @@ By default jobs are retried 25 times - using an exponential backoff - before bei
 
 Note that the number of retries set on your Cloud Task queue should be many times higher than the number of retries configured in Cloudtasker because Cloud Task also includes failures to connect to your application. Ideally set the number of retries to `unlimited` in Cloud Tasks.
 
-**Note**: Versions prior to `v0.14.0 (upcoming)` use the `X-CloudTasks-TaskRetryCount` header for retries instead of the `X-CloudTasks-TaskExecutionCount` header to detect the number of retries, because there a previous bug on the GCP side which made the `X-CloudTasks-TaskExecutionCount` stay at zero instead of increasing on successive executions. Versions prior to `v0.14.0 (upcoming)` count any failure as failure, including failures due to the backend being unavailable (`HTTP 503`). Versions `v0.14.0 (upcoming)` and later only count application failure (`HTTP 4xx`) as failure for retry purpose.
+**Note**: Versions prior to `v0.14.rc1` use the `X-CloudTasks-TaskRetryCount` header for retries instead of the `X-CloudTasks-TaskExecutionCount` header to detect the number of retries, because there a previous bug on the GCP side which made the `X-CloudTasks-TaskExecutionCount` stay at zero instead of increasing on successive executions. Versions prior to `v0.14.rc1` count any failure as failure, including failures due to the backend being unavailable (`HTTP 503`). Versions `v0.14.rc1` and later only count application failure (`HTTP 4xx`) as failure for retry purpose.
 
 E.g. Set max number of retries globally via the cloudtasker initializer.
 ```ruby
@@ -889,7 +891,7 @@ end
 ```
 
 ### Conditional reenqueues using retry errors
-**Supported since**: `v0.14.0 (upcoming)`  
+**Supported since**: `v0.14.rc1`  
 
 If your worker is waiting for some precondition to occur and you want to re-enqueue it until the condition has been met, you can raise a `Cloudtasker::RetryWorkerError`. This special error will fail your job **without logging an error** while still increasing the number of retries.
 
