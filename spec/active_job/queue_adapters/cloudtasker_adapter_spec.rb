@@ -9,22 +9,16 @@ if defined?(Rails)
     subject(:adapter) { described_class.new }
 
     let(:example_job_wrapper_double) do
-      instance_double(
-        "#{described_class.name}::JobWrapper",
-        example_job_wrapper_args
-      ).tap { |double| allow(double).to receive(:schedule) }
+      instance_double("#{described_class.name}::JobWrapper", example_job_wrapper_args)
+        .tap { |double| allow(double).to receive(:schedule) }
     end
 
-    before do
-      allow(described_class::JobWrapper).to receive(:new)
-        .and_return(example_job_wrapper_double)
-    end
+    around { |e| Timecop.freeze { e.run } }
+    before { allow(described_class::JobWrapper).to receive(:new).and_return(example_job_wrapper_double) }
 
     shared_examples 'of instantiating a Cloudtasker JobWrapper from ActiveJob' do
       it 'instantiates a new CloudtaskerAdapter JobWrapper for the given job' do
-        expect(described_class::JobWrapper).to receive(:new)
-          .with(example_job_wrapper_args)
-
+        expect(described_class::JobWrapper).to receive(:new).with(example_job_wrapper_args)
         adapter.enqueue(example_job)
       end
     end
@@ -34,7 +28,6 @@ if defined?(Rails)
 
       it 'enqueues the new CloudtaskerAdapter JobWrapper to execute' do
         expect(example_job_wrapper_double).to receive(:schedule)
-
         adapter.enqueue(example_job)
       end
     end
@@ -46,17 +39,13 @@ if defined?(Rails)
       include_examples 'of instantiating a Cloudtasker JobWrapper from ActiveJob'
 
       it 'enqueues the new CloudtaskerAdapter JobWrapper to execute at the given time' do
-        expect(example_job_wrapper_double).to receive(:schedule)
-          .with(time_at: expected_execution_time)
-
+        expect(example_job_wrapper_double).to receive(:schedule).with(time_at: expected_execution_time)
         adapter.enqueue_at(example_job, example_execution_timestamp)
       end
     end
 
     describe '#enqueue_after_transaction_commit?' do
-      it 'returns true' do
-        expect(adapter.enqueue_after_transaction_commit?).to be true
-      end
+      it { expect(adapter).to be_enqueue_after_transaction_commit }
     end
   end
 end

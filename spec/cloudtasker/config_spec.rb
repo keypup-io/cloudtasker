@@ -151,22 +151,22 @@ RSpec.describe Cloudtasker::Config do
   describe '#logger' do
     subject { config.logger }
 
-    context 'with no logger provided' do
-      let(:logger) { nil }
-
-      it { is_expected.to be_a(Logger) }
-    end
-
     context 'with logger provided' do
       it { is_expected.to eq(logger) }
     end
 
     if defined?(Rails)
-      context 'with Rails and no logger provided' do
+      context 'with no logger provided and Rails' do
         let(:logger) { nil }
 
         before { stub_const('Rails', rails_klass) }
         it { is_expected.to eq(rails_logger) }
+      end
+    else
+      context 'with no logger provided and no-Rails' do
+        let(:logger) { nil }
+
+        it { is_expected.to be_a(Logger) }
       end
     end
   end

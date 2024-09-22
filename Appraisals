@@ -54,6 +54,11 @@ if RUBY_VERSION >= '2.7'
     gem 'rails', '~> 7.0.0'
     gem 'rspec-rails'
   end
+
+  appraise 'rails_7.1' do
+    gem 'rails', '~> 7.1'
+    gem 'rspec-rails'
+  end
 end
 
 appraise 'semantic_logger_3.4' do
