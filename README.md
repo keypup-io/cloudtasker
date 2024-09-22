@@ -1,4 +1,4 @@
-![Build Status](https://github.com/keypup-io/cloudtasker/workflows/Test/badge.svg) [![Gem Version](https://badge.fury.io/rb/cloudtasker.svg)](https://badge.fury.io/rb/cloudtasker)
+![Build Status 3.x](https://github.com/keypup-io/cloudtasker/actions/workflows/test_ruby_3.x.yml/badge.svg) [![Gem Version](https://badge.fury.io/rb/cloudtasker.svg)](https://badge.fury.io/rb/cloudtasker)
 
 🚀🚀🚀 Cloudtasker 0.14 release candidate (`v0.14.rc1`) is out and it's quite big ([Changelog](https://github.com/keypup-io/cloudtasker/blob/master/CHANGELOG.md)). Any help testing this release is welcome, and feel free to open issues if you spot any regression.
 
