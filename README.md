@@ -1005,7 +1005,7 @@ Each testing mode accepts a block argument to temporarily switch to it:
 Cloudtasker::Testing.fake!
 
 # Enable inline! mode temporarily for a given test
-Cloudtasker.inline! do
+Cloudtasker::Testing.inline! do
    MyWorker.perform_async(1,2)
 end
 ```
