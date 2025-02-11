@@ -1,8 +1,8 @@
 # Changelog
 
-## [v0.14.rc1](https://github.com/keypup-io/cloudtasker/tree/v0.14.rc1) (2024-09-22)
+## [v0.14.0](https://github.com/keypup-io/cloudtasker/tree/v0.14.0) (2025-02-11)
 
-[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.13.2...v0.14.rc1)
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.13.2...v0.14.0)
 
 **Improvements:**
 - Authentication: To support OIDC and regular Cloudtasker authentication, we moved the Cloudtasker Authentication header from `Authorization` to `X-Cloudtasker-Authorization`. Backward compatibility is maintained for existing jobs.
