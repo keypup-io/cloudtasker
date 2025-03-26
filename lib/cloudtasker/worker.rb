@@ -150,7 +150,7 @@ module Cloudtasker
       # @return [Integer] The number of retries.
       #
       def max_retries
-        cloudtasker_options_hash[:max_retries] || Cloudtasker.config.max_retries
+        cloudtasker_options_hash[:max_retries].nil? ? Cloudtasker.config.max_retries : cloudtasker_options_hash[:max_retries] || 0
       end
     end
 
