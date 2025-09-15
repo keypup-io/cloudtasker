@@ -70,6 +70,7 @@ For each lock strategy the table specifies the lock period (start/end) and which
 | `until_executing` | The job is scheduled | The job starts processing | `reject` (default) or `raise` |
 | `while_executing` | The job starts processing | The job ends processing | `reject` (default), `reschedule` or `raise` |
 | `until_executed` | The job is scheduled | The job ends processing | `reject` (default) or `raise` |
+| `until_completed` | The job is scheduled | The job completes successfully or a DeadWorkerError is raised | `reject` (default) or `raise` |
 
 ## Available conflict strategies
 
