@@ -14,5 +14,6 @@ gem "timecop"
 gem "webmock"
 gem "rails", "~> 6.1.0"
 gem "rspec-rails"
+gem "mutex_m"
 
 gemspec path: "../"
