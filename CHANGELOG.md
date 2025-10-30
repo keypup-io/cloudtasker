@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.15.rc1](https://github.com/keypup-io/cloudtasker/tree/v0.15.rc1) (2025-10-30)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.14.0...v0.15.rc1)
+
+**Improvements:**
+- Unique Jobs: add `until_completed` strategy to lock jobs until they are completed or have exhausted all retries (thanks @jam-packed).
+
+**Maintenance:**
+- Supported rubies: drop support for ruby `2.7`. Cloudtasker now requires ruby `3.0` and above.
+
 ## [v0.14.0](https://github.com/keypup-io/cloudtasker/tree/v0.14.0) (2025-02-11)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.13.2...v0.14.0)
@@ -21,7 +31,6 @@
 - Duration Logging: Specify the unit (`s` for seconds) on the job duration attribute so it gets properly picked up by GCP Logging. GCP Logging was occasionally mixing up seconds and milliseconds.
 - Job Retry Count: GCP fixed their retry count header some time ago. We now use the `X-CloudTasks-TaskExecutionCount` header instead of the `X-CloudTasks-TaskRetryCount`. [See more details here](https://github.com/keypup-io/cloudtasker?tab=readme-ov-file#max-retries).
 - Rails: Use `skip_forgery_protection` instead of `skip_before_action`. The later was causing occasional issues on some setups.
-
 
 
 ## [v0.13.2](https://github.com/keypup-io/cloudtasker/tree/v0.13.2) (2023-07-02)
