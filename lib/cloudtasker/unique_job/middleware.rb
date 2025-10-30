@@ -14,6 +14,7 @@ require_relative 'lock/no_op'
 require_relative 'lock/until_executed'
 require_relative 'lock/until_executing'
 require_relative 'lock/while_executing'
+require_relative 'lock/until_completed'
 
 require_relative 'job'
 
