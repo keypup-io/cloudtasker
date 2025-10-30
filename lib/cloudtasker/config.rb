@@ -71,6 +71,9 @@ module Cloudtasker
     # failures due to the instance being unreachable.
     DEFAULT_MAX_RETRY_ATTEMPTS = 25
 
+    # How long to wait between retries in local server mode
+    LOCAL_SERVER_RETRY_DELAY = (ENV['CLOUDTASKER_LOCAL_RETRY_DELAY'] || 20).to_i # seconds
+
     PROCESSOR_HOST_MISSING = <<~DOC
       Missing host for processing.
       Please specify a processor hostname in form of `https://some-public-dns.example.com`'

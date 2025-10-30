@@ -9,7 +9,7 @@ module Cloudtasker
     class RedisTask
       attr_reader :id, :http_request, :schedule_time, :retries, :queue, :dispatch_deadline
 
-      RETRY_INTERVAL = 20 # seconds
+      RETRY_INTERVAL = Config::LOCAL_SERVER_RETRY_DELAY
 
       #
       # Return the Cloudtasker redis client
