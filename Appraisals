@@ -49,6 +49,16 @@ appraise 'rails_7.1' do
   gem 'rspec-rails'
 end
 
+appraise 'rails_8.0' do
+  gem 'rails', '~> 8.0'
+  gem 'rspec-rails'
+end
+
+appraise 'rails_8.1' do
+  gem 'rails', '~> 8.1'
+  gem 'rspec-rails'
+end
+
 appraise 'semantic_logger_3.4' do
   gem 'semantic_logger', '3.4.1'
 end
