@@ -3,8 +3,8 @@
 require 'sinatra'
 
 # Require project files
-Dir.glob('./config/initializers/*.rb').sort.each { |file| require file }
-Dir.glob('./app/workers/*.rb').sort.each { |file| require file }
+Dir.glob('./config/initializers/*.rb').each { |file| require file }
+Dir.glob('./app/workers/*.rb').each { |file| require file }
 
 #---------------------------------------------------
 # Routes

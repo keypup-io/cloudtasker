@@ -184,9 +184,9 @@ module Cloudtasker
     #
     # @return [Any] The method return value
     #
-    def method_missing(name, *args, &block)
+    def method_missing(name, ...)
       if logger.respond_to?(name)
-        logger.send(name, *args, &block)
+        logger.send(name, ...)
       else
         super
       end

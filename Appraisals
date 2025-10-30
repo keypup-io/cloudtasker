@@ -32,33 +32,19 @@ appraise 'google_cloud_tasks_2.1' do
   gem 'google-cloud-tasks', '~> 2.1.0'
 end
 
-if RUBY_VERSION < '3'
-  appraise 'rails_5.2' do
-    gem 'rails', '~> 5.2.0'
-    gem 'rspec-rails'
-  end
-
-  appraise 'rails_6.0' do
-    gem 'rails', '~> 6.0.0'
-    gem 'rspec-rails'
-  end
-end
-
 appraise 'rails_6.1' do
   gem 'rails', '~> 6.1.0'
   gem 'rspec-rails'
 end
 
-if RUBY_VERSION >= '2.7'
-  appraise 'rails_7.0' do
-    gem 'rails', '~> 7.0.0'
-    gem 'rspec-rails'
-  end
+appraise 'rails_7.0' do
+  gem 'rails', '~> 7.0.0'
+  gem 'rspec-rails'
+end
 
-  appraise 'rails_7.1' do
-    gem 'rails', '~> 7.1'
-    gem 'rspec-rails'
-  end
+appraise 'rails_7.1' do
+  gem 'rails', '~> 7.1'
+  gem 'rspec-rails'
 end
 
 appraise 'semantic_logger_3.4' do

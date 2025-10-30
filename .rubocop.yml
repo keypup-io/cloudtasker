@@ -3,10 +3,10 @@ require: rubocop-rspec
 AllCops:
   NewCops: enable
   SuggestExtensions: false
-  TargetRubyVersion: 2.7
+  TargetRubyVersion: 3.0
   Exclude:
-    - 'gemfiles/**/*'
-    - 'vendor/**/*'
+    - "gemfiles/**/*"
+    - "vendor/**/*"
 
 Metrics/ClassLength:
   Max: 300
@@ -17,7 +17,7 @@ Metrics/ModuleLength:
 Metrics/AbcSize:
   Max: 30
   Exclude:
-    - 'spec/support/*'
+    - "spec/support/*"
 
 Metrics/PerceivedComplexity:
   Max: 20
@@ -30,7 +30,7 @@ Metrics/MethodLength:
 
 RSpec/DescribeClass:
   Exclude:
-    - 'spec/integration/**/*_spec.rb'
+    - "spec/integration/**/*_spec.rb"
 
 RSpec/ExpectInHook:
   Enabled: false
@@ -44,12 +44,12 @@ RSpec/ScatteredSetup:
 Metrics/BlockLength:
   Exclude:
     - cloudtasker.gemspec
-    - 'spec/**/*'
+    - "spec/**/*"
 
 Style/Documentation:
   Exclude:
-    - 'examples/**/*'
-    - 'spec/**/*'
+    - "examples/**/*"
+    - "spec/**/*"
 
 Metrics/ParameterLists:
   CountKeywordArgs: false
@@ -59,15 +59,15 @@ Metrics/CyclomaticComplexity:
 
 Lint/EmptyBlock:
   Exclude:
-    - 'examples/rails/config/routes.rb'
+    - "examples/rails/config/routes.rb"
 
 RSpec/MessageSpies:
   Enabled: false
 
 RSpec/MultipleExpectations:
   Exclude:
-    - 'examples/**/*'
-    - 'spec/integration/**/*'
+    - "examples/**/*"
+    - "spec/integration/**/*"
 
 RSpec/AnyInstance:
   Enabled: false
