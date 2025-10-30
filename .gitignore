@@ -3,7 +3,7 @@
 /_yardoc/
 /coverage/
 /doc/
-/examples/rails/log/*.log
+/examples/*/log/*.log
 /examples/rails/tmp/
 /gemfiles/*.gemfile.lock
 /log/
