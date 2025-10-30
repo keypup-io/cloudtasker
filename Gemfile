@@ -6,7 +6,7 @@ source 'https://rubygems.org'
 gemspec
 
 # Dev dependencies
-gem 'appraisal', github: 'thoughtbot/appraisal'
+gem 'appraisal'
 gem 'bundler', '~> 2.0'
 gem 'rake', '>= 12.3.3'
 gem 'rspec', '~> 3.0'
