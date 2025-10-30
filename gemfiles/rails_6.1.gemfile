@@ -15,5 +15,6 @@ gem "webmock"
 gem "rails", "~> 6.1.0"
 gem "rspec-rails"
 gem "mutex_m"
+gem "drb"
 
 gemspec path: "../"

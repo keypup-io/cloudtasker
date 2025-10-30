@@ -36,6 +36,7 @@ appraise 'rails_6.1' do
   gem 'rails', '~> 6.1.0'
   gem 'rspec-rails'
   gem 'mutex_m'
+  gem 'drb'
 end
 
 appraise 'rails_7.0' do
