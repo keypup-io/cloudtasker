@@ -30,7 +30,7 @@ module Cloudtasker
       head :not_found
     rescue StandardError
       # 422: Job will be retried
-      head :unprocessable_content
+      head 422
     end
 
     private
