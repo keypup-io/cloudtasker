@@ -198,7 +198,12 @@ module Cloudtasker
     # @return [String] The name of queue.
     #
     def job_queue
-      (@job_queue ||= self.class.cloudtasker_options_hash[:queue] || Config::DEFAULT_JOB_QUEUE).to_s
+      (
+        @job_queue ||=
+          Thread.current[:cloudtasker_propagated_queue] ||
+          self.class.cloudtasker_options_hash[:queue] ||
+          Config::DEFAULT_JOB_QUEUE
+      ).to_s
     end
 
     #
@@ -450,6 +455,10 @@ module Cloudtasker
     def execute_middleware_chain
       self.perform_started_at = Time.now
 
+      # Store the parent worker queue so as to propagate it to the child workers
+      # See: #job_queue
+      Thread.current[:cloudtasker_propagated_queue] = job_queue if self.class.cloudtasker_options_hash[:propagate_queue]
+
       Cloudtasker.config.server_middleware.invoke(self) do
         # Immediately abort the job if it is already dead
         flag_as_dead if job_dead?
@@ -468,6 +477,7 @@ module Cloudtasker
       end
     ensure
       self.perform_ended_at = Time.now
+      Thread.current[:cloudtasker_propagated_queue] = nil
     end
   end
 end

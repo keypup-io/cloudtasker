@@ -289,21 +289,38 @@ RSpec.describe Cloudtasker::Worker do
     let(:worker_queue) { nil }
     let(:worker) { worker_class.new(job_queue: worker_queue) }
 
+    after { Thread.current[:cloudtasker_propagated_queue] = nil }
+
     context 'with no queue specified' do
       it { is_expected.to eq('default') }
     end
 
-    context 'with queue specified at class level' do
-      let(:opts) { { queue: 'real-time' } }
-
-      before { allow(worker_class).to receive(:cloudtasker_options_hash).and_return(opts) }
-      it { is_expected.to eq(opts[:queue]) }
-    end
-
     context 'with queue specified on worker' do
-      let(:worker_queue) { 'critical' }
+      let(:worker_queue) { 'level1' }
+
+      before do
+        Thread.current[:cloudtasker_propagated_queue] = 'level2'
+        allow(worker_class).to receive(:cloudtasker_options_hash).and_return({ queue: 'level3' })
+      end
 
       it { is_expected.to eq(worker_queue) }
+    end
+
+    context 'with queue in Thread.current' do
+      let(:thread_queue) { 'level2' }
+
+      before do
+        Thread.current[:cloudtasker_propagated_queue] = thread_queue
+        allow(worker_class).to receive(:cloudtasker_options_hash).and_return({ queue: 'level3' })
+      end
+      it { is_expected.to eq(thread_queue) }
+    end
+
+    context 'with queue specified at class level' do
+      let(:class_queue) { 'level3' }
+
+      before { allow(worker_class).to receive(:cloudtasker_options_hash).and_return({ queue: class_queue }) }
+      it { is_expected.to eq(class_queue) }
     end
   end
 
@@ -423,17 +440,27 @@ RSpec.describe Cloudtasker::Worker do
     let(:worker) { worker_class.new(job_args: args, job_id: SecureRandom.uuid) }
     let(:args) { [1, 2] }
     let(:resp) { 'some-result' }
+    let(:runtime_context) { {} }
 
     context 'with no middleware chain' do
-      before { allow(worker).to receive(:perform).with(*args).and_return(resp) }
-      before { expect(worker).to have_attributes(perform_started_at: nil, perform_ended_at: nil) }
-      after { expect(worker).to have_attributes(perform_started_at: be_a(Time), perform_ended_at: be_a(Time)) }
+      before do
+        expect(worker).to receive(:perform).with(*args) do
+          runtime_context[:queue] = Thread.current[:cloudtasker_propagated_queue]
+          resp
+        end
+        expect(worker).to have_attributes(perform_started_at: nil, perform_ended_at: nil)
+      end
+
+      after do
+        expect(runtime_context[:queue]).to be_nil
+        expect(worker).to have_attributes(perform_started_at: be_a(Time), perform_ended_at: be_a(Time))
+      end
       it { is_expected.to eq(resp) }
     end
 
     context 'with server middleware chain' do
       before do
-        allow(worker).to receive(:perform).with(*args).and_return(resp)
+        expect(worker).to receive(:perform).with(*args).and_return(resp)
         expect(worker).to have_attributes(perform_started_at: nil, perform_ended_at: nil)
         Cloudtasker.config.server_middleware.add(TestMiddleware)
       end
@@ -443,6 +470,26 @@ RSpec.describe Cloudtasker::Worker do
         expect(worker).to have_attributes(perform_started_at: be_a(Time), perform_ended_at: be_a(Time))
       end
 
+      it { is_expected.to eq(resp) }
+    end
+
+    context 'with propagate_queue option' do
+      let(:job_queue) { 'some-queue' }
+
+      before do
+        allow(worker_class).to receive(:cloudtasker_options_hash).and_return(
+          { propagate_queue: true, queue: job_queue }
+        )
+        expect(worker).to receive(:perform).with(*args) do
+          runtime_context[:queue] = Thread.current[:cloudtasker_propagated_queue]
+          resp
+        end
+      end
+
+      after do
+        expect(runtime_context[:queue]).to eq(job_queue)
+        expect(Thread.current[:cloudtasker_propagated_queue]).to be_nil
+      end
       it { is_expected.to eq(resp) }
     end
 
