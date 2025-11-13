@@ -120,6 +120,10 @@ Open a Rails console and enqueue some jobs
 
   # Process job in 60 seconds
   DummyWorker.perform_in(60, 'foo')
+
+  # Process job immediately, inline
+  # Supported since: v0.15.rc2
+  DummyWorker.perform_now('foo')
 ```
 
 Your Rails logs should display the following:
@@ -474,6 +478,11 @@ MyWorker.perform_at(3.days.from_now, arg1, arg2)
 MyWorker.schedule(args: [arg1, arg2], time_at: Time.parse('2025-01-01 00:50:00Z'), queue: 'critical')
 # or
 MyWorker.schedule(args: [arg1, arg2], time_in: 5 * 60, queue: 'critical')
+
+# Perform worker immediately, inline. This will not send the job to
+# the processing queue. Middlewares such as Unique Job, Batch Jobs will still be invoked.
+# Supported since: v0.15.rc2
+MyWorker.perform_now(arg1, arg2)
 ```
 
 Cloudtasker also provides a helper for re-enqueuing jobs. Re-enqueued jobs keep the same job id. Some middlewares may rely on this to track the fact that that a job didn't actually complete (e.g. Cloustasker batch). This is optional and you can always fallback to using exception management (raise an error) to retry/re-enqueue jobs.

@@ -121,6 +121,25 @@ RSpec.describe Cloudtasker::Worker do
     it { is_expected.to eq(resp) }
   end
 
+  describe '.perform_now' do
+    subject { worker_class.perform_now(arg1, arg2) }
+
+    let(:queue) { 'some-queue' }
+    let(:delay) { 10 }
+    let(:arg1) { 1 }
+    let(:arg2) { 2 }
+    let(:task) { instance_double(Cloudtasker::WorkerHandler) }
+    let(:resp) { 'some result' }
+    let(:worker) { instance_double(worker_class.to_s) }
+
+    before do
+      expect(worker_class).to receive(:new).with(job_args: [arg1, arg2]).and_return(worker)
+      expect(worker).to receive(:execute).and_return(resp)
+    end
+
+    it { is_expected.to eq(resp) }
+  end
+
   describe '.perform_in' do
     subject { worker_class.perform_in(delay, arg1, arg2) }
 

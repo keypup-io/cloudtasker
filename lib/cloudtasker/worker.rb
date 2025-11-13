@@ -96,7 +96,7 @@ module Cloudtasker
       end
 
       #
-      # Enqueue worker in the backgroundf.
+      # Enqueue worker in the background.
       #
       # @param [Array<any>] *args List of worker arguments
       #
@@ -128,6 +128,20 @@ module Cloudtasker
       #
       def perform_at(time_at, *args)
         schedule(args: args, time_at: time_at)
+      end
+
+      #
+      # Perform a worker inline, without sending it to the queue for processing.
+      #
+      # Middlewares (unique job, batch etc.) will still be invoked as if the job
+      # had been scheduled.
+      #
+      # @param [Array<any>] *args List of worker arguments
+      #
+      # @return [Any] The result of the worker perform method.
+      #
+      def perform_now(*args)
+        new(job_args: args).execute
       end
 
       #
@@ -215,7 +229,7 @@ module Cloudtasker
     #
     # Execute the worker by calling the `perform` with the args.
     #
-    # @return [Any] The result of the perform.
+    # @return [Any] The result of the worker perform method.
     #
     def execute
       logger.info('Starting job...')
