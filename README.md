@@ -557,7 +557,7 @@ CriticalWorker.schedule(args: [1], queue: :important)
 ### Propagating the queue in child workers
 **Supported since:** `v0.15.rc2`
 
-You can specify `propagate_queue: true` via the `cloudtasker_options` to make workers enqueued inside the job use the parent job queue instead on their class-configured queue:
+You can specify `propagate_queue: true` via the `cloudtasker_options` to make workers enqueued inside a job use the runtime queue instead of the default (class-configured or `default`) queue:
 
 ```ruby
 # app/workers/child_worker.rb
@@ -585,7 +585,7 @@ class ParentWorker
     logger.info("This is a parent job, which is set to run on the level1 queue by default.")
 
     # This worker will run on queue 'level1' instead of 'level2' because
-    # the "propagate_queue: true" has been specified on the parent
+    # the "propagate_queue: true" has been specified on the parent.
     ChildWorker.perform_async(some_arg)
 
     # This worker will run on queue 'level3' because the queue has been explicitly
