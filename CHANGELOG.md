@@ -1,11 +1,13 @@
 # Changelog
 
-## [v0.15.rc1](https://github.com/keypup-io/cloudtasker/tree/v0.15.rc1) (2025-10-30)
+## [v0.15.rc2](https://github.com/keypup-io/cloudtasker/tree/v0.15.rc2) (2025-11-13)
 
-[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.14.0...v0.15.rc1)
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.14.0...v0.15.rc2)
 
 **Improvements:**
+- Queues: support `propagate_queue: true` option on `cloudtasker_options` to make workers enqueued inside a job use the runtime queue instead of the default (class-configured or `default`) queue.
 - Unique Jobs: add `until_completed` strategy to lock jobs until they are completed or have exhausted all retries (thanks @jam-packed).
+- Workers: provide `perform_now` method to perform job inline and align with other job frameworks
 
 **Maintenance:**
 - Supported rubies: drop support for ruby `2.7`. Cloudtasker now requires ruby `3.0` and above.
