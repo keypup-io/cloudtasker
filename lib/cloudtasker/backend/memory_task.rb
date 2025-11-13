@@ -66,7 +66,7 @@ module Cloudtasker
         payload = payload.merge(schedule_time: payload[:schedule_time].to_i)
 
         # Save task
-        task = new(**payload.merge(id: id))
+        task = new(**payload, id: id)
         queue << task
 
         # Execute task immediately if in testing and inline mode enabled

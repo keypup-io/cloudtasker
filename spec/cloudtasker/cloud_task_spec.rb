@@ -138,7 +138,7 @@ RSpec.describe Cloudtasker::CloudTask do
     end
 
     context 'with different id' do
-      it { is_expected.not_to eq(described_class.new(**payload.merge(id: "#{payload[:id]}a"))) }
+      it { is_expected.not_to eq(described_class.new(**payload, id: "#{payload[:id]}a")) }
     end
 
     context 'with different object' do

@@ -100,7 +100,7 @@ RSpec.describe Cloudtasker::Cron::Schedule do
 
     context 'with existing schedule' do
       before { allow(described_class).to receive(:find).with(id).and_return(existing_record) }
-      after { expect(described_class).to have_received(:new).with(**expected_attrs.merge(job_id: job_id)) }
+      after { expect(described_class).to have_received(:new).with(**expected_attrs, job_id: job_id) }
       after { expect(record).to have_received(:save) }
       it { is_expected.to eq(record) }
     end

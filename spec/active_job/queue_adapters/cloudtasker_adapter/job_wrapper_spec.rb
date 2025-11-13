@@ -6,7 +6,7 @@ if defined?(Rails)
   RSpec.describe ActiveJob::QueueAdapters::CloudtaskerAdapter::JobWrapper do
     include_context 'of Cloudtasker ActiveJob instantiation'
 
-    subject(:worker) { described_class.new(**example_job_wrapper_args.merge(task_id: '00000001')) }
+    subject(:worker) { described_class.new(**example_job_wrapper_args, task_id: '00000001') }
 
     let(:example_unreconstructed_job_serialization) do
       example_job_serialization.except('job_id', 'queue_name', 'provider_job_id', 'executions', 'priority')

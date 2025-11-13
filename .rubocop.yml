@@ -51,6 +51,9 @@ Style/Documentation:
     - "examples/**/*"
     - "spec/**/*"
 
+Style/SafeNavigationChainLength:
+  Enabled: false
+
 Metrics/ParameterLists:
   CountKeywordArgs: false
 

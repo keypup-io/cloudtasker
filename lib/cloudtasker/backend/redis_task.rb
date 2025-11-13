@@ -89,7 +89,7 @@ module Cloudtasker
         # Save job
         redis.write(key(id), payload)
         redis.sadd(key, [id])
-        new(**payload.merge(id: id))
+        new(**payload, id: id)
       end
 
       #
@@ -103,7 +103,7 @@ module Cloudtasker
         gid = key(id)
         return nil unless (payload = redis.fetch(gid))
 
-        new(**payload.merge(id: id))
+        new(**payload, id: id)
       end
 
       #

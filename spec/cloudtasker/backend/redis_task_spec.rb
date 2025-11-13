@@ -23,7 +23,7 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
     }
   end
   let(:task_id) { '1234' }
-  let(:task) { described_class.new(**job_payload.merge(id: task_id)) }
+  let(:task) { described_class.new(**job_payload, id: task_id) }
 
   describe '.redis' do
     subject { described_class.redis }
@@ -70,9 +70,9 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
     let(:queue) { nil }
     let(:tasks) do
       [
-        described_class.new(**job_payload.merge(id: 1, queue: 'critical')),
-        described_class.new(**job_payload.merge(id: 2, queue: 'default')),
-        described_class.new(**job_payload.merge(id: 3, schedule_time: Time.now + 3600))
+        described_class.new(**job_payload, id: 1, queue: 'critical'),
+        described_class.new(**job_payload, id: 2, queue: 'default'),
+        described_class.new(**job_payload, id: 3, schedule_time: Time.now + 3600)
       ]
     end
 
@@ -95,8 +95,8 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
     let(:queue) { 'some-queue' }
     let(:tasks) do
       [
-        described_class.new(**job_payload.merge(id: 1)),
-        described_class.new(**job_payload.merge(id: 2))
+        described_class.new(**job_payload, id: 1),
+        described_class.new(**job_payload, id: 2)
       ]
     end
 
@@ -125,7 +125,7 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
   describe '.find' do
     subject { described_class.find(task_id) }
 
-    let(:expected_record) { described_class.new(**job_payload.merge(id: task_id)) }
+    let(:expected_record) { described_class.new(**job_payload, id: task_id) }
 
     context 'with record found' do
       before { allow(SecureRandom).to receive(:uuid).and_return(task_id) }
@@ -292,11 +292,11 @@ RSpec.describe Cloudtasker::Backend::RedisTask do
     subject { task }
 
     context 'with same id' do
-      it { is_expected.to eq(described_class.new(**job_payload.merge(id: task_id))) }
+      it { is_expected.to eq(described_class.new(**job_payload, id: task_id)) }
     end
 
     context 'with different id' do
-      it { is_expected.not_to eq(described_class.new(**job_payload.merge(id: "#{task_id}a"))) }
+      it { is_expected.not_to eq(described_class.new(**job_payload, id: "#{task_id}a")) }
     end
 
     context 'with different object' do

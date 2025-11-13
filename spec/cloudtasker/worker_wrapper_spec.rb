@@ -12,7 +12,7 @@ RSpec.describe Cloudtasker::WorkerWrapper do
   end
 
   describe '.new' do
-    subject { described_class.new(**worker_args.merge(worker_name: worker_class)) }
+    subject { described_class.new(**worker_args, worker_name: worker_class) }
 
     let(:id) { SecureRandom.uuid }
     let(:args) { [1, 2] }
