@@ -1,8 +1,8 @@
 # Changelog
 
-## [v0.15.rc2](https://github.com/keypup-io/cloudtasker/tree/v0.15.rc2) (2025-11-13)
+## [v0.15.rc3](https://github.com/keypup-io/cloudtasker/tree/v0.15.rc3) (2025-11-17)
 
-[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.14.0...v0.15.rc2)
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.14.0...v0.15.rc3)
 
 **Improvements:**
 - Queues: support `propagate_queue: true` option on `cloudtasker_options` to make workers enqueued inside a job use the runtime queue instead of the default (class-configured or `default`) queue.
