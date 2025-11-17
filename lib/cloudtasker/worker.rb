@@ -141,7 +141,9 @@ module Cloudtasker
       # @return [Any] The result of the worker perform method.
       #
       def perform_now(*args)
-        new(job_args: args).execute
+        # Serialize/deserialize arguments to mimic job enqueueing and produce a similar context
+        job_args = JSON.parse(args.to_json)
+        new(job_args: job_args).execute
       end
 
       #

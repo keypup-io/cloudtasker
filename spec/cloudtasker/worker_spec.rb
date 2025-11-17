@@ -127,13 +127,14 @@ RSpec.describe Cloudtasker::Worker do
     let(:queue) { 'some-queue' }
     let(:delay) { 10 }
     let(:arg1) { 1 }
-    let(:arg2) { 2 }
+    let(:arg2) { { foo: 'bar', some_time: Time.now } }
+    let(:job_args) { JSON.parse([arg1, arg2].to_json) }
     let(:task) { instance_double(Cloudtasker::WorkerHandler) }
     let(:resp) { 'some result' }
     let(:worker) { instance_double(worker_class.to_s) }
 
     before do
-      expect(worker_class).to receive(:new).with(job_args: [arg1, arg2]).and_return(worker)
+      expect(worker_class).to receive(:new).with(job_args: job_args).and_return(worker)
       expect(worker).to receive(:execute).and_return(resp)
     end
 
