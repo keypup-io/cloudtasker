@@ -251,7 +251,9 @@ module Cloudtasker
       logger.info("Job dead after #{job_duration}s and #{job_retries} retries") { { duration: job_duration * 1000 } }
       raise(e)
     rescue RetryWorkerError => e
-      logger.info("Job done after #{job_duration}s (retry requested)") { { duration: job_duration * 1000 } }
+      logger.info("Job done after #{job_duration}s (retry requested)") do
+        { duration: job_duration * 1000, reason: e.message }
+      end
       raise(e)
     rescue StandardError => e
       logger.info("Job failed after #{job_duration}s") { { duration: job_duration * 1000 } }
