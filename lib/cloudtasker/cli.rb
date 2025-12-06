@@ -82,7 +82,7 @@ module Cloudtasker
         logger.info "[Cloudtasker/Server] Booted Rails #{::Rails.version} application in #{environment} environment"
       end
 
-      # Get internal read/write pip
+      # Get internal read/write pipe
       self_read, self_write = IO.pipe
 
       # Setup signals to trap
@@ -104,7 +104,7 @@ module Cloudtasker
       local_server.start(opts)
 
       while (readable_io = read_pipe.wait_readable)
-        signal = readable_io.first[0].gets.strip
+        signal = readable_io.first.chomp
         handle_signal(signal)
       end
     rescue Interrupt
