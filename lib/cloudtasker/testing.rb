@@ -30,6 +30,28 @@ module Cloudtasker
     end
 
     #
+    # Set the error mode, either permanently or
+    # temporarily (via block).
+    #
+    # @param [Symbol] mode The error mode.
+    #
+    # @return [Symbol] The error mode.
+    #
+    def switch_error_mode(mode)
+      if block_given?
+        current_mode = @error_mode
+        begin
+          @error_mode = mode
+          yield
+        ensure
+          @error_mode = current_mode
+        end
+      else
+        @error_mode = mode
+      end
+    end
+
+    #
     # Set cloudtasker to real mode temporarily
     #
     # @param [Proc] &block The block to run in real mode
@@ -79,6 +101,35 @@ module Cloudtasker
     #
     def inline?
       @test_mode == :inline
+    end
+
+    #
+    # Temporarily raise errors in the same manner
+    # inline! does it.
+    #
+    # This is used when you want to manually drain the jobs
+    # but still want to surface errors at runtime, instead of
+    # using the retry mechanic.
+    #
+    def raise_errors!(&block)
+      switch_error_mode(:raise, &block)
+    end
+
+    #
+    # Temporarily silence errors. Job will follow the retry logic.
+    #
+    def silence_errors!(&block)
+      switch_error_mode(:silence, &block)
+    end
+
+    #
+    # Return true if jobs should raise errors immediately
+    # without relying on retries.
+    #
+    # @return [Boolean] True if jobs are run inline.
+    #
+    def raise_errors?
+      @test_mode == :inline || @error_mode == :raise
     end
 
     #

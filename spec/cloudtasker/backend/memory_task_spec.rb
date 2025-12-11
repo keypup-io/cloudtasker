@@ -65,6 +65,24 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
     end
   end
 
+  describe '.raise_errors?' do
+    subject { described_class }
+
+    before { allow(Cloudtasker::Testing).to receive(:raise_errors?).and_return(enabled) }
+
+    context 'with testing raise_errors! mode enabled' do
+      let(:enabled) { true }
+
+      it { is_expected.to be_raise_errors }
+    end
+
+    context 'with testing raise_errors! mode disabled' do
+      let(:enabled) { false }
+
+      it { is_expected.not_to be_raise_errors }
+    end
+  end
+
   describe '.queue' do
     subject { described_class.queue }
 
@@ -215,32 +233,32 @@ RSpec.describe Cloudtasker::Backend::MemoryTask do
       it { is_expected.to eq(resp) }
     end
 
-    context 'with dead worker and inline_mode' do
-      before { allow(described_class).to receive(:inline_mode?).and_return(true) }
+    context 'with dead worker and raise_errors mode' do
+      before { allow(described_class).to receive(:raise_errors?).and_return(true) }
       before { allow(worker).to receive(:execute).and_raise(Cloudtasker::DeadWorkerError) }
       after { expect(described_class).to have_received(:delete) }
       after { expect(task).to have_attributes(job_retries: 0) }
       it { expect { execute }.to raise_error(Cloudtasker::DeadWorkerError) }
     end
 
-    context 'with dead worker and no inline_mode' do
-      before { allow(described_class).to receive(:inline_mode?).and_return(false) }
+    context 'with dead worker and no raise_errors mode' do
+      before { allow(described_class).to receive(:raise_errors?).and_return(false) }
       before { allow(worker).to receive(:execute).and_raise(Cloudtasker::DeadWorkerError) }
       after { expect(described_class).to have_received(:delete) }
       after { expect(task).to have_attributes(job_retries: 0) }
       it { expect { execute }.not_to raise_error }
     end
 
-    context 'with standard error and inline_mode' do
-      before { allow(described_class).to receive(:inline_mode?).and_return(true) }
+    context 'with standard error and raise_errors mode' do
+      before { allow(described_class).to receive(:raise_errors?).and_return(true) }
       before { allow(worker).to receive(:execute).and_raise(StandardError) }
       after { expect(described_class).not_to have_received(:delete) }
       after { expect(task).to have_attributes(job_retries: 1) }
       it { expect { execute }.to raise_error(StandardError) }
     end
 
-    context 'with standard error and no inline_mode' do
-      before { allow(described_class).to receive(:inline_mode?).and_return(false) }
+    context 'with standard error and no raise_errors mode' do
+      before { allow(described_class).to receive(:raise_errors?).and_return(false) }
       before { allow(worker).to receive(:execute).and_raise(StandardError) }
       after { expect(described_class).not_to have_received(:delete) }
       after { expect(task).to have_attributes(job_retries: 1) }

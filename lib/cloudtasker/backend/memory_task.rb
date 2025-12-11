@@ -18,6 +18,15 @@ module Cloudtasker
       end
 
       #
+      # Return true if errors must be raised immediately
+      #
+      # @return [Boolean] True if raise error mode is enabled.
+      #
+      def self.raise_errors?
+        defined?(Cloudtasker::Testing) && Cloudtasker::Testing.raise_errors?
+      end
+
+      #
       # Return the task queue. A worker class name
       #
       # @return [Array<Hash>] <description>
@@ -172,10 +181,10 @@ module Cloudtasker
         resp
       rescue DeadWorkerError => e
         self.class.delete(id)
-        raise(e) if self.class.inline_mode?
+        raise(e) if self.class.raise_errors?
       rescue StandardError => e
         self.job_retries += 1
-        raise(e) if self.class.inline_mode?
+        raise(e) if self.class.raise_errors?
       end
 
       #
