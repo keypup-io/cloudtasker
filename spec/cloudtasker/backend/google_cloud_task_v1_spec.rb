@@ -192,19 +192,39 @@ if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '
         payload[:schedule_time] = described_class.format_protobuf_time(arg_payload[:schedule_time])
         payload[:dispatch_deadline] = described_class.format_protobuf_duration(arg_payload[:dispatch_deadline])
         payload[:http_request][:headers]['Content-Type'] = 'text/json'
-        payload[:http_request][:headers]['Content-Transfer-Encoding'] = 'Base64'
-        payload[:http_request][:body] = Base64.encode64(arg_payload[:http_request][:body])
+        if config.base64_encode_body
+          payload[:http_request][:headers]['Content-Transfer-Encoding'] = 'Base64'
+          payload[:http_request][:body] = Base64.encode64(arg_payload[:http_request][:body])
+        end
         payload.compact
       end
 
-      context 'with defined keys' do
-        it { is_expected.to eq(expected_payload) }
+      context 'with base64 encoding enabled' do
+        before { config.base64_encode_body = true }
+
+        context 'with defined keys' do
+          it { is_expected.to eq(expected_payload) }
+        end
+
+        context 'with nil keys' do
+          let(:arg_payload) { job_payload.merge(some_nil_key: nil) }
+
+          it { is_expected.to eq(expected_payload) }
+        end
       end
 
-      context 'with nil keys' do
-        let(:arg_payload) { job_payload.merge(some_nil_key: nil) }
+      context 'with base64 encoding disabled' do
+        before { config.base64_encode_body = false }
 
-        it { is_expected.to eq(expected_payload) }
+        context 'with defined keys' do
+          it { is_expected.to eq(expected_payload) }
+        end
+
+        context 'with nil keys' do
+          let(:arg_payload) { job_payload.merge(some_nil_key: nil) }
+
+          it { is_expected.to eq(expected_payload) }
+        end
       end
     end
 
@@ -255,8 +275,10 @@ if !defined?(Google::Cloud::Tasks::VERSION) || Google::Cloud::Tasks::VERSION < '
         payload[:schedule_time] = described_class.format_protobuf_time(job_payload[:schedule_time])
         payload[:dispatch_deadline] = described_class.format_protobuf_duration(job_payload[:dispatch_deadline])
         payload[:http_request][:headers]['Content-Type'] = 'text/json'
-        payload[:http_request][:headers]['Content-Transfer-Encoding'] = 'Base64'
-        payload[:http_request][:body] = Base64.encode64(job_payload[:http_request][:body])
+        if config.base64_encode_body
+          payload[:http_request][:headers]['Content-Transfer-Encoding'] = 'Base64'
+          payload[:http_request][:body] = Base64.encode64(job_payload[:http_request][:body])
+        end
         payload
       end
 
