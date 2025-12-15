@@ -8,7 +8,8 @@ module Cloudtasker
     attr_accessor :redis, :store_payloads_in_redis, :gcp_queue_prefix
     attr_writer :secret, :gcp_location_id, :gcp_project_id,
                 :processor_path, :logger, :mode, :max_retries,
-                :dispatch_deadline, :on_error, :on_dead, :oidc, :local_server_ssl_verify
+                :dispatch_deadline, :on_error, :on_dead, :oidc, :local_server_ssl_verify,
+                :base64_encode_body
 
     # Max Cloud Task size in bytes
     MAX_TASK_SIZE = 100 * 1024 # 100 KB
@@ -55,6 +56,9 @@ module Cloudtasker
 
     # Default on_error Proc
     DEFAULT_ON_ERROR = ->(error, worker) {}
+
+    # Default base64 encoding flag
+    DEFAULT_BASE64_ENCODE_BODY = true
 
     # Cache key prefix used to store workers in cache and retrieve
     # them later.
@@ -300,6 +304,16 @@ module Cloudtasker
     #
     def local_server_ssl_verify
       @local_server_ssl_verify.nil? ? DEFAULT_LOCAL_SERVER_SSL_VERIFY_MODE : @local_server_ssl_verify
+    end
+
+    #
+    # Return whether to base64 encode the task body when sending to Cloud Tasks.
+    # Encoding is enabled by default to support UTF-8 content.
+    #
+    # @return [Boolean] Whether to base64 encode the body.
+    #
+    def base64_encode_body
+      @base64_encode_body.nil? ? DEFAULT_BASE64_ENCODE_BODY : @base64_encode_body
     end
   end
 end
