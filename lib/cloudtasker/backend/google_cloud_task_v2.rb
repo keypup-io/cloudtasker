@@ -121,12 +121,16 @@ module Cloudtasker
         # Format dispatch_deadline to Google::Protobuf::Duration
         payload[:dispatch_deadline] = format_protobuf_duration(payload[:dispatch_deadline])
 
-        # Encode job content to support UTF-8.
-        # Google Cloud Task expect content to be ASCII-8BIT compatible (binary)
+        # Setup headers
         payload[:http_request][:headers] ||= {}
         payload[:http_request][:headers][Cloudtasker::Config::CONTENT_TYPE_HEADER] = 'text/json'
-        payload[:http_request][:headers][Cloudtasker::Config::ENCODING_HEADER] = 'Base64'
-        payload[:http_request][:body] = Base64.encode64(payload[:http_request][:body])
+
+        # Conditionally encode job content to support UTF-8.
+        # Google Cloud Task expect content to be ASCII-8BIT compatible (binary)
+        if config.base64_encode_body
+          payload[:http_request][:headers][Cloudtasker::Config::ENCODING_HEADER] = 'Base64'
+          payload[:http_request][:body] = Base64.encode64(payload[:http_request][:body])
+        end
 
         payload.compact
       end

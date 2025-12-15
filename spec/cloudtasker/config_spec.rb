@@ -16,6 +16,7 @@ RSpec.describe Cloudtasker::Config do
   let(:on_dead) { ->(e, w) {} }
   let(:oidc) { nil }
   let(:local_server_ssl_verify) { false }
+  let(:base64_encode_body) { true }
 
   let(:rails_hosts) { [] }
   let(:rails_secret) { 'rails_secret' }
@@ -48,6 +49,7 @@ RSpec.describe Cloudtasker::Config do
       c.on_dead = on_dead
       c.oidc = oidc
       c.local_server_ssl_verify = local_server_ssl_verify
+      c.base64_encode_body = base64_encode_body
     end
 
     Cloudtasker.config
@@ -334,6 +336,20 @@ RSpec.describe Cloudtasker::Config do
       let(:local_server_ssl_verify) { nil }
 
       it { is_expected.to eq(described_class::DEFAULT_LOCAL_SERVER_SSL_VERIFY_MODE) }
+    end
+  end
+
+  describe '#base64_encode_body' do
+    subject { config.base64_encode_body }
+
+    context 'with value specified via config' do
+      it { is_expected.to eq(base64_encode_body) }
+    end
+
+    context 'with no value' do
+      let(:base64_encode_body) { nil }
+
+      it { is_expected.to eq(described_class::DEFAULT_BASE64_ENCODE_BODY) }
     end
   end
 
