@@ -92,7 +92,7 @@ module Cloudtasker
       args_payload_key = extracted_payload[:args_payload_key]
 
       # Build worker
-      worker = Cloudtasker::Worker.from_hash(payload) || raise(InvalidWorkerError)
+      worker = Cloudtasker::Worker.from_hash(payload) || raise(InvalidWorkerError, payload[:worker])
 
       # Yied worker
       resp = yield(worker)

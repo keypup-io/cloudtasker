@@ -196,6 +196,17 @@ RSpec.describe Cloudtasker::WorkerHandler do
       it { expect_subject_block.to yield_with_args(be_a(Cloudtasker::Worker)) }
       it { expect_subject_block.to yield_with_args(have_attributes(extracted_payload)) }
     end
+
+    context 'with invalid worker class' do
+      let(:input_payload) { { 'worker' => 'NonExistentWorker', 'job_id' => 'some-id', 'job_args' => [1, 2] } }
+
+      before do
+        expect(Cloudtasker.config.on_error).to receive(:call)
+          .with(an_instance_of(Cloudtasker::InvalidWorkerError), nil)
+      end
+
+      it { expect_subject_block.to raise_error(Cloudtasker::InvalidWorkerError, 'Invalid worker: NonExistentWorker') }
+    end
   end
 
   describe '.execute_from_payload!' do
