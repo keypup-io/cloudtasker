@@ -35,6 +35,10 @@ module Cloudtasker
       # to be acquired.
       BATCH_MAX_LOCK_WAIT = 60
 
+      # TTL for the completion flag that prevents concurrent children from
+      # triggering multiple on_complete calls.
+      BATCH_COMPLETION_TTL = 100
+
       #
       # Return the cloudtasker redis client
       #
@@ -191,6 +195,15 @@ module Cloudtasker
       #
       def batch_state_count_gid(state)
         "#{batch_state_gid}/state_count/#{state}"
+      end
+
+      #
+      # Return the key used to track batch completion.
+      #
+      # @return [String] The batch completion key.
+      #
+      def batch_completion_gid
+        "#{batch_state_gid}/completed"
       end
 
       #
@@ -407,8 +420,20 @@ module Cloudtasker
           run_worker_callback(:on_child_dead, child_batch.worker)
         end
 
-        # Notify the parent batch that we are done with this batch
-        on_complete if status != :errored && complete?
+        return if status == :errored
+        return unless complete?
+
+        # Notify the parent batch that we are done with this batch. Use SETNX to ensure
+        # only the first concurrent child to complete triggers on_complete.
+        return unless redis.set(batch_completion_gid, true, nx: true, ex: BATCH_COMPLETION_TTL)
+
+        begin
+          on_complete
+        rescue StandardError
+          # Clear key on error so completion can be reattempted
+          redis.del(batch_completion_gid)
+          raise
+        end
       end
 
       #
@@ -439,6 +464,7 @@ module Cloudtasker
         redis.multi do |m|
           m.del(batch_gid)
           m.del(batch_state_gid)
+          m.del(batch_completion_gid)
           BATCH_STATUSES.each { |e| m.del(batch_state_count_gid(e)) }
         end
       end
