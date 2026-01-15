@@ -327,21 +327,34 @@ module Cloudtasker
       #
       # Update the batch state.
       #
-      # @param [String] job_id The batch id.
+      # @param [String] batch_id The batch id.
       # @param [String] status The status of the sub-batch.
+      # @param [Boolean] force Force update the status even if the registered status is a completion status.
       #
-      def update_state(batch_id, status)
+      def update_state(batch_id, status, force: false)
         migrate_batch_state_to_redis_hash
 
-        # Get current status
-        current_status = redis.hget(batch_state_gid, batch_id)
-        return if current_status == status.to_s
+        # Get stored status and abort if no changes
+        stored_status = redis.hget(batch_state_gid, batch_id)
+        return if stored_status == status.to_s
+
+        # Abort if the job has already been flagged as completed
+        #
+        # A job may be duplicated and run concurrently if Cloud Task times out
+        # before the job completes.
+        #
+        # In this case, the original job keeps running in the background while Cloud Task triggers a retry.
+        # This retry runs in parallel of the hung job. The retry may complete before the hung job.
+        # The hung job may eventually raise an error (e.g. timeout error) after the retried job has completed,
+        # which would leave the job status as "errored" instead of "completed in the batch state without
+        # the failsafe below.
+        return if COMPLETION_STATUSES.include?(stored_status) && !force
 
         # Update the batch state batch_id entry with the new status
         # and update counters
         redis.multi do |m|
           m.hset(batch_state_gid, batch_id, status)
-          m.decr(batch_state_count_gid(current_status))
+          m.decr(batch_state_count_gid(stored_status))
           m.incr(batch_state_count_gid(status))
         end
       end
@@ -432,6 +445,8 @@ module Cloudtasker
         rescue StandardError
           # Clear key on error so completion can be reattempted
           redis.del(batch_completion_gid)
+
+          # Re-raise
           raise
         end
       end

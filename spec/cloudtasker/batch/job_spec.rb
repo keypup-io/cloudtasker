@@ -408,21 +408,50 @@ RSpec.describe Cloudtasker::Batch::Job do
 
     let(:child_id) { child_batch.batch_id }
     let(:status) { 'processing' }
-    let(:initial_state) { { child_id => 'scheduled' } }
+    let(:initial_status) { 'scheduled' }
+    let(:initial_state) { { child_id => initial_status } }
+    let(:force) { false }
 
     before do
       redis.hset(batch.batch_state_gid, initial_state)
-      redis.set(batch.batch_state_count_gid('scheduled'), 1)
-      batch.update_state(child_id, status)
+      redis.set(batch.batch_state_count_gid(initial_status), 1)
+      batch.update_state(child_id, status, force: force)
       expect(batch).to receive(:migrate_batch_state_to_redis_hash).and_call_original
     end
 
-    after do
-      expect(batch.batch_state_count('scheduled')).to eq(0)
-      expect(batch.batch_state_count(status)).to eq(1)
+    context 'with status moving forward' do
+      after do
+        expect(batch.batch_state_count(initial_status)).to eq(0)
+        expect(batch.batch_state_count(status)).to eq(1)
+      end
+
+      it { is_expected.to eq(status) }
     end
 
-    it { is_expected.to eq(status) }
+    %w[completed dead].each do |final_status|
+      context "with status already flagged as #{final_status}" do
+        let(:initial_status) { final_status }
+
+        after do
+          expect(batch.batch_state_count(initial_status)).to eq(1)
+          expect(batch.batch_state_count(status)).to eq(0)
+        end
+
+        it { is_expected.to eq(initial_status) }
+      end
+
+      context "with force=true and status already flagged as #{final_status}" do
+        let(:force) { true }
+        let(:initial_status) { final_status }
+
+        after do
+          expect(batch.batch_state_count(initial_status)).to eq(0)
+          expect(batch.batch_state_count(status)).to eq(1)
+        end
+
+        it { is_expected.to eq(status) }
+      end
+    end
   end
 
   describe '#complete?' do
