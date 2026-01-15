@@ -165,6 +165,12 @@ RSpec.describe Cloudtasker::Batch::Job do
     it { is_expected.to eq("#{batch.batch_state_gid}/state_count/#{state}") }
   end
 
+  describe '#batch_completion_gid' do
+    subject { batch.batch_completion_gid }
+
+    it { is_expected.to eq("#{batch.batch_state_gid}/completed") }
+  end
+
   describe '#batch_state_count' do
     subject { batch.batch_state_count(state) }
 
@@ -565,10 +571,29 @@ RSpec.describe Cloudtasker::Batch::Job do
     end
 
     context 'with batch complete' do
+      before do
+        expect(redis).to receive(:set)
+          .with(batch.batch_completion_gid, true, nx: true, ex: described_class::BATCH_COMPLETION_TTL)
+          .and_call_original
+      end
+
       after { expect(batch).to have_received(:update_state) }
       after { expect(batch).to have_received(:run_worker_callback).with(:on_child_complete, child_batch.worker) }
       after { expect(batch).to have_received(:on_complete) }
       it { is_expected.to be_truthy }
+    end
+
+    context 'with batch complete but completion already claimed by another child' do
+      before do
+        expect(redis).to receive(:set)
+          .with(batch.batch_completion_gid, true, nx: true, ex: described_class::BATCH_COMPLETION_TTL)
+          .and_return(false)
+      end
+
+      after { expect(batch).to have_received(:update_state) }
+      after { expect(batch).to have_received(:run_worker_callback).with(:on_child_complete, child_batch.worker) }
+      after { expect(batch).not_to have_received(:on_complete) }
+      it { is_expected.to be_falsey }
     end
 
     context 'with batch not complete yet' do
