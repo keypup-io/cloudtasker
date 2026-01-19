@@ -755,6 +755,16 @@ RSpec.describe Cloudtasker::Worker do
     end
   end
 
+  describe '#job_duration_ms' do
+    subject { worker.job_duration_ms }
+
+    let(:worker) { worker_class.new }
+    let(:job_duration) { 5.214 }
+
+    before { allow(worker).to receive(:job_duration).and_return(job_duration) }
+    it { is_expected.to eq(job_duration * 1000) }
+  end
+
   describe '#run_worker_callback' do
     subject(:run_worker_callback) { worker.run_callback(callback, *args) }
 
