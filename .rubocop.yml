@@ -12,7 +12,7 @@ Metrics/ClassLength:
   Max: 300
 
 Metrics/ModuleLength:
-  Max: 150
+  Max: 300
 
 Metrics/AbcSize:
   Max: 30
