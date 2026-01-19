@@ -60,8 +60,8 @@ module Cloudtasker
       # Worker will be nil on InvalidWorkerError - in that case we use generic logging
       logger = worker&.logger || Cloudtasker.logger
 
-      # Log error
-      logger.error(error)
+      # Log error with duration
+      logger.error(error) { { duration: worker&.job_duration_ms }.compact }
     end
 
     #
