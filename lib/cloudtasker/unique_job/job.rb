@@ -118,6 +118,29 @@ module Cloudtasker
       end
 
       #
+      # The base unique scope generated from lock options
+      #
+      # @return [Hash] A scope hash
+      #
+      def base_unique_scope
+        if options[:lock_per_batch] && defined?(Cloudtasker::Batch::Job)
+          key = Cloudtasker::Batch::Job.key(:parent_id).to_sym
+          worker.job_meta.to_h.slice(key)
+        else
+          {}
+        end
+      end
+
+      #
+      # Return a scope to be included in the digest hash
+      #
+      # @return [Hash] A scope hash
+      #
+      def unique_scope
+        base_unique_scope.to_h.merge(worker.try(:unique_scope).to_h)
+      end
+
+      #
       # Return a unique description of the job in hash format.
       #
       # @return [Hash] Representation of the unique job in hash format.
@@ -125,8 +148,9 @@ module Cloudtasker
       def digest_hash
         @digest_hash ||= {
           class: worker.class.to_s,
-          unique_args: unique_args
-        }
+          unique_args: unique_args,
+          unique_scope: unique_scope.presence
+        }.compact
       end
 
       #

@@ -151,10 +151,97 @@ RSpec.describe Cloudtasker::UniqueJob::Job do
     end
   end
 
+  describe '#base_unique_scope' do
+    subject { job.base_unique_scope }
+
+    let(:job_opts) { {} }
+
+    before { allow(job).to receive(:options).and_return(job_opts) }
+
+    context 'with no lock_per_batch option' do
+      it { is_expected.to eq({}) }
+    end
+
+    context 'with lock_per_batch option but no Batch module' do
+      let(:job_opts) { { lock_per_batch: true } }
+
+      before { hide_const('Cloudtasker::Batch::Job') }
+      it { is_expected.to eq({}) }
+    end
+
+    context 'with lock_per_batch option and Batch module defined' do
+      let(:job_opts) { { lock_per_batch: true } }
+      let(:parent_id) { 'parent-123' }
+      let(:batch_key) { Cloudtasker::Batch::Job.key(:parent_id).to_sym }
+
+      before do
+        allow(worker).to receive(:job_meta).and_return(
+          Cloudtasker::MetaStore.new(batch_key => parent_id, other_key: 'other_value')
+        )
+      end
+
+      it { is_expected.to eq(batch_key => parent_id) }
+    end
+
+    context 'with lock_per_batch option and no parent_id in meta' do
+      let(:job_opts) { { lock_per_batch: true } }
+      let(:batch_key) { Cloudtasker::Batch::Job.key(:parent_id).to_sym }
+
+      before do
+        allow(worker).to receive(:job_meta).and_return(
+          Cloudtasker::MetaStore.new(other_key: 'other_value')
+        )
+      end
+
+      it { is_expected.to eq({}) }
+    end
+  end
+
+  describe '#unique_scope' do
+    subject { job.unique_scope }
+
+    let(:base_scope) { { base_key: 'base_value' } }
+
+    before { allow(job).to receive(:base_unique_scope).and_return(base_scope) }
+
+    context 'with no unique_scope defined on worker' do
+      it { is_expected.to eq(base_scope) }
+    end
+
+    context 'with unique_scope defined on worker' do
+      let(:worker_scope) { { worker_key: 'worker_value' } }
+
+      before { allow(worker).to receive(:unique_scope).and_return(worker_scope) }
+      it { is_expected.to eq(base_scope.merge(worker_scope)) }
+    end
+
+    context 'with unique_scope overriding base_scope' do
+      let(:worker_scope) { { base_key: 'overridden_value', worker_key: 'worker_value' } }
+
+      before { allow(worker).to receive(:unique_scope).and_return(worker_scope) }
+      it { is_expected.to eq(worker_scope) }
+    end
+
+    context 'with worker returning nil for unique_scope' do
+      before { allow(worker).to receive(:unique_scope).and_return(nil) }
+      it { is_expected.to eq(base_scope) }
+    end
+  end
+
   describe '#digest_hash' do
     subject { job.digest_hash }
 
-    it { is_expected.to eq(class: worker.class.to_s, unique_args: job.unique_args) }
+    context 'with no unique_scope' do
+      before { allow(job).to receive(:unique_scope).and_return({}) }
+      it { is_expected.to eq(class: worker.class.to_s, unique_args: job.unique_args) }
+    end
+
+    context 'with unique_scope present' do
+      let(:scope) { { tenant_id: '123' } }
+
+      before { allow(job).to receive(:unique_scope).and_return(scope) }
+      it { is_expected.to eq(class: worker.class.to_s, unique_args: job.unique_args, unique_scope: scope) }
+    end
   end
 
   describe '#id' do
