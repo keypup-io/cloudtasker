@@ -43,6 +43,9 @@ RSpec.configure do |config|
 
     # Flush redis keys
     Cloudtasker::RedisClient.new.clear
+
+    # Clear all jobs in memory
+    Cloudtasker::Worker.clear_all
   end
 
   # NOTE: Retriable is configured in a conditional before
