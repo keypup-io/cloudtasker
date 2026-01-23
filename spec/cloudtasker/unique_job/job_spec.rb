@@ -11,6 +11,12 @@ RSpec.describe Cloudtasker::UniqueJob::Job do
     subject { job }
 
     it { is_expected.to have_attributes(worker: worker, call_opts: call_opts) }
+
+    context 'with nil call_opts' do
+      let(:call_opts) { nil }
+
+      it { is_expected.to have_attributes(worker: worker, call_opts: {}) }
+    end
   end
 
   describe '#options' do

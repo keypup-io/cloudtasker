@@ -24,7 +24,7 @@ module Cloudtasker
       #
       def initialize(worker, opts = {})
         @worker = worker
-        @call_opts = opts
+        @call_opts = opts.to_h
       end
 
       #
