@@ -68,9 +68,13 @@ RSpec/MessageSpies:
   Enabled: false
 
 RSpec/MultipleExpectations:
+  Max: 5
   Exclude:
     - "examples/**/*"
     - "spec/integration/**/*"
+
+RSpec/ExampleLength:
+  Max: 10
 
 RSpec/AnyInstance:
   Enabled: false

@@ -11,8 +11,12 @@ module Cloudtasker
     # after schedule time.
     DEFAULT_LOCK_TTL = 10 * 60 # 10 minutes
 
+    # The maximum duration of the provisional lock while
+    # enqueuing a job.
+    DEFAULT_LOCK_PROVISIONAL_TTL = 3
+
     class << self
-      attr_writer :lock_ttl
+      attr_writer :lock_ttl, :lock_provisional_ttl
 
       # Configure the middleware
       def configure
@@ -26,6 +30,15 @@ module Cloudtasker
       #
       def lock_ttl
         @lock_ttl || DEFAULT_LOCK_TTL
+      end
+
+      #
+      # Return the provisional TTL for locks
+      #
+      # @return [Integer] The lock TTL.
+      #
+      def lock_provisional_ttl
+        @lock_provisional_ttl || DEFAULT_LOCK_PROVISIONAL_TTL
       end
     end
   end

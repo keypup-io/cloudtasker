@@ -10,6 +10,12 @@ module Cloudtasker
       # The default lock strategy to use. Defaults to "no lock".
       DEFAULT_LOCK = UniqueJob::Lock::NoOp
 
+      # Warning message when final lock cannot be acquired after scheduling
+      LOCK_FINALIZATION_WARNING = 'A provisional lock was acquired before enqueuing the job but the ' \
+                                  'lock could not be finalized after enqueuing the job. This means that ' \
+                                  'it took longer than lock_provisional_ttl to enqueue the job. See ' \
+                                  'Worker#lock_provisional_ttl option.'
+
       #
       # Build a new instance of the class.
       #
@@ -63,8 +69,26 @@ module Cloudtasker
         scheduled_at = [call_opts[:time_at].to_i, now].compact.max
         lock_duration = (options[:lock_ttl] || Cloudtasker::UniqueJob.lock_ttl).to_i
 
-        # Return TTL
-        scheduled_at + lock_duration - now
+        # Return the TTL, which is the configured lock_duration at minima
+        [lock_duration, scheduled_at + lock_duration - now].max
+      end
+
+      #
+      # A provisional lock uses a very short duration and aims
+      # at covering the time it takes for the job to be enqueued through
+      # the client middleware chain.
+      #
+      # If the application crashes during this
+      # time (e.g. OOM), at least the job won't be locked for an extended period
+      # of time (which may span across a parent job retry, for instance)
+      #
+      # This TTL can be configured via the `lock_provisional_ttl` option on
+      # the job itself.
+      #
+      # @return [Integer] The TTL in seconds
+      #
+      def lock_provisional_ttl
+        (options[:lock_provisional_ttl] || Cloudtasker::UniqueJob.lock_provisional_ttl).to_i
       end
 
       #
@@ -154,6 +178,49 @@ module Cloudtasker
         lock_already_acquired = !lock_acquired && redis.get(unique_gid) == id
 
         raise(LockError) unless lock_acquired || lock_already_acquired
+      end
+
+      #
+      # Acquire a provisional lock, yield, then set a final lock.
+      #
+      # This method is designed for scheduling operations where you need to:
+      # 1. Acquire a provisional lock to prevent concurrent scheduling
+      # 2. Perform the scheduling operation (yield)
+      # 3. Set a final lock with proper TTL after scheduling succeeds
+      #
+      # Raises a `Cloudtasker::UniqueJob::LockError` if the provisional lock
+      # cannot be acquired.
+      #
+      # @return [Any] The return value of the block
+      #
+      def lock_for_scheduling!
+        # Step 1: Acquire provisional lock
+        # Check if the lock is already acquired from a previous run
+        acquired = redis.get(unique_gid) == id
+
+        # Set the lock exclusively, if not acquired already.
+        # Refresh the duration otherwise.
+        lock_acquired = redis.set(unique_gid, id, nx: !acquired, ex: lock_provisional_ttl)
+        raise(LockError) unless lock_acquired
+
+        # Step 2: Yield to perform scheduling operation
+        result = yield
+
+        # Step 3: Set final lock
+        # Check if the lock is still held by this job
+        acquired = redis.get(unique_gid) == id
+
+        # Set the lock with final duration
+        # If already acquired, refresh with final TTL
+        # If not acquired (expired or taken), try to acquire exclusively
+        final_lock_acquired = redis.set(unique_gid, id, nx: !acquired, ex: lock_ttl)
+
+        # Log a warning if final lock could not be acquired
+        # The job has already been enqueued at this point, so raising an error is useless
+        worker.logger.warn(LOCK_FINALIZATION_WARNING) unless final_lock_acquired
+
+        # Return the result of the block
+        result
       end
 
       #

@@ -11,10 +11,13 @@ module Cloudtasker
         # if the lock could not be acquired.
         #
         def schedule(&block)
-          job.lock!
-          yield
+          job.lock_for_scheduling!(&block)
         rescue LockError
           conflict_instance.on_schedule(&block)
+        rescue StandardError
+          # Unlock the job if any error arises during scheduling
+          job.unlock!
+          raise
         end
 
         #

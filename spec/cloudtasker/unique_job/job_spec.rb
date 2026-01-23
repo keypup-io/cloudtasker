@@ -61,6 +61,46 @@ RSpec.describe Cloudtasker::UniqueJob::Job do
 
       it { is_expected.to eq(call_opts[:time_at] + job_opts[:lock_ttl] - now) }
     end
+
+    context 'with call_opts[:time_at] in the past' do
+      let(:call_opts) { { time_at: now - 3600 } }
+
+      it { is_expected.to eq(default_ttl) }
+    end
+
+    context 'with call_opts[:time_at] in the past and custom lock_ttl' do
+      let(:call_opts) { { time_at: now - 3600 } }
+      let(:job_opts) { { lock_ttl: 60 } }
+
+      it { is_expected.to eq(job_opts[:lock_ttl]) }
+    end
+  end
+
+  describe '#lock_provisional_ttl' do
+    subject { job.lock_provisional_ttl }
+
+    let(:job_opts) { {} }
+    let(:default_provisional_ttl) { Cloudtasker::UniqueJob::DEFAULT_LOCK_PROVISIONAL_TTL }
+
+    before { allow(job).to receive(:options).and_return(job_opts) }
+
+    context 'with no opts' do
+      it { is_expected.to eq(default_provisional_ttl) }
+    end
+
+    context 'with global lock_provisional_ttl' do
+      let(:global_provisional_ttl) { 5 }
+
+      before { Cloudtasker::UniqueJob.configure { |c| c.lock_provisional_ttl = global_provisional_ttl } }
+      after { Cloudtasker::UniqueJob.configure { |c| c.lock_provisional_ttl = nil } }
+      it { is_expected.to eq(global_provisional_ttl) }
+    end
+
+    context 'with options[:lock_provisional_ttl]' do
+      let(:job_opts) { { lock_provisional_ttl: 10 } }
+
+      it { is_expected.to eq(job_opts[:lock_provisional_ttl]) }
+    end
   end
 
   describe '#lock_instance' do
@@ -155,6 +195,95 @@ RSpec.describe Cloudtasker::UniqueJob::Job do
       after { expect(job.redis.get(job.unique_gid)).to eq(job.id) }
       after { expect(job.redis.ttl(job.unique_gid)).to be_within(10).of(job.lock_ttl) }
       it { expect { lock! }.not_to raise_error }
+    end
+  end
+
+  describe '#lock_for_scheduling!' do
+    let(:block_executed) { [] }
+
+    context 'with lock acquired by another job' do
+      let(:other_worker) { TestWorker.new(job_args: [1, 2]) }
+      let(:other_job) { described_class.new(other_worker) }
+
+      before { other_job.lock! }
+      it 'raises a LockError' do
+        expect do
+          job.lock_for_scheduling! do
+            block_executed << true
+          end
+        end.to raise_error(Cloudtasker::UniqueJob::LockError)
+      end
+    end
+
+    context 'with lock available' do
+      it 'acquires provisional lock, yields, then sets final lock' do
+        expect { job.lock_for_scheduling! { block_executed << true } }.not_to raise_error
+        expect(block_executed).to eq([true])
+        expect(job.redis.get(job.unique_gid)).to eq(job.id)
+        expect(job.redis.ttl(job.unique_gid)).to be_within(10).of(job.lock_ttl)
+      end
+
+      it 'returns the block return value' do
+        result = job.lock_for_scheduling! { 'test_result' }
+        expect(result).to eq('test_result')
+      end
+    end
+
+    context 'with lock already acquired by the same job' do
+      before { job.lock! }
+
+      it 'refreshes provisional lock, yields, then sets final lock' do
+        expect { job.lock_for_scheduling! { block_executed << true } }.not_to raise_error
+        expect(block_executed).to eq([true])
+        expect(job.redis.get(job.unique_gid)).to eq(job.id)
+        expect(job.redis.ttl(job.unique_gid)).to be_within(10).of(job.lock_ttl)
+      end
+    end
+
+    context 'when provisional lock expires before final lock' do
+      it 'does not raise an error' do
+        expect do
+          job.lock_for_scheduling! do
+            block_executed << true
+            # Simulate provisional lock expiring
+            job.redis.del(job.unique_gid)
+          end
+        end.not_to raise_error
+
+        expect(block_executed).to eq([true])
+      end
+    end
+
+    context 'when provisional lock is taken by another job before final lock' do
+      let(:other_worker) { TestWorker.new(job_args: [1, 2]) }
+      let(:other_job) { described_class.new(other_worker) }
+
+      it 'does not raise an error' do
+        expect do
+          job.lock_for_scheduling! do
+            block_executed << true
+            # Simulate another job taking the lock
+            job.redis.del(job.unique_gid)
+            other_job.lock!
+          end
+        end.not_to raise_error
+
+        expect(block_executed).to eq([true])
+      end
+    end
+
+    context 'when block raises an error' do
+      let(:error) { StandardError.new('test error') }
+
+      it 'propagates the error without setting final lock' do
+        expect do
+          job.lock_for_scheduling! { raise error }
+        end.to raise_error(error)
+
+        # Provisional lock should still be set
+        expect(job.redis.get(job.unique_gid)).to eq(job.id)
+        expect(job.redis.ttl(job.unique_gid)).to be_within(2).of(job.lock_provisional_ttl)
+      end
     end
   end
 
