@@ -236,7 +236,7 @@ module Cloudtasker
     #
     def secret
       @secret ||= (
-        defined?(Rails) && Rails.application.credentials&.dig(:secret_key_base)
+        defined?(Rails) && Rails.application.secret_key_base
       ) || raise(StandardError, SECRET_MISSING_ERROR)
     end
 
