@@ -12,7 +12,9 @@ module Cloudtasker
                 :base64_encode_body
 
     # Max Cloud Task size in bytes
-    MAX_TASK_SIZE = 100 * 1024 # 100 KB
+    # The GCP limit is 1MiB, which is 1049KB.
+    # The task formatting and headers add about 20KB.
+    MAX_TASK_SIZE = 1000 * 1000 # 1000 KB
 
     # Retry header in Cloud Task responses
     #

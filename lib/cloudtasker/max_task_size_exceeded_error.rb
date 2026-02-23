@@ -5,7 +5,7 @@ module Cloudtasker
   # See: https://cloud.google.com/appengine/quotas#Task_Queue
   #
   class MaxTaskSizeExceededError < StandardError
-    MSG = 'The size of Cloud Tasks must not exceed 100KB'
+    MSG = "The size of Cloud Tasks must not exceed #{Config::MAX_TASK_SIZE / 1000}KB".freeze
 
     def initialize(msg = MSG)
       super

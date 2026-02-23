@@ -178,7 +178,7 @@ module Cloudtasker
     #
     def store_payload_in_redis?
       Cloudtasker.config.redis_payload_storage_threshold &&
-        worker.job_args.to_json.bytesize > (Cloudtasker.config.redis_payload_storage_threshold * 1024)
+        worker.job_args.to_json.bytesize > (Cloudtasker.config.redis_payload_storage_threshold * 1000)
     end
 
     #

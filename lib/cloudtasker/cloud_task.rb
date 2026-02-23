@@ -82,10 +82,22 @@ module Cloudtasker
     # @return [Cloudtasker::CloudTask] The created task.
     #
     def self.create(payload)
-      raise MaxTaskSizeExceededError if payload.to_json.bytesize > Config::MAX_TASK_SIZE
+      raise MaxTaskSizeExceededError if payload_size(payload) > Config::MAX_TASK_SIZE
 
       resp = backend.create(payload)&.to_h
       resp ? new(**resp) : nil
+    end
+
+    #
+    # Calculate the size of a task payload.
+    # The size of the task will be inflated if Base64 encoding is used.
+    #
+    # @param [Hash] payload The payload of the task
+    #
+    # @return [Integer] The size of of the payload, in bytes.
+    #
+    def self.payload_size(payload)
+      (Cloudtasker.config.base64_encode_body ? Base64.encode64(payload.to_json) : payload.to_json).bytesize
     end
 
     #

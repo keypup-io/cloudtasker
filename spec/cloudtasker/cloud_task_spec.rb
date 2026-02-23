@@ -107,7 +107,9 @@ RSpec.describe Cloudtasker::CloudTask do
     end
 
     context 'with max task size exceeded' do
-      let(:payload) { 'a' * 1024 * 101 }
+      let(:exceeding_size) { Cloudtasker::Config::MAX_TASK_SIZE + 1 }
+
+      before { allow(described_class).to receive(:payload_size).with(payload).and_return(exceeding_size) }
 
       it { expect { create_task }.to raise_error(Cloudtasker::MaxTaskSizeExceededError) }
     end
@@ -143,6 +145,28 @@ RSpec.describe Cloudtasker::CloudTask do
 
     context 'with different object' do
       it { is_expected.not_to eq('foo') }
+    end
+  end
+
+  describe '.payload_size' do
+    subject(:payload_size) { described_class.payload_size(test_payload) }
+
+    let(:test_payload) { { worker: 'TestWorker', job_args: %w[arg1 arg2] } }
+
+    context 'with base64 encoding enabled' do
+      let(:expected_size) { Base64.encode64(test_payload.to_json).bytesize }
+
+      before { allow(Cloudtasker.config).to receive(:base64_encode_body).and_return(true) }
+
+      it { is_expected.to eq(expected_size) }
+    end
+
+    context 'with base64 encoding disabled' do
+      let(:expected_size) { test_payload.to_json.bytesize }
+
+      before { allow(Cloudtasker.config).to receive(:base64_encode_body).and_return(false) }
+
+      it { is_expected.to eq(expected_size) }
     end
   end
 end
