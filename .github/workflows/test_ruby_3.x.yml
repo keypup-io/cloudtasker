@@ -32,7 +32,7 @@ jobs:
       BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/${{ matrix.appraisal }}.gemfile
     steps:
       - uses: actions/checkout@v2
-      - uses: zhulik/redis-action@1.1.0
+      - uses: shogo82148/actions-setup-redis@v1
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: ${{ matrix.ruby }}
