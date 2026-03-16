@@ -19,10 +19,11 @@ module Cloudtasker
     # Retry header in Cloud Task responses
     #
     # Definitions:
-    #   X-CloudTasks-TaskRetryCount: total number of retries (including 504 "instance unreachable")
-    #   X-CloudTasks-TaskExecutionCount: number of non-503 retries (= actual number of job failures)
+    #   X-CloudTasks-TaskRetryCount: total number of retries (including 50x errors)
+    #   X-CloudTasks-TaskExecutionCount: number of non-50x retries (= actual number of job failures)
     #
     RETRY_HEADER = 'X-Cloudtasks-Taskexecutioncount'
+    ATTEMPT_HEADER = 'X-CloudTasks-TaskRetryCount'
 
     # Cloud Task ID header
     TASK_ID_HEADER = 'X-CloudTasks-TaskName'

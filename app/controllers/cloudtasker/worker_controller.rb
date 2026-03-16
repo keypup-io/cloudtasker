@@ -63,7 +63,9 @@ module Cloudtasker
     #
     def payload
       # Return content parsed as JSON and add job retries count
-      @payload ||= JSON.parse(json_payload).merge(job_retries: job_retries, task_id: task_id)
+      @payload ||= JSON.parse(json_payload).merge(
+        job_retries: job_retries, job_attempts: job_attempts, task_id: task_id
+      )
     end
 
     #
@@ -73,6 +75,16 @@ module Cloudtasker
     #
     def job_retries
       request.headers[Cloudtasker::Config::RETRY_HEADER].to_i
+    end
+
+    #
+    # Extract the number of times this task was attempted at runtime.
+    # This includes all attempts (including 50x errors).
+    #
+    # @return [Integer] The number of attempts.
+    #
+    def job_attempts
+      request.headers[Cloudtasker::Config::ATTEMPT_HEADER].to_i
     end
 
     #

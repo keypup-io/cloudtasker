@@ -21,22 +21,25 @@ if defined?(Rails)
       end
       let(:mime_type) { :json }
       let(:request_body) { payload.to_json }
-      let(:expected_payload) { payload.merge(job_retries: retries, task_id: task_id) }
+      let(:expected_payload) { payload.merge(job_retries: retries, job_attempts: attempts, task_id: task_id) }
       let(:task_id) { 'ab2341f' }
       let(:id) { '111' }
       let(:worker_class_name) { 'TestWorker' }
       let(:args) { [1, 2] }
       let(:meta) { { 'foo' => 'bar' } }
       let(:retries) { 3 }
+      let(:attempts) { 5 }
       let(:queue) { 'some-queue' }
       let(:signature) { Cloudtasker::Authenticator.sign_payload(payload.to_json) }
 
       let(:signature_header) { "HTTP_#{Cloudtasker::Config::CT_SIGNATURE_HEADER.tr('-', '_').upcase}" }
       let(:env_retries_header) { "HTTP_#{Cloudtasker::Config::RETRY_HEADER.tr('-', '_').upcase}" }
+      let(:env_attempts_header) { "HTTP_#{Cloudtasker::Config::ATTEMPT_HEADER.tr('-', '_').upcase}" }
       let(:env_task_id_header) { "HTTP_#{Cloudtasker::Config::TASK_ID_HEADER.tr('-', '_').upcase}" }
 
       before do
         request.env[env_retries_header] = retries
+        request.env[env_attempts_header] = attempts
         request.env[env_task_id_header] = task_id
       end
 

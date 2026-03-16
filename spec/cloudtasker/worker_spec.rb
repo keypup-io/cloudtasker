@@ -33,6 +33,7 @@ RSpec.describe Cloudtasker::Worker do
     let(:job_retries) { 3 }
     let(:job_queue) { 'critical' }
     let(:worker_class_name) { worker_class.to_s }
+    let(:job_attempts) { 5 }
     let(:worker_hash) do
       {
         'worker' => worker_class_name,
@@ -40,6 +41,7 @@ RSpec.describe Cloudtasker::Worker do
         'job_args' => job_args,
         'job_meta' => job_meta,
         'job_retries' => job_retries,
+        'job_attempts' => job_attempts,
         'job_queue' => job_queue,
         'task_id' => task_id
       }
@@ -53,6 +55,7 @@ RSpec.describe Cloudtasker::Worker do
           job_args: job_args,
           job_meta: eq(job_meta),
           job_retries: job_retries,
+          job_attempts: job_attempts,
           task_id: task_id
         }
       end
@@ -233,6 +236,7 @@ RSpec.describe Cloudtasker::Worker do
     let(:args) { [1, 2] }
     let(:meta) { { foo: 'bar' } }
     let(:retries) { 3 }
+    let(:attempts) { 5 }
     let(:queue) { 'critical' }
 
     context 'without args' do
@@ -243,6 +247,7 @@ RSpec.describe Cloudtasker::Worker do
           job_args: [],
           job_id: be_a(String),
           job_retries: 0,
+          job_attempts: 0,
           task_id: nil
         }
       end
@@ -258,6 +263,7 @@ RSpec.describe Cloudtasker::Worker do
           job_id: id,
           job_meta: meta,
           job_retries: retries,
+          job_attempts: attempts,
           task_id: task_id
         }
       end
@@ -268,6 +274,7 @@ RSpec.describe Cloudtasker::Worker do
           job_id: id,
           job_meta: eq(meta),
           job_retries: retries,
+          job_attempts: attempts,
           task_id: task_id
         }
       end
@@ -597,6 +604,7 @@ RSpec.describe Cloudtasker::Worker do
         job_args: worker.job_args,
         job_meta: worker.job_meta.to_h,
         job_retries: worker.job_retries,
+        job_attempts: worker.job_attempts,
         job_queue: worker.job_queue,
         task_id: task_id
       }
