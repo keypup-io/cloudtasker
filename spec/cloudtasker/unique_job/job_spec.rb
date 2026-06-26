@@ -378,6 +378,20 @@ RSpec.describe Cloudtasker::UniqueJob::Job do
         expect(job.redis.ttl(job.unique_gid)).to be_within(2).of(job.lock_provisional_ttl)
       end
     end
+
+    context 'with inline execution mode' do
+      # In inline mode the job runs synchronously within the yield and releases
+      # its own lock, so the final lock must not be re-acquired (nothing would
+      # release it). The TTL therefore stays at the short provisional value.
+      it 'does not promote the lock to the final TTL' do
+        Cloudtasker::Testing.inline! do
+          job.lock_for_scheduling! { block_executed << true }
+        end
+
+        expect(block_executed).to eq([true])
+        expect(job.redis.ttl(job.unique_gid)).to be_within(2).of(job.lock_provisional_ttl)
+      end
+    end
   end
 
   describe '#unlock!' do

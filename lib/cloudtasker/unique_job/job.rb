@@ -230,18 +230,14 @@ module Cloudtasker
         # Step 2: Yield to perform scheduling operation
         result = yield
 
-        # Step 3: Set final lock
-        # Check if the lock is still held by this job
-        acquired = redis.get(unique_gid) == id
-
-        # Set the lock with final duration
-        # If already acquired, refresh with final TTL
-        # If not acquired (expired or taken), try to acquire exclusively
-        final_lock_acquired = redis.set(unique_gid, id, nx: !acquired, ex: lock_ttl)
-
-        # Log a warning if final lock could not be acquired
-        # The job has already been enqueued at this point, so raising an error is useless
-        worker.logger.warn(LOCK_FINALIZATION_WARNING) unless final_lock_acquired
+        # Step 3: Promote the provisional lock to the final lock
+        #
+        # Skipped under inline execution (testing): in that mode the job runs
+        # synchronously within the yield above and releases its own lock via the
+        # execute middleware. Re-acquiring the lock here would resurrect a lock
+        # that nothing will ever release, wrongly rejecting subsequent enqueues
+        # of the same unique job.
+        set_final_lock! unless inline_mode?
 
         # Return the result of the block
         result
@@ -253,6 +249,36 @@ module Cloudtasker
       def unlock!
         locked_id = redis.get(unique_gid)
         redis.del(unique_gid) if locked_id == id
+      end
+
+      private
+
+      #
+      # Promote the provisional lock to the full lock TTL after the job has been
+      # enqueued. The job is already enqueued at this point, so a failure to
+      # acquire is logged rather than raised.
+      #
+      def set_final_lock!
+        # Check if the lock is still held by this job
+        acquired = redis.get(unique_gid) == id
+
+        # Set the lock with final duration
+        # If already acquired, refresh with final TTL
+        # If not acquired (expired or taken), try to acquire exclusively
+        final_lock_acquired = redis.set(unique_gid, id, nx: !acquired, ex: lock_ttl)
+
+        # Log a warning if final lock could not be acquired
+        worker.logger.warn(LOCK_FINALIZATION_WARNING) unless final_lock_acquired
+      end
+
+      #
+      # Return true in inline testing mode, where jobs run synchronously at
+      # enqueue time. Mirrors `Backend::MemoryTask.inline_mode?`.
+      #
+      # @return [Boolean] True if inline mode enabled.
+      #
+      def inline_mode?
+        defined?(Cloudtasker::Testing) && Cloudtasker::Testing.inline?
       end
     end
   end

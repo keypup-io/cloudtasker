@@ -65,6 +65,22 @@ RSpec.describe 'Unique Worker' do
     end
   end
 
+  describe 'successive inline enqueuing+run of standalone jobs with same args' do
+    before do
+      Cloudtasker::Testing.inline! do
+        TestUniqueJobWorker.perform_async(1, 2)
+        TestUniqueJobWorker.perform_async(1, 2)
+      end
+    end
+
+    # In inline mode the job runs synchronously within the enqueue call and
+    # releases its lock. A second enqueue of the same unique job must therefore
+    # run again rather than being rejected by a lock left behind by the first.
+    it 'processes both jobs' do
+      expect(TestUniqueJobWorker.past_job_args).to eq([[1, 2], [1, 2]])
+    end
+  end
+
   describe 'concurrent enqueuing of a standalone job and batch sub-job (lock_per_batch: true)' do
     before do
       orig_options = TestUniqueJobWorker.cloudtasker_options_hash
