@@ -122,7 +122,7 @@ Open a Rails console and enqueue some jobs
   DummyWorker.perform_in(60, 'foo')
 
   # Process job immediately, inline
-  # Supported since: v0.15.rc2
+  # Supported since: v0.15.0
   DummyWorker.perform_now('foo')
 ```
 
@@ -446,6 +446,18 @@ Cloudtasker.configure do |config|
   # Default: true
   #
   # config.local_server_ssl_verify = true
+
+  #
+  # Enable/disable the base64 encoding of task payloads when sent to Google Cloud Tasks.
+  #
+  # Base64-encoding is required for job payloads containing special characters.
+  # The downside is that the Google Cloud Task UI will therefore obfuscate the payload and force users to manually decode the payload to see the actual content.
+  #
+  # Supported since: v0.15.0
+  #
+  # Default: true
+  #
+  # config.base64_encode_body = true
 end
 ```
 
@@ -481,7 +493,7 @@ MyWorker.schedule(args: [arg1, arg2], time_in: 5 * 60, queue: 'critical')
 
 # Perform worker immediately, inline. This will not send the job to
 # the processing queue. Middlewares such as Unique Job, Batch Jobs will still be invoked.
-# Supported since: v0.15.rc2
+# Supported since: v0.15.0
 MyWorker.perform_now(arg1, arg2)
 ```
 
@@ -555,7 +567,7 @@ CriticalWorker.schedule(args: [1], queue: :important)
 ```
 
 ### Propagating the queue in child workers
-**Supported since:** `v0.15.rc2`
+**Supported since:** `v0.15.0`
 
 You can specify `propagate_queue: true` via the `cloudtasker_options` to make workers enqueued inside a job use the runtime queue instead of the default (class-configured or `default`) queue:
 

@@ -1,13 +1,26 @@
 # Changelog
 
-## [v0.15.rc3](https://github.com/keypup-io/cloudtasker/tree/v0.15.rc3) (2025-11-17)
+## [v0.15.0](https://github.com/keypup-io/cloudtasker/tree/v0.15.0) (2026-06-26)
 
-[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.14.0...v0.15.rc3)
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.14.0...v0.15.0)
 
 **Improvements:**
+- Local Server: allow retry delay to be configured via the env var `LOCAL_SERVER_RETRY_DELAY`
+- Local Server: fix a syntax error on trap handling, which was re-raising an unnecessary exception.
+- Logging: add job `duration` on error logs
+- Logging: log error message as `reason` on `RetryWorkerError`
 - Queues: support `propagate_queue: true` option on `cloudtasker_options` to make workers enqueued inside a job use the runtime queue instead of the default (class-configured or `default`) queue.
+- Testing: add specific `raise_errors!` mode to raise job errors during testing, without having to specifically use `inline_mode`. Using `inline_mode` will still raise errors.
 - Unique Jobs: add `until_completed` strategy to lock jobs until they are completed or have exhausted all retries (thanks @jam-packed).
+- Workers: capture `job_attempts` on workers, which is captured from `X-CloudTasks-TaskRetryCount`
+- Workers: increase the allowed max task size to 1049KB since Google Tasks supports increased payloads
 - Workers: provide `perform_now` method to perform job inline and align with other job frameworks
+- Workers: support a global configuration option to control whether task payloads are base64-encoded. See `base64_encode_body`
+
+**Fixed bugs:**
+- Batch Jobs: prevent rollback of completion status if a completed job is replayed. This may happen if Cloud Tasks times out before the job completes.
+- Batch Jobs: prevent rollback of job statuses due to multiple children completing concurrently and updating the parent job status (race condition in batch completion callback). 
+- Unique Jobs: avoid long-lock on OOM/error while scheduling jobs. An initial short-lived lock is now acquired before scheduling the job, which is then turned into a long-lived lock after the job has been scheduled. This prevents jobs from being enqueued for a fair amount of time after a scheduling crash.
 
 **Maintenance:**
 - Supported rubies: drop support for ruby `2.7`. Cloudtasker now requires ruby `3.0` and above.
