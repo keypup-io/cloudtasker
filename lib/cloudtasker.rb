@@ -18,6 +18,7 @@ require 'cloudtasker/max_task_size_exceeded_error'
 
 require 'cloudtasker/middleware/chain'
 require 'cloudtasker/authenticator'
+require 'cloudtasker/cloud_scheduler'
 require 'cloudtasker/cloud_task'
 require 'cloudtasker/worker_logger'
 require 'cloudtasker/worker_handler'
