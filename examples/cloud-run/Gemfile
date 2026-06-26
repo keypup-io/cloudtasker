@@ -12,7 +12,7 @@ gem 'rails', '~> 7.1'
 gem 'puma'
 
 # Background jobs via Cloud Tasks
-gem 'cloudtasker', github: 'keypup-io/cloudtasker'
+gem 'cloudtasker', path: '../../'
 
 # Active record adapter
 gem 'sqlite3'
