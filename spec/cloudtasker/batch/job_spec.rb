@@ -419,6 +419,49 @@ RSpec.describe Cloudtasker::Batch::Job do
     end
   end
 
+  describe 'progressive batch expansion' do
+    # A running child may add more jobs to a batch that has already been set up
+    # (see docs/BATCH_JOBS.md "Expanding the parent batch"). The setup seal is
+    # set once at the initial setup and must not interfere: the batch stays open
+    # while the expanding child runs, then completes normally.
+    let(:initial_child) { worker.new_instance }
+    let(:added_child) { worker.new_instance }
+
+    before do
+      allow_any_instance_of(Cloudtasker::Worker).to receive(:schedule)
+        .and_return(instance_double(Cloudtasker::CloudTask))
+
+      # Parent sets up with one initial child and seals the batch
+      batch.pending_jobs.push(initial_child)
+      batch.setup
+
+      # The initial child starts running, then expands the batch before completing
+      batch.update_state(initial_child.job_id, 'processing')
+      batch.pending_jobs.push(added_child)
+      batch.schedule_pending_jobs
+    end
+
+    it { expect(batch).to be_setup_complete }
+
+    context 'with the expanding child still running' do
+      before { batch.update_state(added_child.job_id, 'completed') }
+
+      # The expanding child's own 'processing' entry holds the batch open, so
+      # the freshly added child completing does not complete the batch.
+      it { expect(batch).not_to be_complete }
+    end
+
+    context 'with the expanding child and the added child both completed' do
+      before do
+        batch.update_state(added_child.job_id, 'completed')
+        batch.update_state(initial_child.job_id, 'completed')
+      end
+
+      it { expect(batch).to be_complete }
+      it { expect(batch).to be_setup_complete }
+    end
+  end
+
   describe '#update_state' do
     subject { batch.batch_state&.dig(child_id) }
 
