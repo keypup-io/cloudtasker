@@ -388,6 +388,7 @@ RSpec.describe Cloudtasker::Batch::Job do
         expect(child_worker).not_to receive(:schedule)
       end
 
+      after { expect(batch).not_to be_setup_complete }
       it { is_expected.to be_truthy }
     end
 
@@ -399,7 +400,22 @@ RSpec.describe Cloudtasker::Batch::Job do
         expect(batch).to receive(:schedule_pending_jobs).and_return(true)
       end
 
+      after { expect(batch).to be_setup_complete }
       it { is_expected.to be_truthy }
+    end
+  end
+
+  describe '#setup_complete?' do
+    subject { batch }
+
+    context 'without the batch having been enqueued' do
+      it { is_expected.not_to be_setup_complete }
+    end
+
+    context 'with the batch flagged as fully enqueued' do
+      before { redis.set(batch.batch_setup_gid, true) }
+
+      it { is_expected.to be_setup_complete }
     end
   end
 
@@ -592,7 +608,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     let(:complete) { true }
 
     before do
-      allow(batch).to receive_messages(complete?: complete, on_complete: true)
+      allow(batch).to receive_messages(complete?: complete, on_complete: true, setup_complete?: true)
       allow(batch).to receive(:update_state).with(child_batch.batch_id, status)
       allow(batch).to receive(:run_worker_callback)
       batch.pending_jobs.push(child_worker)
@@ -610,6 +626,15 @@ RSpec.describe Cloudtasker::Batch::Job do
       after { expect(batch).to have_received(:run_worker_callback).with(:on_child_complete, child_batch.worker) }
       after { expect(batch).to have_received(:on_complete) }
       it { is_expected.to be_truthy }
+    end
+
+    context 'with batch complete but the parent still enqueuing children' do
+      before { allow(batch).to receive(:setup_complete?).and_return(false) }
+
+      after { expect(batch).to have_received(:update_state) }
+      after { expect(batch).to have_received(:run_worker_callback).with(:on_child_complete, child_batch.worker) }
+      after { expect(batch).not_to have_received(:on_complete) }
+      it { is_expected.to be_falsey }
     end
 
     context 'with batch complete but completion already claimed by another child' do
@@ -708,6 +733,7 @@ RSpec.describe Cloudtasker::Batch::Job do
       [
         side_batch.batch_gid,
         side_batch.batch_state_gid,
+        side_batch.batch_setup_gid,
         side_batch.batch_state_count_gid('all'),
         side_batch.batch_state_count_gid('scheduled')
       ].sort

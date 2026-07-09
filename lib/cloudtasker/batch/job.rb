@@ -207,6 +207,16 @@ module Cloudtasker
       end
 
       #
+      # Return the key used to flag that the parent has finished enqueuing all
+      # children of the batch.
+      #
+      # @return [String] The batch setup-complete key.
+      #
+      def batch_setup_gid
+        "#{batch_state_gid}/setup_complete"
+      end
+
+      #
       # Return the number of jobs in a given state
       #
       # @return [String] The batch progress state namespaced id.
@@ -372,6 +382,22 @@ module Cloudtasker
       end
 
       #
+      # Return true once the parent has finished enqueuing all children of the
+      # batch (end of #setup).
+      #
+      # Completion must not be evaluated before this point: the parent enqueues
+      # children one at a time, so a fast child can complete while later siblings
+      # have not yet been scheduled or registered. Without this gate, `complete?`
+      # would see only the children registered so far and report the batch done,
+      # firing `on_batch_complete` prematurely.
+      #
+      # @return [Boolean] True if the batch has been fully enqueued.
+      #
+      def setup_complete?
+        redis.exists?(batch_setup_gid)
+      end
+
+      #
       # Run worker callback. The error and dead callbacks get
       # silenced should they raise an error.
       #
@@ -436,6 +462,11 @@ module Cloudtasker
         return if status == :errored
         return unless complete?
 
+        # Do not let a child complete the batch until the parent has finished
+        # enqueuing every child. Otherwise a fast child can fire on_complete
+        # before its slower siblings have even been scheduled. See #setup_complete?.
+        return unless setup_complete?
+
         # Notify the parent batch that we are done with this batch. Use SETNX to ensure
         # only the first concurrent child to complete triggers on_complete.
         return unless redis.set(batch_completion_gid, true, nx: true, ex: BATCH_COMPLETION_TTL)
@@ -480,6 +511,7 @@ module Cloudtasker
           m.del(batch_gid)
           m.del(batch_state_gid)
           m.del(batch_completion_gid)
+          m.del(batch_setup_gid)
           BATCH_STATUSES.each { |e| m.del(batch_state_count_gid(e)) }
         end
       end
@@ -553,6 +585,11 @@ module Cloudtasker
 
         # Schedule all child workers
         schedule_pending_jobs
+
+        # Flag the batch as fully enqueued. Until this is set, a child that
+        # completes must not be allowed to trigger batch completion — see
+        # #setup_complete?.
+        redis.set(batch_setup_gid, true)
       end
 
       #
