@@ -146,7 +146,14 @@ module Cloudtasker
       def perform_now(*args)
         # Serialize/deserialize arguments to mimic job enqueueing and produce a similar context
         job_args = JSON.parse(args.to_json)
-        new(job_args: job_args).execute
+        worker = new(job_args: job_args)
+
+        # Invoke client middlewares as if the job was being scheduled.
+        # The job runs inline immediately so there is no scheduling time.
+        Cloudtasker.config.client_middleware.invoke(worker)
+
+        # Execute the job though server middleware
+        worker.execute
       end
 
       #

@@ -134,14 +134,21 @@ RSpec.describe Cloudtasker::Worker do
     let(:job_args) { JSON.parse([arg1, arg2].to_json) }
     let(:task) { instance_double(Cloudtasker::WorkerHandler) }
     let(:resp) { 'some result' }
-    let(:worker) { instance_double(worker_class.to_s) }
+    let(:worker) { worker_class.new(job_args: job_args) }
 
     before do
-      expect(worker_class).to receive(:new).with(job_args: job_args).and_return(worker)
-      expect(worker).to receive(:execute).and_return(resp)
+      allow(worker_class).to receive(:new).with(job_args: job_args).and_return(worker)
+      allow(worker).to receive(:execute).and_return(resp)
     end
 
     it { is_expected.to eq(resp) }
+
+    context 'with client middleware chain' do
+      before { Cloudtasker.config.client_middleware.add(TestMiddleware) }
+      after { expect(worker.middleware_called).to be_truthy }
+      after { expect(worker.middleware_opts).to be_empty }
+      it { is_expected.to eq(resp) }
+    end
   end
 
   describe '.perform_in' do
