@@ -136,6 +136,11 @@ RSpec.describe Cloudtasker::Middleware::Chain do
       it { expect { |b| chain.invoke(&b) }.to yield_control }
     end
 
+    context 'without chain and no block' do
+      it { expect(chain.invoke).to be_nil }
+      it { expect { chain.invoke }.not_to raise_error }
+    end
+
     context 'with chain' do
       let(:middleware) { TestMiddleware.new }
 
@@ -143,6 +148,16 @@ RSpec.describe Cloudtasker::Middleware::Chain do
       before { allow(chain).to receive(:empty?).and_return(false) }
       after { expect(middleware.called).to be_truthy }
       it { expect { |b| chain.invoke(worker, &b) }.to yield_control }
+    end
+
+    context 'with chain and no block' do
+      let(:middleware) { TestMiddleware.new }
+
+      before { allow(chain).to receive(:retrieve).and_return([middleware]) }
+      before { allow(chain).to receive(:empty?).and_return(false) }
+      after { expect(middleware.called).to be_truthy }
+
+      it { expect { chain.invoke(worker) }.not_to raise_error }
     end
   end
 end
