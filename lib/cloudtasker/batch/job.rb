@@ -207,10 +207,10 @@ module Cloudtasker
       end
 
       #
-      # Return the key used to flag that the parent has finished enqueuing all
-      # children of the batch.
+      # Return the key tracking the batch enqueuing lifecycle: 'in_progress'
+      # while the parent enqueues children, 'done' once finished.
       #
-      # @return [String] The batch setup-complete key.
+      # @return [String] The batch setup marker key.
       #
       def batch_setup_gid
         "#{batch_state_gid}/setup_complete"
@@ -382,19 +382,19 @@ module Cloudtasker
       end
 
       #
-      # Return true once the parent has finished enqueuing all children of the
-      # batch (end of #setup).
+      # Return true unless the parent is still enqueuing children. The parent
+      # enqueues one at a time, so a fast child could otherwise complete off a
+      # partially-registered state and fire `on_batch_complete` prematurely
+      # (see #on_child_complete).
       #
-      # Completion must not be evaluated before this point: the parent enqueues
-      # children one at a time, so a fast child can complete while later siblings
-      # have not yet been scheduled or registered. Without this gate, `complete?`
-      # would see only the children registered so far and report the batch done,
-      # firing `on_batch_complete` prematurely.
+      # A batch with no marker predates this feature (enqueued by an older
+      # #setup); treat it as fully enqueued so batches in flight during an
+      # upgrade complete normally instead of being stranded.
       #
-      # @return [Boolean] True if the batch has been fully enqueued.
+      # @return [Boolean] True unless the batch is still enqueuing children.
       #
       def setup_complete?
-        redis.exists?(batch_setup_gid)
+        redis.get(batch_setup_gid) != 'in_progress'
       end
 
       #
@@ -583,13 +583,15 @@ module Cloudtasker
         # Save batch
         save
 
+        # Mark as enqueuing before scheduling any child: while set, a completing
+        # child must not trigger batch completion (see #setup_complete?).
+        redis.set(batch_setup_gid, 'in_progress')
+
         # Schedule all child workers
         schedule_pending_jobs
 
-        # Flag the batch as fully enqueued. Until this is set, a child that
-        # completes must not be allowed to trigger batch completion — see
-        # #setup_complete?.
-        redis.set(batch_setup_gid, true)
+        # Mark as fully enqueued; children may now trigger completion.
+        redis.set(batch_setup_gid, 'done')
       end
 
       #
