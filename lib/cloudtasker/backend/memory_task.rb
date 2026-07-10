@@ -9,15 +9,6 @@ module Cloudtasker
       attr_reader :id, :http_request, :schedule_time, :queue
 
       #
-      # Return true if we are in test inline execution mode.
-      #
-      # @return [Boolean] True if inline mode enabled.
-      #
-      def self.inline_mode?
-        defined?(Cloudtasker::Testing) && Cloudtasker::Testing.inline?
-      end
-
-      #
       # Return true if errors must be raised immediately
       #
       # @return [Boolean] True if raise error mode is enabled.
@@ -78,9 +69,7 @@ module Cloudtasker
         task = new(**payload, id: id)
         queue << task
 
-        # Execute task immediately if in testing and inline mode enabled
-        task.execute if inline_mode?
-
+        # Return the task
         task
       end
 

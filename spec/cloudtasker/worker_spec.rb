@@ -171,8 +171,15 @@ RSpec.describe Cloudtasker::Worker do
     let(:arg2) { 2 }
     let(:resp) { instance_double(Cloudtasker::CloudTask) }
 
-    before { allow(worker_class).to receive(:schedule).with(args: [arg1, arg2]).and_return(resp) }
-    it { is_expected.to eq(resp) }
+    context 'with regular mode of operation' do
+      before { expect(worker_class).to receive(:schedule).with(args: [arg1, arg2]).and_return(resp) }
+      it { is_expected.to eq(resp) }
+    end
+
+    context 'with inline! testing mode' do
+      before { expect(worker_class).to receive(:perform_now).with(arg1, arg2).and_return(resp) }
+      it { Cloudtasker::Testing.inline! { is_expected.to eq(resp) } }
+    end
   end
 
   describe '.schedule' do

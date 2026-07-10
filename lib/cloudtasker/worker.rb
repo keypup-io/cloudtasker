@@ -106,7 +106,14 @@ module Cloudtasker
       # @return [Cloudtasker::CloudTask] The Google Task response
       #
       def perform_async(*args)
-        schedule(args: args)
+        if defined?(Cloudtasker::Testing) && Cloudtasker::Testing.inline?
+          # In inline testing mode we process the job immediately without
+          # enqueuing it on the backend. Client/Server middlewares run as expected.
+          perform_now(*args)
+        else
+          # Normal flow. Enqueue the job on the backend.
+          schedule(args: args)
+        end
       end
 
       #
