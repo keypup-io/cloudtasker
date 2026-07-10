@@ -585,6 +585,50 @@ RSpec.describe Cloudtasker::Batch::Job do
     end
   end
 
+  describe '#trigger_completion' do
+    subject(:trigger_completion) { batch.trigger_completion(status) }
+
+    let(:status) { :completed }
+
+    context 'when no other path has claimed completion' do
+      before { allow(batch).to receive(:on_complete).and_return(true) }
+
+      after { expect(batch).to have_received(:on_complete).with(status) }
+      it { is_expected.to be_truthy }
+    end
+
+    # The parent backstop forwards its own status (e.g. :dead/:errored); only the
+    # child path always fires :completed.
+    context 'when propagating a non-completed status' do
+      let(:status) { :dead }
+
+      before { allow(batch).to receive(:on_complete).and_return(true) }
+
+      after { expect(batch).to have_received(:on_complete).with(:dead) }
+      it { is_expected.to be_truthy }
+    end
+
+    context 'when completion was already claimed by another path' do
+      before do
+        allow(batch).to receive(:on_complete)
+        redis.set(batch.batch_completion_gid, true)
+      end
+
+      after { expect(batch).not_to have_received(:on_complete) }
+      it { is_expected.to be_falsey }
+    end
+
+    context 'when on_complete raises' do
+      before { allow(batch).to receive(:on_complete).and_raise(ArgumentError) }
+
+      # Key must be cleared on error so completion can be reattempted.
+      it 'clears the completion key and re-raises' do
+        expect { trigger_completion }.to raise_error(ArgumentError)
+        expect(redis.get(batch.batch_completion_gid)).to be_nil
+      end
+    end
+  end
+
   describe '#on_child_complete' do
     subject { batch.on_child_complete(child_batch, status) }
 
@@ -817,7 +861,31 @@ RSpec.describe Cloudtasker::Batch::Job do
     context 'with batch complete' do
       let(:complete) { true }
 
+      # The backstop claims the shared token before firing, so a concurrent child
+      # cannot also fire on_complete.
+      before do
+        expect(redis).to receive(:set)
+          .with(batch.batch_completion_gid, true, nx: true, ex: described_class::BATCH_COMPLETION_TTL)
+          .and_call_original
+      end
+
       after { expect(batch).to have_received(:on_complete) }
+      after { expect(parent_batch).to have_received(:on_batch_node_complete) }
+      it { is_expected.to be_truthy }
+    end
+
+    context 'with batch complete but completion already claimed by another path' do
+      let(:complete) { true }
+
+      before do
+        expect(redis).to receive(:set)
+          .with(batch.batch_completion_gid, true, nx: true, ex: described_class::BATCH_COMPLETION_TTL)
+          .and_return(false)
+      end
+
+      # Token already held: on_complete must not fire, but node completion still
+      # propagates to the parent.
+      after { expect(batch).not_to have_received(:on_complete) }
       after { expect(parent_batch).to have_received(:on_batch_node_complete) }
       it { is_expected.to be_truthy }
     end
