@@ -207,13 +207,13 @@ module Cloudtasker
       #
       # @param [Array<any>] *args The args to pass to each middleware.
       #
-      def invoke(*args)
-        return yield if empty?
+      def invoke(*args, &block)
+        return block&.call if empty?
 
         chain = retrieve.dup
         traverse_chain = lambda do
           if chain.empty?
-            yield
+            block&.call
           else
             chain.shift.call(*args, &traverse_chain)
           end
