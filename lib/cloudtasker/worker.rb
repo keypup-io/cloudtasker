@@ -106,14 +106,7 @@ module Cloudtasker
       # @return [Cloudtasker::CloudTask] The Google Task response
       #
       def perform_async(*args)
-        if defined?(Cloudtasker::Testing) && Cloudtasker::Testing.inline?
-          # In inline testing mode we process the job immediately without
-          # enqueuing it on the backend. Client/Server middlewares run as expected.
-          perform_now(*args)
-        else
-          # Normal flow. Enqueue the job on the backend.
-          schedule(args: args)
-        end
+        schedule(args: args)
       end
 
       #
@@ -155,12 +148,8 @@ module Cloudtasker
         job_args = JSON.parse(args.to_json)
         worker = new(job_args: job_args)
 
-        # Invoke client middlewares as if the job was being scheduled.
-        # The job runs inline immediately so there is no scheduling time.
-        Cloudtasker.config.client_middleware.invoke(worker)
-
-        # Execute the job though server middleware
-        worker.execute
+        # Run the job immediately
+        worker.perform_now
       end
 
       #
@@ -303,13 +292,40 @@ module Cloudtasker
     # @return [Cloudtasker::CloudTask, nil] The Google Task response or nil if the job was not scheduled
     #
     def schedule(**args)
-      # Evaluate when to schedule the job
-      time_at = schedule_time(**args)
+      if defined?(Cloudtasker::Testing) && Cloudtasker::Testing.inline?
+        # In inline testing mode we process the job immediately without
+        # enqueuing it on the backend. Client/Server middlewares run as expected.
+        perform_now
+      else
+        # Normal flow. Enqueue the job on the backend.
+        # Evaluate when to schedule the job
+        time_at = schedule_time(**args)
 
-      # Schedule job through client middlewares
-      Cloudtasker.config.client_middleware.invoke(self, time_at: time_at) do
-        WorkerHandler.new(self).schedule(time_at: time_at)
+        # Schedule job through client middlewares
+        Cloudtasker.config.client_middleware.invoke(self, time_at: time_at) do
+          WorkerHandler.new(self).schedule(time_at: time_at)
+        end
       end
+    end
+
+    #
+    # Run the worker immediately, without sending it to the queue for processing.
+    #
+    # Middlewares (unique job, batch etc.) will still be invoked as if the job
+    # had been scheduled.
+    #
+    # @return [Any] The result of the worker perform method.
+    #
+    def perform_now
+      # Invoke client middlewares as if the job was being scheduled
+      Cloudtasker.config.client_middleware.invoke(self)
+
+      # Prepare the processing payload
+      handler = WorkerHandler.new(self)
+      worker_payload = handler.worker_payload.merge(job_attempts: job_attempts || 1, task_id: task_id || job_id)
+
+      # Execute the job as if it had been received by the handler
+      WorkerHandler.execute_from_payload!(worker_payload)
     end
 
     #

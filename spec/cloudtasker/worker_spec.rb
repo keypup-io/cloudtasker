@@ -127,28 +127,18 @@ RSpec.describe Cloudtasker::Worker do
   describe '.perform_now' do
     subject { worker_class.perform_now(arg1, arg2) }
 
-    let(:queue) { 'some-queue' }
-    let(:delay) { 10 }
     let(:arg1) { 1 }
     let(:arg2) { { foo: 'bar', some_time: Time.now } }
     let(:job_args) { JSON.parse([arg1, arg2].to_json) }
-    let(:task) { instance_double(Cloudtasker::WorkerHandler) }
     let(:resp) { 'some result' }
     let(:worker) { worker_class.new(job_args: job_args) }
 
     before do
       allow(worker_class).to receive(:new).with(job_args: job_args).and_return(worker)
-      allow(worker).to receive(:execute).and_return(resp)
+      expect(worker).to receive(:perform_now).and_return(resp)
     end
 
     it { is_expected.to eq(resp) }
-
-    context 'with client middleware chain' do
-      before { Cloudtasker.config.client_middleware.add(TestMiddleware) }
-      after { expect(worker.middleware_called).to be_truthy }
-      after { expect(worker.middleware_opts).to be_empty }
-      it { is_expected.to eq(resp) }
-    end
   end
 
   describe '.perform_in' do
@@ -171,15 +161,8 @@ RSpec.describe Cloudtasker::Worker do
     let(:arg2) { 2 }
     let(:resp) { instance_double(Cloudtasker::CloudTask) }
 
-    context 'with regular mode of operation' do
-      before { expect(worker_class).to receive(:schedule).with(args: [arg1, arg2]).and_return(resp) }
-      it { is_expected.to eq(resp) }
-    end
-
-    context 'with inline! testing mode' do
-      before { expect(worker_class).to receive(:perform_now).with(arg1, arg2).and_return(resp) }
-      it { Cloudtasker::Testing.inline! { is_expected.to eq(resp) } }
-    end
+    before { expect(worker_class).to receive(:schedule).with(args: [arg1, arg2]).and_return(resp) }
+    it { is_expected.to eq(resp) }
   end
 
   describe '.schedule' do
@@ -440,20 +423,48 @@ RSpec.describe Cloudtasker::Worker do
     let(:worker) { worker_class.new(job_args: [1, 2]) }
     let(:cal_time_at) { Time.now + 3600 }
 
-    before do
-      allow(worker).to receive(:schedule_time).with(interval: delay, time_at: time_at).and_return(cal_time_at)
-      allow(Cloudtasker::WorkerHandler).to receive(:new).with(worker).and_return(task)
-      allow(task).to receive(:schedule).with(time_at: cal_time_at).and_return(resp)
-    end
+    context 'with production mode' do
+      before do
+        Cloudtasker.config.client_middleware.add(TestMiddleware)
+        allow(worker).to receive(:schedule_time).with(interval: delay, time_at: time_at).and_return(cal_time_at)
+        allow(Cloudtasker::WorkerHandler).to receive(:new).with(worker).and_return(task)
+        expect(task).to receive(:schedule).with(time_at: cal_time_at).and_return(resp)
+      end
+      after do
+        expect(worker.middleware_called).to be_truthy
+        expect(worker.middleware_opts).to eq(time_at: cal_time_at)
+      end
 
-    it { is_expected.to eq(resp) }
-
-    context 'with client middleware chain' do
-      before { Cloudtasker.config.client_middleware.add(TestMiddleware) }
-      after { expect(worker.middleware_called).to be_truthy }
-      after { expect(worker.middleware_opts).to eq(time_at: cal_time_at) }
       it { is_expected.to eq(resp) }
     end
+
+    context 'with inline! testing mode' do
+      before { expect(worker).to receive(:perform_now).and_return(resp) }
+      it { Cloudtasker::Testing.inline! { is_expected.to eq(resp) } }
+    end
+  end
+
+  describe '#perform_now' do
+    subject { worker.perform_now }
+
+    let(:job_args) { [2, 3] }
+    let(:job_id) { 'some-id' }
+    let(:worker) { worker_class.new(job_args: job_args, job_id: job_id) }
+    let(:handler) { instance_double(Cloudtasker::WorkerHandler) }
+    let(:worker_payload) { { worker: worker_class.to_s, job_args: job_args } }
+    let(:expected_payload) { worker_payload.merge(job_attempts: 0, task_id: job_id) }
+    let(:resp) { 'some result' }
+
+    before do
+      Cloudtasker.config.client_middleware.add(TestMiddleware)
+      allow(Cloudtasker::WorkerHandler).to receive(:new).with(worker).and_return(handler)
+      allow(handler).to receive(:worker_payload).and_return(worker_payload)
+      allow(Cloudtasker::WorkerHandler).to receive(:execute_from_payload!)
+        .with(expected_payload).and_return(resp)
+    end
+    after { expect(worker.middleware_called).to be_truthy }
+
+    it { is_expected.to eq(resp) }
   end
 
   describe '#execute' do
