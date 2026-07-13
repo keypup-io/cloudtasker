@@ -415,6 +415,29 @@ module Cloudtasker
       end
 
       #
+      # Fire the batch completion callback, letting only the first path through.
+      #
+      # The last child (#on_child_complete) and the parent's own backstop
+      # (#complete) can observe the batch as complete at the same time; the SETNX
+      # guard lets only the first of them fire on_complete.
+      #
+      # @param [Symbol] status The completion status to propagate.
+      #
+      # @return [Boolean, nil] Truthy if this path triggered completion.
+      #
+      def trigger_completion(status = :completed)
+        return unless redis.set(batch_completion_gid, true, nx: true, ex: BATCH_COMPLETION_TTL)
+
+        begin
+          on_complete(status)
+        rescue StandardError
+          # Clear the key on error so completion can be reattempted
+          redis.del(batch_completion_gid)
+          raise
+        end
+      end
+
+      #
       # Callback invoked when a direct child batch is complete.
       #
       # @param [Cloudtasker::Batch::Job] child_batch The completed child batch.
@@ -436,19 +459,8 @@ module Cloudtasker
         return if status == :errored
         return unless complete?
 
-        # Notify the parent batch that we are done with this batch. Use SETNX to ensure
-        # only the first concurrent child to complete triggers on_complete.
-        return unless redis.set(batch_completion_gid, true, nx: true, ex: BATCH_COMPLETION_TTL)
-
-        begin
-          on_complete
-        rescue StandardError
-          # Clear key on error so completion can be reattempted
-          redis.del(batch_completion_gid)
-
-          # Re-raise
-          raise
-        end
+        # Every child is done: fire completion through the shared SETNX guard.
+        trigger_completion
       end
 
       #
@@ -561,8 +573,10 @@ module Cloudtasker
       def complete(status = :completed)
         return true if reenqueued?
 
-        # Notify the parent batch that a child is complete
-        on_complete(status) if complete?
+        # Fire completion if all children are done. Goes through the same SETNX
+        # guard as #on_child_complete so this backstop and a concurrent child
+        # don't both fire.
+        trigger_completion(status) if complete?
 
         # Notify the parent that a batch node has completed
         parent_batch&.on_batch_node_complete(self, status)
