@@ -388,6 +388,7 @@ RSpec.describe Cloudtasker::Batch::Job do
         expect(child_worker).not_to receive(:schedule)
       end
 
+      after { expect(redis.get(batch.batch_setup_gid)).to be_nil }
       it { is_expected.to be_truthy }
     end
 
@@ -399,7 +400,92 @@ RSpec.describe Cloudtasker::Batch::Job do
         expect(batch).to receive(:schedule_pending_jobs).and_return(true)
       end
 
+      after { expect(redis.get(batch.batch_setup_gid)).to eq('done') }
       it { is_expected.to be_truthy }
+    end
+  end
+
+  describe '#setup_complete?' do
+    subject { batch }
+
+    context 'when the batch is still enqueuing children' do
+      before { redis.set(batch.batch_setup_gid, 'in_progress') }
+
+      it { is_expected.not_to be_setup_complete }
+    end
+
+    context 'when the batch is fully enqueued' do
+      before { redis.set(batch.batch_setup_gid, 'done') }
+
+      it { is_expected.to be_setup_complete }
+    end
+
+    context 'without a marker (batch enqueued before this feature)' do
+      # Backward compatibility: batches in flight during an upgrade have no
+      # marker and must be treated as fully enqueued so they are not stranded.
+      it { is_expected.to be_setup_complete }
+    end
+  end
+
+  describe 'progressive batch expansion' do
+    # A running child may add more jobs to a batch that has already been set up
+    # (see docs/BATCH_JOBS.md "Expanding the parent batch"). The setup marker is
+    # written during the initial enqueue and must not interfere: the batch stays
+    # open while the expanding child runs, then completes normally.
+    let(:initial_child) { worker.new_instance }
+    let(:added_child) { worker.new_instance }
+
+    before do
+      allow_any_instance_of(Cloudtasker::Worker).to receive(:schedule)
+        .and_return(instance_double(Cloudtasker::CloudTask))
+
+      # Parent sets up with one initial child and marks the batch enqueued
+      batch.pending_jobs.push(initial_child)
+      batch.setup
+
+      # The initial child starts running, then expands the batch before completing
+      batch.update_state(initial_child.job_id, 'processing')
+      batch.pending_jobs.push(added_child)
+      batch.schedule_pending_jobs
+    end
+
+    it { expect(batch).to be_setup_complete }
+
+    context 'with the expanding child still running' do
+      before { batch.update_state(added_child.job_id, 'completed') }
+
+      # The expanding child's own 'processing' entry holds the batch open, so
+      # the freshly added child completing does not complete the batch.
+      it { expect(batch).not_to be_complete }
+    end
+
+    context 'with the expanding child and the added child both completed' do
+      before do
+        batch.update_state(added_child.job_id, 'completed')
+        batch.update_state(initial_child.job_id, 'completed')
+      end
+
+      it { expect(batch).to be_complete }
+      it { expect(batch).to be_setup_complete }
+    end
+  end
+
+  describe 'batch enqueued before the setup marker (upgrade in flight)' do
+    # A batch enqueued by a previous version has no setup marker. After an
+    # upgrade its remaining children must still be able to complete it - the
+    # parent already ran under the old code and cannot act as the fallback -
+    # otherwise the batch would be stranded and on_batch_complete never fire.
+    before do
+      batch.save
+      redis.hset(batch.batch_state_gid, child_batch.batch_id, 'processing')
+    end
+
+    it { expect(redis.get(batch.batch_setup_gid)).to be_nil }
+    it { expect(batch).to be_setup_complete }
+
+    it 'lets the final child complete the batch' do
+      expect(batch).to receive(:on_complete)
+      batch.on_child_complete(child_batch, :completed)
     end
   end
 
@@ -592,7 +678,7 @@ RSpec.describe Cloudtasker::Batch::Job do
     let(:complete) { true }
 
     before do
-      allow(batch).to receive_messages(complete?: complete, on_complete: true)
+      allow(batch).to receive_messages(complete?: complete, on_complete: true, setup_complete?: true)
       allow(batch).to receive(:update_state).with(child_batch.batch_id, status)
       allow(batch).to receive(:run_worker_callback)
       batch.pending_jobs.push(child_worker)
@@ -610,6 +696,15 @@ RSpec.describe Cloudtasker::Batch::Job do
       after { expect(batch).to have_received(:run_worker_callback).with(:on_child_complete, child_batch.worker) }
       after { expect(batch).to have_received(:on_complete) }
       it { is_expected.to be_truthy }
+    end
+
+    context 'with batch complete but the parent still enqueuing children' do
+      before { allow(batch).to receive(:setup_complete?).and_return(false) }
+
+      after { expect(batch).to have_received(:update_state) }
+      after { expect(batch).to have_received(:run_worker_callback).with(:on_child_complete, child_batch.worker) }
+      after { expect(batch).not_to have_received(:on_complete) }
+      it { is_expected.to be_falsey }
     end
 
     context 'with batch complete but completion already claimed by another child' do
@@ -708,6 +803,7 @@ RSpec.describe Cloudtasker::Batch::Job do
       [
         side_batch.batch_gid,
         side_batch.batch_state_gid,
+        side_batch.batch_setup_gid,
         side_batch.batch_state_count_gid('all'),
         side_batch.batch_state_count_gid('scheduled')
       ].sort
