@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.15.1](https://github.com/keypup-io/cloudtasker/tree/v0.15.1) (Not released)
+
+[Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.15.0...v0.15.1)
+
+**Fixed bugs:**
+- Worker: make `perform_now` go through the full lifecycle of client (+ server) middlewares and worker handling logic (e.g. global `on_error` callbacks) to be in line enqueued workers
+- Testing: make the `inline!` mode use `perform_now`. This fixes an issue where server middlewares were called inside client middlewares, leaving dangling locks as a result.
+
 ## [v0.15.0](https://github.com/keypup-io/cloudtasker/tree/v0.15.0) (2026-06-26)
 
 [Full Changelog](https://github.com/keypup-io/cloudtasker/compare/v0.14.0...v0.15.0)
